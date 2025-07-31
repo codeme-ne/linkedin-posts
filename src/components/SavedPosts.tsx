@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { SavedPost, getSavedPosts, deleteSavedPost, updateSavedPost } from '../api/supabase'
+import { SaveButton, EditButton, DeleteButton, LinkedInShareButton } from '../design-system/components/ActionButtons'
+import { Button } from '../design-system/components/Button'
 
 interface SavedPostsProps {
   onCollapse: (collapsed: boolean) => void;
@@ -85,55 +87,41 @@ export function SavedPosts({ onCollapse, refreshKey }: SavedPostsProps) {
                     rows={3}
                   />
                   <div className="flex justify-end space-x-2">
-                    <button
+                    <Button
                       onClick={() => setEditingPost(null)}
-                      className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                      variant="ghost"
+                      size="sm"
                     >
-                      Cancel
-                    </button>
-                    <button
+                      Abbrechen
+                    </Button>
+                    <SaveButton
                       onClick={() => handleEdit(post.id, editingPost.content)}
-                      className="px-3 py-1 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                    >
-                      Save
-                    </button>
+                      size="sm"
+                    />
                   </div>
                 </div>
               ) : (
                 <>
                   <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
                   <div className="mt-4 flex justify-end">
-                    <div className="flex gap-1">
-                      <button 
+                    <div className="flex gap-2">
+                      <EditButton
                         onClick={() => setEditingPost({ id: post.id, content: post.content })}
-                        className="inline-flex items-center p-2 text-gray-700 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100"
+                        size="sm"
                         title="Beitrag bearbeiten"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={() => {
-                          const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=&summary=${encodeURIComponent(post.content)}`
-                          window.open(linkedinUrl, '_blank')
-                        }}
-                        className="inline-flex items-center p-2 text-blue-500 hover:text-blue-600 transition-colors rounded-full hover:bg-blue-50"
+                      />
+                      <LinkedInShareButton
+                        postContent={post.content}
+                        size="sm"
+                        text="Teilen"
                         title="Auf LinkedIn als Draft posten"
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                        </svg>
-                      </button>
-                      <button 
+                      />
+                      <DeleteButton
                         onClick={() => handleDelete(post.id)}
-                        className="inline-flex items-center p-2 text-red-500 hover:text-red-600 transition-colors rounded-full hover:bg-red-50"
+                        size="sm"
+                        text=""
                         title="Beitrag löschen"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      />
                     </div>
                   </div>
                 </>

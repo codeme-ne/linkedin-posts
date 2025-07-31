@@ -4,24 +4,13 @@ import { savePost } from './api/supabase'
 import { SavedPosts } from './components/SavedPosts'
 import { createLinkedInDraftPost, createLinkedInShareUrl, LinkedInAPIError } from './api/linkedin'
 import { Button } from '@/components/ui/button'
+import { SaveButton, EditButton, LinkedInShareButton } from './design-system/components/ActionButtons'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { Toaster } from '@/components/ui/toaster'
-import { Edit, Save, Loader2 } from 'lucide-react'
-
-// LinkedIn Icon Component
-const LinkedInIcon = ({ className }: { className?: string }) => (
-  <svg 
-    className={className}
-    viewBox="0 0 24 24" 
-    fill="currentColor"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-  </svg>
-);
+import { Loader2 } from 'lucide-react'
 
 function App() {
   const [inputText, setInputText] = useState('')
@@ -39,7 +28,7 @@ function App() {
       const remixedPosts = await linkedInPostsFromNewsletter(inputText)
       setPosts(remixedPosts)
       toast({
-        title: "LinkedIn-Beiträge erstellt! ✨",
+        title: "LinkedIn-Beiträge erstellt!",
         description: `${remixedPosts.length} Beiträge wurden erfolgreich generiert.`,
       })
     } catch (error) {
@@ -94,10 +83,10 @@ function App() {
       <div className={`max-w-4xl mx-auto space-y-8 transition-transform duration-300 ${isSidebarCollapsed ? 'translate-x-[1.5rem]' : 'translate-x-[-10rem]'}`}>
         <div className="text-center space-y-4">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-            Newsletter zu LinkedIn
+            Newsletters zu LinkedIn-Beiträgen
           </h1>
           <p className="text-muted-foreground text-lg">
-            Verwandle deinen Post in ansprechende LinkedIn-Beiträge
+            Verwandle deinen Newsletter in ansprechende LinkedIn-Beiträge
           </p>
           <Badge variant="secondary" className="text-sm">
             Powered by Claude AI ✨
@@ -174,12 +163,10 @@ function App() {
                             >
                               Abbrechen
                             </Button>
-                            <Button
+                            <SaveButton
                               size="sm"
                               onClick={() => handleSaveEdit(index)}
-                            >
-                              Speichern
-                            </Button>
+                            />
                           </div>
                         </div>
                       ) : (
@@ -192,25 +179,21 @@ function App() {
                               Post #{index + 1}
                             </Badge>
                             <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
+                              <EditButton
                                 size="sm"
                                 onClick={() => handleStartEdit(index, post)}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
+                                text=""
+                                title="Beitrag bearbeiten"
+                              />
+                              <SaveButton
                                 size="sm"
                                 onClick={() => handleSavePost(post)}
-                                className="h-8 w-8 p-0 text-primary hover:text-primary/80 hover:bg-primary/10"
-                              >
-                                <Save className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
+                                text=""
+                                title="Beitrag speichern"
+                              />
+                              <LinkedInShareButton
                                 size="sm"
+                                text=""
                                 onClick={async () => {
                                   try {
                                     // Try LinkedIn API first if tokens are available
@@ -247,10 +230,8 @@ function App() {
                                     }
                                   }
                                 }}
-                                className="h-8 w-8 p-0 text-accent hover:text-accent/80 hover:bg-accent/10"
-                              >
-                                <LinkedInIcon className="h-4 w-4" />
-                              </Button>
+                                title="Auf LinkedIn teilen"
+                              />
                             </div>
                           </div>
                         </>
