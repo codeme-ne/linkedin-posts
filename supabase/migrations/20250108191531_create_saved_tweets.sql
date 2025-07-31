@@ -1,0 +1,5 @@
+CREATE TABLE saved_tweets (
+  id BIGSERIAL PRIMARY KEY,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
