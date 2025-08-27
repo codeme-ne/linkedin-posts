@@ -77,9 +77,11 @@ Da du ein Ghostwriter bist, musst du sicherstellen, dass du dem Stil, Ton und de
 
 Denke daran: Tweets dürfen nicht länger als 280 Zeichen sein.
 
-Bitte gib die Tweets in Listenform zurück, mit jedem Tweet in einer neuen Zeile, und stelle sicher, dass du mindestens fünf Tweets erstellst.
-
-Verwende keine Hashtags oder Emojis.
+WICHTIG (Ausgabeformat – strikt befolgen):
+- Gib NUR die Tweets zurück, eine Zeile pro Tweet.
+- KEINE Einleitung, KEINE Überschrift, KEINE Labels/Nummerierung (z. B. "Hier sind 5 Tweets…", "Tweets:", "Tweet 1:"), KEINE Aufzählungszeichen, KEINE leeren Zeilen.
+- Mindestens 5 und höchstens 10 Tweets.
+- Keine Hashtags, keine Emojis.
 
 Hier ist der Blogbeitrag: `
 

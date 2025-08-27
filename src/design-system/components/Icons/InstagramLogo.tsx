@@ -5,7 +5,7 @@ type InstagramLogoProps = {
   className?: string
 }
 
-// Simple Instagram glyph: pink rounded square with white camera outline
+// Instagram glyph in Lucide-like style: strokes only, no internal fill/background.
 export const InstagramLogo: React.FC<InstagramLogoProps> = ({ size = 16, className }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -13,16 +13,19 @@ export const InstagramLogo: React.FC<InstagramLogoProps> = ({ size = 16, classNa
     width={size}
     height={size}
     className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     aria-hidden="true"
   >
-    {/* Background */}
-    <rect x="1.5" y="1.5" width="21" height="21" rx="5" fill="#e706ab" />
-    {/* Camera outline */}
-    <rect x="5" y="5" width="14" height="14" rx="4" fill="none" stroke="white" strokeWidth="2" />
+    {/* Outer rounded square (camera body) */}
+    <rect x="2" y="2" width="20" height="20" rx="5" />
     {/* Lens */}
-    <circle cx="12" cy="12" r="4" fill="none" stroke="white" strokeWidth="2" />
+    <circle cx="12" cy="12" r="4" />
     {/* Flash dot */}
-    <circle cx="17.2" cy="6.8" r="1.4" fill="white" />
+    <circle cx="17.5" cy="6.5" r="1" />
   </svg>
 )
 

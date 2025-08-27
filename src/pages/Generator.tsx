@@ -14,6 +14,7 @@ import {
   EditButton,
   LinkedInShareButton,
   XShareButton,
+  InstagramShareButton,
 } from "@/design-system/components/ActionButtons";
 import {
   Card,
@@ -301,6 +302,14 @@ export default function Generator() {
                                     text=""
                                     tweetContent={post}
                                     title="Auf X teilen"
+                                  />
+                                )}
+                                {platform === "instagram" && (
+                                  <InstagramShareButton
+                                    size="sm"
+                                    text=""
+                                    postContent={post}
+                                    title="Auf Instagram teilen"
                                   />
                                 )}
                               </div>
