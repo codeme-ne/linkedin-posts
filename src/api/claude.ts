@@ -68,32 +68,77 @@ export async function linkedInPostsFromNewsletter(content: string) {
 
 // === X (Twitter) generation ===
 const xFromBlogPrompt_de = `
+Du bist ein Twitter-Experte mit authentischer Stimme.
 
-Du bist ein Social-Media-Experte und Ghostwriter.
+Deine Aufgabe: Wandle den folgenden Blogbeitrag in natürliche, menschliche Tweets um, die klingen wie echte Gedanken - nicht wie Marketing oder Werbung.
 
-Du arbeitest für einen beliebten Blogger, und deine Aufgabe ist es, deren Blogbeitrag zu nehmen und verschiedene Tweets zu erstellen, um Ideen aus dem Beitrag zu teilen.
+Sprache: AUSSCHLIESSLICH Deutsch (DACH). Antworte nur auf Deutsch.
 
-Da du ein Ghostwriter bist, musst du sicherstellen, dass du dem Stil, Ton und der Stimme des Blogbeitrags so genau wie möglich folgst.
+WICHTIGE STILREGELN:
+- Authentisch und persönlich schreiben (wie ein echter Mensch, nicht wie eine Marke)
+- Kurz und prägnant formulieren (ideal: 70-100 Zeichen)
+- Gespräche starten mit Fragen oder Meinungen, die zum Antworten einladen
+- Emotionen oder Persönlichkeit zeigen (Überraschung, Begeisterung, Neugierde)
+- Mehrwert bieten: nützliche Information, überraschende Erkenntnis oder kluger Gedanke
+- Klare Call-to-Actions verwenden, wo sinnvoll ("Was denkt ihr?", "Teilt eure Erfahrung")
+- KEINE Hashtags verwenden (0 Hashtags)
+- KEINE Emojis verwenden (0 Emojis)
 
-Denke daran: Tweets dürfen nicht länger als 280 Zeichen sein.
+VERMEIDEN:
+- Marketing-Sprache und Werbeton ("Entdecke jetzt", "Die besten Tipps")
+- Generische Business-Floskeln und Buzzwords
+- Komplizierte oder zu lange Sätze
+- Hashtags und Emojis (absolut keine)
+- Überladene, unauthentische Posts
 
-WICHTIG (Ausgabeformat – strikt befolgen):
-- Gib NUR die Tweets zurück, eine Zeile pro Tweet.
-- KEINE Einleitung, KEINE Überschrift, KEINE Labels/Nummerierung (z. B. "Hier sind 5 Tweets…", "Tweets:", "Tweet 1:"), KEINE Aufzählungszeichen, KEINE leeren Zeilen.
-- Mindestens 5 und höchstens 10 Tweets.
-- Keine Hashtags, keine Emojis.
+Format:
+- Jeder Tweet ist eigenständig verständlich (keine Threads)
+- Maximal 280 Zeichen pro Tweet
+- 3-5 Tweets insgesamt
+- Gib NUR die Tweets zurück, eine Zeile pro Tweet
 
-Hier ist der Blogbeitrag: `
-
-;
+Hier ist der Blogbeitrag:
+`;
 
 function sanitizeTweet(tweet: string): string {
+  let t = tweet.trim();
+
   // Entferne Hashtags vorsichtshalber
-  let t = tweet.replace(/#[^\s#]+/g, '').trim();
+  t = t.replace(/#[^\s#]+/g, '').trim();
+
+  // Entferne gängige Plattform-/Meta-Labels im Text
+  t = t
+    .replace(/\bX\s*\(Twitter\)\s*·\s*Post\s*#?\d+\b/gi, '')
+    .replace(/\bPost\s*#?\d+\b/gi, '')
+    .replace(/\bTweet\s*#?\d+\b/gi, '')
+    .trim();
+
+  // Entferne führende Labels/Nummerierung (Tweet 1:, Punkt 2:, 1) 1. - * • (1) etc.)
+  t = t
+    .replace(/^\s*(Tweet|Tweets|Punkt)\s*\d+\s*:\s*/i, '')
+  .replace(/^\s*[-*•]\s+/, '')
+    .replace(/^\s*\(?\d+\)?\s*[-.)]\s+/, '')
+    .replace(/^\s*\(?\d+\/\d+\)?\s+/, '')
+    .trim();
+
+  // Entferne Thread-Hinweise (am Anfang oder Ende)
+  t = t
+    .replace(/\s*\(?\d+\/\d+\)?\s*$/g, '') // z. B. "1/5" am Ende
+    .replace(/^\s*(Teil\s*\d+(?:\/\d+)?)\s*[:-]?\s*/i, '')
+    .replace(/\b(Thread|Fortsetzung|weiter(\s*geht's)?|Teil\s*\d+)\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  // Entferne Emojis (grobe Unicode-Emoji-Range und gängige Symbole)
+  // Hinweis: bewusst konservativ, um deutsche Umlaute/Sonderzeichen nicht zu treffen
+  t = t
+    .replace(/[\u{1F300}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+    .replace(/[\u2702-\u27B0]/g, '')
+    .trim();
+
   // Kürze hart auf 280 Zeichen
   if (t.length > 280) t = t.slice(0, 279) + '…';
-  // Entferne führende Listenmarker
-  t = t.replace(/^[-*•\d.)\s]+/, '').trim();
+
   return t;
 }
 
@@ -102,7 +147,7 @@ export async function xTweetsFromBlog(content: string) {
     const response = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 1200,
-      temperature: 0.5,
+  temperature: 0.7,
       messages: [{
         role: 'user',
         content: `${xFromBlogPrompt_de}\n\n${content}`
@@ -110,23 +155,46 @@ export async function xTweetsFromBlog(content: string) {
     });
 
     const text = (response.content[0] as { text: string }).text.trim();
-    // Splitte Zeilen und filtere leere raus; Tweets erwarten wir zeilenweise
+
+  // Primär: zeilenweise Tweets
     let lines = text
       .split(/\r?\n+/)
       .map((l) => l.trim())
       .filter((l) => l.length > 0);
 
-    // Falls das Modell Absatzblöcke liefert, fallback auf Aufzählungszeichen
-    if (lines.length < 5) {
+    // Fallback: falls nur ein Block kam, versuche Aufzählungen zu splitten
+    if (lines.length === 1 && /(^|\n)\s*(?:-|\*|\d+\.)\s/.test(text)) {
       lines = text
-        .split(/\n-\s|\n\*\s|\n\d+\.\s/)
+        .split(/\n\s*(?:-\s|\*\s|\d+\.\s)/)
         .map((l) => l.trim())
         .filter((l) => l.length > 0);
     }
 
-    const tweets = lines.map(sanitizeTweet).filter((t) => t.length > 0);
-    // Gib nur die tatsächlich generierten Tweets zurück (max 10)
-    return tweets.slice(0, 10);
+    // Filtere Meta-Zeilen wie "X (Twitter) · Post #1"
+    const metaPattern = /^(?:x\s*\(twitter\)|tweet|post)\b|\bpost\s*#?\d+\b|\bx\s*\(twitter\)\s*·/i;
+    lines = lines.filter((l) => !metaPattern.test(l));
+
+    // Säubere und dedupliziere Tweets
+    const seen = new Set<string>();
+    const tweets = lines
+      .map(sanitizeTweet)
+      // Verweise auf andere Tweets/Listen entfernen
+      .filter((t) => !/(?:diese\s+(?:drei|beiden|anderen)|dieser\s+thread|siehe\s+oben|post\s*#\d+|tweet\s*#\d+|teil\s*\d+|weiter\s+geht'?s|these\s+three|as\s+above)/i.test(t))
+      // Fremdsprachige Antworten (offensichtlich Englisch) grob rausfiltern
+      .filter((t) => {
+        // einfache Heuristik: enthält typische deutsche Stoppwörter
+        const deWords = /( der | die | das | und | mit | für | nicht | du | deine | deinem | deinen | ein | eine | im | vom | zum | zur )/i;
+        return deWords.test(` ${t} `);
+      })
+      .filter((t) => t.length > 0)
+      .filter((t) => {
+        const key = t.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    // Maximal 5 Tweets zurückgeben (0–5 erlaubt)
+    return tweets.slice(0, 5);
   } catch (error) {
     console.error('X generation error:', error);
     throw new Error('Failed to generate X tweets');
