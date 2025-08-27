@@ -2,20 +2,37 @@ import { useEffect, useState } from 'react'
 import { SavedPost, getSavedPosts, deleteSavedPost, updateSavedPost } from '../api/supabase'
 import { SaveButton, EditButton, DeleteButton, LinkedInShareButton } from '../design-system/components/ActionButtons'
 import { Button } from '../design-system/components/Button'
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog'
 
 interface SavedPostsProps {
   onCollapse: (collapsed: boolean) => void;
   refreshKey?: number;
+  isAuthenticated?: boolean;
+  onLoginClick?: () => void;
 }
 
-export function SavedPosts({ onCollapse, refreshKey }: SavedPostsProps) {
+export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginClick }: SavedPostsProps) {
   const [savedPosts, setSavedPosts] = useState<SavedPost[]>([])
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [editingPost, setEditingPost] = useState<{ id: number, content: string } | null>(null)
 
   useEffect(() => {
-    loadSavedPosts()
-  }, [refreshKey])
+    if (isAuthenticated) {
+      loadSavedPosts()
+    } else {
+      setSavedPosts([])
+    }
+  }, [refreshKey, isAuthenticated])
 
   useEffect(() => {
     onCollapse(isCollapsed)
@@ -76,7 +93,18 @@ export function SavedPosts({ onCollapse, refreshKey }: SavedPostsProps) {
           <div className="absolute inset-0 bg-white z-20" style={{ left: '-2rem', width: 'calc(100% + 2rem)' }} />
         )}
         <div className="relative p-4 space-y-4 overflow-y-auto z-10" style={{ height: 'calc(100vh - 4rem)' }}>
-          {savedPosts.map((post) => (
+          {!isAuthenticated ? (
+            <div className="p-4 rounded-lg border border-gray-200 bg-white text-center space-y-2">
+              <p className="text-gray-700">Bitte logge dich ein, um gespeicherte Beiträge zu sehen.</p>
+              {onLoginClick && (
+                <Button onClick={onLoginClick} variant="primary" size="sm">Login</Button>
+              )}
+            </div>
+          ) : savedPosts.length === 0 ? (
+            <div className="p-4 rounded-lg border border-gray-200 bg-white text-center">
+              <p className="text-gray-700">Noch keine gespeicherten Beiträge.</p>
+            </div>
+          ) : savedPosts.map((post) => (
             <div key={post.id} className="p-4 rounded-lg border border-gray-200 bg-white">
               {editingPost?.id === post.id ? (
                 <div className="space-y-2">
@@ -108,20 +136,45 @@ export function SavedPosts({ onCollapse, refreshKey }: SavedPostsProps) {
                       <EditButton
                         onClick={() => setEditingPost({ id: post.id, content: post.content })}
                         size="sm"
+                        text=""
                         title="Beitrag bearbeiten"
                       />
                       <LinkedInShareButton
                         postContent={post.content}
                         size="sm"
-                        text="Teilen"
-                        title="Auf LinkedIn als Draft posten"
-                      />
-                      <DeleteButton
-                        onClick={() => handleDelete(post.id)}
-                        size="sm"
                         text=""
-                        title="Beitrag löschen"
+                        title="Auf LinkedIn teilen"
                       />
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <div>
+                            <DeleteButton
+                              size="sm"
+                              text=""
+                              title="Beitrag löschen"
+                            />
+                          </div>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Möchtest du diesen Beitrag wirklich löschen?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Diese Aktion kann nicht rückgängig gemacht werden.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Nein</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => handleDelete(post.id)}
+                            >
+                              Ja
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </>

@@ -9,11 +9,13 @@ export interface SavedPost {
   id: number
   content: string
   created_at: string
+  user_id?: string | null
 }
 
 export const savePost = async (content: string) => {
   console.log('Saving post to Supabase:', { content })
   
+  // Insert with implicit user_id via DEFAULT auth.uid()
   const { data, error } = await supabase
     .from('saved_posts')
     .insert([{ content }])
@@ -55,3 +57,14 @@ export const updateSavedPost = async (id: number, content: string) => {
   
   if (error) throw error
 } 
+
+// Auth helpers
+export const signInWithEmail = (email: string) =>
+  supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
+
+export const signOut = () => supabase.auth.signOut()
+
+export const getSession = () => supabase.auth.getSession()
+
+export const onAuthStateChange = (callback: Parameters<typeof supabase.auth.onAuthStateChange>[0]) =>
+  supabase.auth.onAuthStateChange(callback)
