@@ -78,7 +78,7 @@ export default function Landing() {
       setIsDeleting(false);
       setCurrentPhraseIndex((prevIndex) => (prevIndex + 1) % phrases.length);
     }
-  }, [displayText, isDeleting, currentPhraseIndex, checking]);
+  }, [displayText, isDeleting, currentPhraseIndex, checking, phrases]);
 
   if (checking) return null;
 
