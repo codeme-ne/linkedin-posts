@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import crypto from 'crypto';
 
 export const config = {
   runtime: 'edge',
@@ -11,7 +10,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Verify webhook signature from Stripe
+// Verify webhook signature from Stripe using Web Crypto API
 async function verifyStripeSignature(
   body: string,
   signature: string,
@@ -30,23 +29,29 @@ async function verifyStripeSignature(
   // Create the signed payload string
   const signedPayload = `${timestamp}.${body}`;
   
-  // Calculate expected signature
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(signedPayload)
-    .digest('hex');
+  // Use Web Crypto API to create HMAC
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const signatureBuffer = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(signedPayload)
+  );
+  
+  // Convert to hex string
+  const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 
   // Check if any of the signatures match
-  return signatures.some(sig => {
-    try {
-      return crypto.timingSafeEqual(
-        Buffer.from(sig),
-        Buffer.from(expectedSignature)
-      );
-    } catch {
-      return false;
-    }
-  });
+  return signatures.some(sig => sig === expectedSignature);
 }
 
 export default async function handler(req: Request) {
