@@ -4,14 +4,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getSession, onAuthStateChange } from "@/api/supabase";
-import { InstagramLogo } from "@/design-system/components/Icons/InstagramLogo";
-import { XLogo } from "@/design-system/components/Icons/XLogo";
 
 export default function Landing() {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  
+  // Animated headline states
+  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
+  const [displayText, setDisplayText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  const phrases = [
+    { text: "LinkedIn Post", color: "text-[#0a66c2]" },
+    { text: "Tweet", color: "text-black dark:text-white" },
+    { text: "Instagram Beitrag", color: "text-[#e706ab]" }
+  ];
 
   useEffect(() => {
     // Auto-redirect if already logged in
@@ -40,6 +49,36 @@ export default function Landing() {
       videoRef.current.play().catch(err => console.log("Video autoplay prevented:", err));
     }
   }, [checking]);
+
+  // Typewriter effect for animated headline
+  useEffect(() => {
+    if (checking) return;
+    
+    const currentPhrase = phrases[currentPhraseIndex].text;
+    const typingSpeed = 100;
+    const deletingSpeed = 50;
+    const pauseTime = 2000;
+
+    if (!isDeleting && displayText.length < currentPhrase.length) {
+      const timeout = setTimeout(() => {
+        setDisplayText(currentPhrase.slice(0, displayText.length + 1));
+      }, typingSpeed);
+      return () => clearTimeout(timeout);
+    } else if (!isDeleting && displayText.length === currentPhrase.length) {
+      const timeout = setTimeout(() => {
+        setIsDeleting(true);
+      }, pauseTime);
+      return () => clearTimeout(timeout);
+    } else if (isDeleting && displayText.length > 0) {
+      const timeout = setTimeout(() => {
+        setDisplayText(displayText.slice(0, -1));
+      }, deletingSpeed);
+      return () => clearTimeout(timeout);
+    } else if (isDeleting && displayText.length === 0) {
+      setIsDeleting(false);
+      setCurrentPhraseIndex((prevIndex) => (prevIndex + 1) % phrases.length);
+    }
+  }, [displayText, isDeleting, currentPhraseIndex, checking]);
 
   if (checking) return null;
 
@@ -87,32 +126,35 @@ export default function Landing() {
                 </Badge>
                 
                 <h1 className="text-5xl font-bold leading-tight tracking-tight">
-                  <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-gradient-x">
-                    Newsletter zu Social Media
-                  </span>
+                  <span className="text-foreground">Newsletter zu</span>
                   <br />
-                  <span className="text-foreground">in Sekunden transformieren</span>
+                  <span className={`${phrases[currentPhraseIndex].color} transition-colors duration-300`}>
+                    {displayText}
+                    <span className="animate-pulse">|</span>
+                  </span>
                 </h1>
                 
                 <p className="text-xl text-muted-foreground leading-relaxed">
                   Ein KI-Tool, das deinen Newsletter intelligent in optimierte Beiträge für verschiedene Social-Media-Plattformen umwandelt.
                 </p>
-                
-                <div className="flex flex-wrap gap-3">
-                  <div className="flex items-center gap-2 bg-[#0a66c2] text-white px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19a.66.66 0 000 .14V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z"></path>
-                    </svg>
-                    <span className="font-medium">LinkedIn</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                    <XLogo size={16} />
-                    <span className="font-medium">X (Twitter)</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-[#e706ab] text-white px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                    <InstagramLogo size={16} />
-                    <span className="font-medium">Instagram</span>
-                  </div>
+
+                {/* CTAs direkt nach der Subheadline in der Hero Section */}
+                <div className="flex gap-4 pt-6">
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-105 transition-all duration-300" 
+                    onClick={() => navigate("/signup")}
+                  >
+                    Kostenlos starten
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="hover:scale-105 transition-all duration-300" 
+                    onClick={() => navigate("/app")}
+                  >
+                    Demo ansehen
+                  </Button>
                 </div>
               </div>
 
@@ -173,24 +215,6 @@ export default function Landing() {
                     </p>
                   </CardContent>
                 </Card>
-              </div>
-
-              <div className={`flex gap-4 pt-4 transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                <Button 
-                  size="lg" 
-                  className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-105 transition-all duration-300" 
-                  onClick={() => navigate("/signup")}
-                >
-                  Kostenlos starten
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="hover:scale-105 transition-all duration-300" 
-                  onClick={() => navigate("/app")}
-                >
-                  Demo ansehen
-                </Button>
               </div>
             </div>
 
