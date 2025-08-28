@@ -34,6 +34,8 @@ import { PlatformSelector } from "@/components/PlatformSelector";
 import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";
 import { InstagramLogo } from "@/design-system/components/Icons/InstagramLogo";
+import { useUsageTracking } from "@/hooks/useUsageTracking";
+import { PaywallModal } from "@/components/PaywallModal";
 
 export default function Generator() {
   const [inputText, setInputText] = useState("");
@@ -51,6 +53,8 @@ export default function Generator() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(["linkedin"]);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const { canTransform, incrementUsage, getRemainingCount, isPro } = useUsageTracking();
 
   useEffect(() => {
     getSession().then(({ data }) => {
@@ -66,6 +70,12 @@ export default function Generator() {
   }, []);
 
   const handleRemix = async () => {
+    // Check usage limit
+    if (!canTransform()) {
+      setShowPaywall(true);
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const baseLinkedInPosts = await linkedInPostsFromNewsletter(inputText);
@@ -86,6 +96,9 @@ export default function Generator() {
       setPostsByPlatform(next);
       const names = selectedPlatforms.join(", ");
       toast({ title: "Beiträge erstellt!", description: `Generiert für: ${names}` });
+      
+      // Increment usage after successful transformation
+      incrementUsage();
     } catch (error) {
       console.error("Remix error:", error);
       toast({
@@ -204,6 +217,15 @@ export default function Generator() {
             />
             <div className="space-y-2">
               <PlatformSelector value={selectedPlatforms} onChange={setSelectedPlatforms} />
+              {!isPro && (
+                <div className="flex justify-center">
+                  <Badge variant="outline" className="px-3 py-1">
+                    {getRemainingCount() > 0 
+                      ? `${getRemainingCount()} kostenlose Transformationen heute` 
+                      : "Keine kostenlosen Transformationen mehr"}
+                  </Badge>
+                </div>
+              )}
             </div>
 
             <Button
@@ -330,6 +352,11 @@ export default function Generator() {
         refreshKey={refreshKey}
         isAuthenticated={!!userEmail}
         onLoginClick={() => setLoginOpen(true)}
+      />
+      
+      <PaywallModal 
+        open={showPaywall} 
+        onOpenChange={setShowPaywall} 
       />
     </div>
   );

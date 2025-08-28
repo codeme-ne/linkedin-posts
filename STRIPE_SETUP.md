@@ -22,33 +22,30 @@ Die App nutzt Stripe für die Zahlungsabwicklung des Beta Lifetime Deals.
    - Produkt: "Social Transformer - Beta Lifetime Deal"
    - Preis: 49€ (Einmalzahlung)
 
-### 2. Supabase Migrations ausführen
+### 2. Supabase Migration ausführen
 
-**WICHTIG: Migrations müssen in der richtigen Reihenfolge ausgeführt werden!**
+**Die Migration erstellt die `subscriptions` Tabelle mit allen Stripe-Feldern.**
 
 In Supabase SQL Editor ([SQL Editor Link](https://supabase.com/dashboard/project/_/sql)):
 
-1. **Erst die Basis-Migration für Subscriptions ausführen:**
+**Migration ausführen:**
    ```sql
-   -- Führe zuerst diese Migration aus: supabase/migrations/002_add_subscription_fields.sql
-   -- Diese erstellt die subscriptions Tabelle
+   -- Führe diese Migration aus: supabase/migrations/002_add_subscription_fields.sql
+   -- Diese erstellt die subscriptions Tabelle mit allen Stripe-Feldern
    ```
    Kopiere den Inhalt von `supabase/migrations/002_add_subscription_fields.sql` und führe ihn aus.
 
-2. **Dann die Stripe-spezifischen Felder hinzufügen:**
-   ```sql
-   -- Führe danach diese Migration aus: supabase/migrations/003_add_stripe_fields.sql
-   -- Diese fügt Stripe-Felder zur existierenden Tabelle hinzu
-   ```
-   Kopiere den Inhalt von `supabase/migrations/003_add_stripe_fields.sql` und führe ihn aus.
+Die Migration erstellt:
+- `public.subscriptions` Tabelle
+- Stripe-spezifische Felder (stripe_customer_id, stripe_subscription_id, etc.)
+- RLS Policies für Sicherheit
+- Funktion `get_user_subscription_status()`
+- Notwendige Indizes
 
-**Alternative mit Supabase CLI (falls installiert):**
+**Alternative mit Supabase MCP (falls konfiguriert):**
 ```bash
-# Installation (falls nicht vorhanden)
-npm install -g supabase
-
-# Migrations ausführen
-supabase db push --db-url "postgresql://postgres:[password]@[project-ref].supabase.co:5432/postgres"
+# Mit Supabase MCP und Projekt ID
+# Die Migration kann auch direkt über MCP ausgeführt werden
 ```
 
 ### 3. Environment Variables (Vercel)
