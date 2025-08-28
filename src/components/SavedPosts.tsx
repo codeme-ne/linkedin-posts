@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { SavedPost, getSavedPosts, deleteSavedPost, updateSavedPost } from '../api/supabase'
-import { SaveButton, EditButton, DeleteButton, LinkedInShareButton } from '../design-system/components/ActionButtons'
+import { SaveButton, EditButton, DeleteButton, LinkedInShareButton, XShareButton, InstagramShareButton } from '../design-system/components/ActionButtons'
 import { Button } from '../design-system/components/Button'
 import {
   AlertDialog,
@@ -139,12 +139,28 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
                         text=""
                         title="Beitrag bearbeiten"
                       />
-                      <LinkedInShareButton
-                        postContent={post.content}
-                        size="sm"
-                        text=""
-                        title="Auf LinkedIn teilen"
-                      />
+                      {post.platform === 'x' ? (
+                        <XShareButton
+                          tweetContent={post.content}
+                          size="sm"
+                          text=""
+                          title="Auf X teilen"
+                        />
+                      ) : post.platform === 'instagram' ? (
+                        <InstagramShareButton
+                          postContent={post.content}
+                          size="sm"
+                          text=""
+                          title="Auf Instagram teilen"
+                        />
+                      ) : (
+                        <LinkedInShareButton
+                          postContent={post.content}
+                          size="sm"
+                          text=""
+                          title="Auf LinkedIn teilen"
+                        />
+                      )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <div>

@@ -98,7 +98,7 @@ export default function Generator() {
     }
   };
 
-  const handleSavePost = async (content: string) => {
+  const handleSavePost = async (content: string, platform: 'linkedin' | 'x' | 'instagram' = 'linkedin') => {
     if (!userEmail) {
       setLoginOpen(true);
       toast({
@@ -108,7 +108,7 @@ export default function Generator() {
       return;
     }
     try {
-      await savePost(content);
+      await savePost(content, platform);
       setRefreshKey((prev) => prev + 1);
       toast({
         title: "Beitrag gespeichert! 💾",
@@ -156,10 +156,10 @@ export default function Generator() {
       >
         <div className="text-center space-y-4">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-            Newsletters zu LinkedIn-Beiträgen
+            Vom Newsletter zu viralen Posts
           </h1>
           <p className="text-muted-foreground text-lg">
-            Verwandle deinen Newsletter in ansprechende LinkedIn-Beiträge
+            Mehr Sichtbarkeit aus vorhandenem Content
           </p>
           <Badge variant="secondary" className="text-sm">
             Powered by Claude AI ✨
@@ -266,7 +266,7 @@ export default function Generator() {
                                   text=""
                                   title="Beitrag bearbeiten"
                                 />
-                                <SaveButton size="sm" onClick={() => handleSavePost(post)} text="" title="Beitrag speichern" />
+                                <SaveButton size="sm" onClick={() => handleSavePost(post, platform)} text="" title="Beitrag speichern" />
                                 {platform === "linkedin" && (
                                   <LinkedInShareButton
                                     size="sm"

@@ -10,15 +10,16 @@ export interface SavedPost {
   content: string
   created_at: string
   user_id?: string | null
+  platform?: 'linkedin' | 'x' | 'instagram'
 }
 
-export const savePost = async (content: string) => {
-  console.log('Saving post to Supabase:', { content })
+export const savePost = async (content: string, platform: 'linkedin' | 'x' | 'instagram' = 'linkedin') => {
+  console.log('Saving post to Supabase:', { content, platform })
   
   // Insert with implicit user_id via DEFAULT auth.uid()
   const { data, error } = await supabase
     .from('saved_posts')
-    .insert([{ content }])
+    .insert([{ content, platform }])
     .select()
   
   if (error) {
