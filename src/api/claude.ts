@@ -70,37 +70,76 @@ export async function linkedInPostsFromNewsletter(content: string) {
 
 // === X (Twitter) generation ===
 const xFromBlogPrompt_de = `
-Du bist ein Twitter-Experte mit authentischer Stimme.
+Sie sind ein erfahrener Content-Marketer mit der Aufgabe, ansprechende Tweets aus einem Blogbeitrag zu erstellen. Ihr Ziel ist es, 5 unterschiedliche Tweets zu verfassen, die das Wesen des Blogbeitrags erfassen und dabei den einzigartigen Schreibstil des Autors beibehalten. Diese Tweets sollen auf Deutsch sein, unabhängig von der Sprache des ursprünglichen Blogbeitrags.
 
-Deine Aufgabe: Wandle den folgenden Blogbeitrag in natürliche, menschliche Tweets um, die klingen wie echte Gedanken - nicht wie Marketing oder Werbung.
+Hier ist der Blogbeitrag, den Sie analysieren sollen:
 
-Sprache: AUSSCHLIESSLICH Deutsch (DACH). Antworte nur auf Deutsch.
+<blogpost>
+{{BLOGPOST}}
+</blogpost>
 
-WICHTIGE STILREGELN:
-- Authentisch und persönlich schreiben (wie ein echter Mensch, nicht wie eine Marke)
-- Kurz und prägnant formulieren (ideal: 70-100 Zeichen)
-- Gespräche starten mit Fragen oder Meinungen, die zum Antworten einladen
-- Emotionen oder Persönlichkeit zeigen (Überraschung, Begeisterung, Neugierde)
-- Mehrwert bieten: nützliche Information, überraschende Erkenntnis oder kluger Gedanke
-- Klare Call-to-Actions verwenden, wo sinnvoll ("Was denkt ihr?", "Teilt eure Erfahrung")
-- KEINE Hashtags verwenden (0 Hashtags)
-- KEINE Emojis verwenden (0 Emojis)
+Bevor Sie die Tweets erstellen, analysieren Sie bitte den Blogbeitrag gründlich. Wrap your analysis in <blogpost_analysis> tags:
 
-VERMEIDEN:
-- Marketing-Sprache und Werbeton ("Entdecke jetzt", "Die besten Tipps")
-- Generische Business-Floskeln und Buzzwords
-- Komplizierte oder zu lange Sätze
-- Hashtags und Emojis (absolut keine)
-- Überladene, unauthentische Posts
+<blogpost_analysis>
+1. Identifizieren Sie 5-7 Hauptpunkte oder interessante Fakten aus dem Blogbeitrag. Für jeden Punkt:
+   a. Zitieren Sie die relevante Passage aus dem Blogbeitrag.
+   b. Falls der Blogbeitrag nicht auf Deutsch ist, geben Sie eine kurze deutsche Übersetzung des Zitats.
+   c. Beschreiben Sie, wie dieser Punkt in einen Tweet umgewandelt werden könnte.
 
-Format:
-- Jeder Tweet ist eigenständig verständlich (keine Threads)
-- Maximal 280 Zeichen pro Tweet
-- 3-5 Tweets insgesamt
-- Gib NUR die Tweets zurück, eine Zeile pro Tweet
+2. Beschreiben Sie den Schreibstil und Ton des Autors. Notieren Sie spezifische Phrasen oder Satzstrukturen, die charakteristisch für den Autor sind.
 
-Hier ist der Blogbeitrag:
-`;
+3. Für jeden Hauptpunkt, entwickeln Sie eine Tweet-Idee:
+   a. Formulieren Sie den Tweet auf Deutsch.
+   b. Zählen Sie die Zeichen laut, indem Sie jedes Wort mit einer Nummer versehen (z.B. 1.Dieses 2.ist 3.ein 4.Beispieltweet).
+   c. Notieren Sie, wie der Stil und Ton des Tweets dem des Autors entspricht.
+   d. Wenn die Zeichenzahl 280 überschreitet, überarbeiten und zählen Sie erneut, bis der Tweet passt.
+
+4. Identifizieren Sie potenzielle "Scrollstopper"-Elemente für jeden Tweet, die die Leser zum Innehalten und Interagieren bringen könnten.
+
+5. Basierend auf dem Inhalt, beschreiben Sie die Zielgruppe und wie die Tweets für deutschsprachige Leser ansprechend gestaltet werden können.
+
+6. Wählen Sie die 5 besten Tweet-Ideen aus, die verschiedene Aspekte des Blogbeitrags abdecken und innerhalb des Zeichenlimits liegen.
+</blogpost_analysis>
+
+Erstellen Sie nun 5 Tweets basierend auf Ihrer Analyse. Jeder Tweet sollte einen anderen Hauptpunkt oder eine wichtige Idee aus dem Inhalt hervorheben. Befolgen Sie diese Richtlinien:
+
+1. Schreiben Sie alle Tweets auf Deutsch, unabhängig von der Originalsprache des Blogbeitrags.
+2. Stellen Sie sicher, dass jeder Tweet in sich geschlossen ist und ohne Kontext aus den anderen Tweets verstanden werden kann.
+3. Behalten Sie durchgehend den Schreibstil und Ton des Autors bei.
+4. Konzentrieren Sie sich auf interessante, überraschende oder zum Nachdenken anregende Fakten oder Ideen aus dem Blogbeitrag. Diese sollten als "Scrollstopper" fungieren - Inhalte, die Leser zum Innehalten und Interagieren bringen.
+5. Halten Sie jeden Tweet innerhalb des Twitter-Limits von 280 Zeichen.
+6. Verwenden Sie keine Emojis in den Tweets.
+7. Vermeiden Sie die Verwendung von Hashtags, es sei denn, sie werden speziell im Blogbeitrag erwähnt.
+8. Verwenden Sie keine Twitter-spezifischen Funktionen wie @mentions oder URLs, es sei denn, sie sind entscheidend für den Inhalt des Blogbeitrags.
+9. Wenn es relevante Statistiken oder Zitate im Blogbeitrag gibt, erwägen Sie, diese gegebenenfalls einzubauen.
+10. Formulieren Sie die Tweets nicht als Empfehlungen oder Anweisungen (z.B. vermeiden Sie Phrasen wie "Machen Sie dies..." oder "Sie sollten...").
+11. Konzentrieren Sie sich auf konkrete, wertvolle Informationen. Vermeiden Sie allgemeine Aussagen oder Verallgemeinerungen.
+
+Präsentieren Sie Ihre Tweets in folgendem Format:
+
+<tweets>
+<tweet1>
+[Tweet-Inhalt für den ersten Hauptpunkt auf Deutsch]
+</tweet1>
+
+<tweet2>
+[Tweet-Inhalt für den zweiten Hauptpunkt auf Deutsch]
+</tweet2>
+
+<tweet3>
+[Tweet-Inhalt für den dritten Hauptpunkt auf Deutsch]
+</tweet3>
+
+<tweet4>
+[Tweet-Inhalt für den vierten Hauptpunkt auf Deutsch]
+</tweet4>
+
+<tweet5>
+[Tweet-Inhalt für den fünften Hauptpunkt auf Deutsch]
+</tweet5>
+</tweets>
+
+Denken Sie daran, dass jeder Tweet ein "Scrollstopper" sein sollte, der plausibel vom ursprünglichen Autor zur Förderung seines Blogbeitrags geschrieben worden sein könnte, gegebenenfalls ins Deutsche übersetzt. Ziel ist es, die Aufmerksamkeit des Lesers zu fesseln und ihn dazu zu ermutigen, sich mit dem vollständigen Blogbeitrag auseinanderzusetzen.`;
 
 function sanitizeTweet(tweet: string): string {
   let t = tweet.trim();
@@ -146,48 +185,67 @@ function sanitizeTweet(tweet: string): string {
 
 export async function xTweetsFromBlog(content: string) {
   try {
+    // Replace {{BLOGPOST}} placeholder with actual content
+    const promptWithContent = xFromBlogPrompt_de.replace('{{BLOGPOST}}', content);
+    
     const response = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 1200,
-  temperature: 0.7,
+      max_tokens: 2500,
+      temperature: 0.7,
       messages: [{
         role: 'user',
-        content: `${xFromBlogPrompt_de}\n\n${content}`
+        content: promptWithContent
       }]
     });
 
     const text = (response.content[0] as { text: string }).text.trim();
 
-  // Primär: zeilenweise Tweets
-    let lines = text
-      .split(/\r?\n+/)
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-
-    // Fallback: falls nur ein Block kam, versuche Aufzählungen zu splitten
-    if (lines.length === 1 && /(^|\n)\s*(?:-|\*|\d+\.)\s/.test(text)) {
-      lines = text
-        .split(/\n\s*(?:-\s|\*\s|\d+\.\s)/)
-        .map((l) => l.trim())
-        .filter((l) => l.length > 0);
+    // Parse tweets from XML tags
+    const tweets: string[] = [];
+    
+    // Extract tweets from <tweet1> through <tweet5> tags
+    for (let i = 1; i <= 5; i++) {
+      const regex = new RegExp(`<tweet${i}>\\s*([\\s\\S]*?)\\s*</tweet${i}>`, 'i');
+      const match = text.match(regex);
+      if (match && match[1]) {
+        const tweetContent = match[1].trim();
+        // Remove placeholder text if present
+        if (!tweetContent.startsWith('[') && tweetContent.length > 0) {
+          tweets.push(tweetContent);
+        }
+      }
     }
 
-    // Filtere Meta-Zeilen wie "X (Twitter) · Post #1"
-    const metaPattern = /^(?:x\s*\(twitter\)|tweet|post)\b|\bpost\s*#?\d+\b|\bx\s*\(twitter\)\s*·/i;
-    lines = lines.filter((l) => !metaPattern.test(l));
+    // Fallback: if no XML tags found, try line-based parsing
+    if (tweets.length === 0) {
+      let lines = text
+        .split(/\r?\n+/)
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
 
-    // Säubere und dedupliziere Tweets
+      // Filter out meta lines and analysis content
+      lines = lines.filter((l) => 
+        !l.startsWith('<') && 
+        !l.includes('tweet1>') && 
+        !l.includes('tweet2>') &&
+        !l.includes('tweet3>') &&
+        !l.includes('tweet4>') &&
+        !l.includes('tweet5>') &&
+        !l.includes('blogpost_analysis>') &&
+        !l.includes('tweets>')
+      );
+      
+      lines.forEach(line => {
+        if (line.length > 10 && line.length <= 280) {
+          tweets.push(line);
+        }
+      });
+    }
+
+    // Clean and deduplicate tweets
     const seen = new Set<string>();
-    const tweets = lines
+    const finalTweets = tweets
       .map(sanitizeTweet)
-      // Verweise auf andere Tweets/Listen entfernen
-      .filter((t) => !/(?:diese\s+(?:drei|beiden|anderen)|dieser\s+thread|siehe\s+oben|post\s*#\d+|tweet\s*#\d+|teil\s*\d+|weiter\s+geht'?s|these\s+three|as\s+above)/i.test(t))
-      // Fremdsprachige Antworten (offensichtlich Englisch) grob rausfiltern
-      .filter((t) => {
-        // einfache Heuristik: enthält typische deutsche Stoppwörter
-        const deWords = /( der | die | das | und | mit | für | nicht | du | deine | deinem | deinen | ein | eine | im | vom | zum | zur )/i;
-        return deWords.test(` ${t} `);
-      })
       .filter((t) => t.length > 0)
       .filter((t) => {
         const key = t.toLowerCase();
@@ -195,8 +253,9 @@ export async function xTweetsFromBlog(content: string) {
         seen.add(key);
         return true;
       });
-    // Maximal 5 Tweets zurückgeben (0–5 erlaubt)
-    return tweets.slice(0, 5);
+    
+    // Return up to 5 tweets
+    return finalTweets.slice(0, 5);
   } catch (error) {
     console.error('X generation error:', error);
     throw new Error('Failed to generate X tweets');
