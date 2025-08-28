@@ -9,7 +9,7 @@ interface PaywallGuardProps {
   feature?: string;
 }
 
-export function PaywallGuard({ children, feature = "diese Funktion" }: PaywallGuardProps) {
+export function PaywallGuard({ children }: PaywallGuardProps) {
   const { subscription, loading } = useSubscription();
 
   if (loading) {
@@ -20,28 +20,8 @@ export function PaywallGuard({ children, feature = "diese Funktion" }: PaywallGu
     );
   }
 
-  // User has active subscription (trial or paid)
+  // User has active subscription
   if (subscription?.is_active) {
-    // Show trial badge if in trial
-    if (subscription.status === 'trial' && subscription.trial_ends_at) {
-      const daysLeft = Math.ceil(
-        (new Date(subscription.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-      );
-      
-      return (
-        <div className="space-y-4">
-          {daysLeft > 0 && (
-            <div className="flex items-center justify-center">
-              <Badge variant="outline" className="px-3 py-1">
-                🎉 Testphase - noch {daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'} kostenlos
-              </Badge>
-            </div>
-          )}
-          {children}
-        </div>
-      );
-    }
-    
     // Paid user - just show the content
     return <>{children}</>;
   }

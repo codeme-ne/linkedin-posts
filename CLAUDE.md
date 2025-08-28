@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Content Remixer - A React-based social media content generation tool that transforms text (newsletters, blogs) into platform-optimized posts for LinkedIn, X (Twitter), and Instagram using Claude AI.
+Social Transformer - A React-based SaaS application that transforms newsletters and blog posts into platform-optimized social media content for LinkedIn, X (Twitter), and Instagram using Claude AI. Features a Stripe-powered Beta Lifetime Deal (49€) with subscription management.
 
 ## Development Commands
 
@@ -31,11 +31,15 @@ Create `.env` from `.env.example` with:
 - `VITE_CLAUDE_API_KEY` - Anthropic Claude API key (not actually used client-side, kept for compatibility)
 - `VITE_SUPABASE_URL` - Supabase project URL
 - `VITE_SUPABASE_ANON_KEY` - Supabase anon key
+- `VITE_STRIPE_PAYMENT_LINK` - Stripe payment link URL
 - `VITE_LINKEDIN_ACCESS_TOKEN` (optional) - LinkedIn API token with w_member_social
 - `VITE_LINKEDIN_AUTHOR_URN` (optional) - LinkedIn author URN
 - `VITE_OPIK_API_KEY` (optional) - Opik tracking API key
 
-**Important**: The Claude API key is handled server-side. The Edge Function uses `CLAUDE_API_KEY` (without VITE_ prefix) on Vercel.
+**Production (Vercel) requires additional:**
+- `CLAUDE_API_KEY` - Server-side Claude API key (without VITE_ prefix)
+- `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret for payment processing  
+- `SUPABASE_SERVICE_ROLE_KEY` - Required for webhook to bypass RLS and save payment data
 
 ## Architecture
 
@@ -63,12 +67,28 @@ The app uses an Edge Function proxy pattern for Claude API calls:
 - All undefined routes redirect to landing
 
 ### Database Schema
-Main table: `saved_posts`
+
+**`saved_posts` table:**
 - `id` (uuid, primary key)
 - `user_id` (uuid, references auth.users)
 - `content` (text)
 - `platform` (text: 'linkedin', 'x', 'instagram')
 - `created_at` (timestamptz)
+
+**`subscriptions` table:**
+- `id` (uuid, primary key)
+- `user_id` (uuid, references auth.users)
+- `stripe_customer_id` (text)
+- `stripe_subscription_id` (text)
+- `stripe_payment_intent_id` (text)
+- `status` (text: 'trial', 'active', 'canceled', 'past_due')
+- `is_active` (boolean, generated)
+- `amount` (integer)
+- `currency` (text)
+- `interval` (text)
+- `current_period_start/end` (timestamptz)
+- `trial_starts_at/ends_at` (timestamptz)
+- `created_at/updated_at` (timestamptz)
 
 ### Key Directories
 - `/src/api/` - API integrations (Claude, Supabase, LinkedIn)
@@ -110,13 +130,36 @@ Main table: `saved_posts`
    - X: Tweets extracted from XML tags `<tweet1>` through `<tweet5>`
    - Instagram: Adapted from LinkedIn posts with hashtags
 
+## Subscription & Payment Flow
+
+1. **Paywall Protection**: Use `PaywallGuard` component to protect premium features
+2. **Subscription Check**: `useSubscription` hook fetches user's subscription status
+3. **Payment Processing**: 
+   - Stripe Payment Link configured in env vars
+   - Webhook handler at `/api/stripe-webhook` processes payments
+   - Creates/updates subscription records in Supabase
+4. **Beta Lifetime Deal**: 49€ one-time payment, no expiration date
+
 ## Testing Approach
 
 Check README or search codebase to determine testing framework and commands. No specific test commands are currently defined in package.json.
 
-## SQL Migration Notes
+## Common TypeScript Fixes
+
+- **Unused parameters**: Remove or prefix with underscore (`_param`)
+- **Unused imports**: Remove from import statements
+- **Type checking**: Run `npm run build` to catch type errors before deployment
+
+## Database Migrations
+
+Located in `/supabase/migrations/`. Key migrations:
+
+- `002_add_subscription_fields.sql` - Stripe subscription tables and functions
+- `20250827_add_platform_to_saved_posts.sql` - Platform field for saved posts
+- `20250827_enable_auth_for_saved_posts.sql` - RLS policies for auth
 
 When adding multiple columns to a PostgreSQL table, each column needs its own `ADD COLUMN` clause:
+
 ```sql
 -- Correct syntax
 ALTER TABLE public.subscriptions

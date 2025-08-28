@@ -5,8 +5,7 @@ import { getSession } from "@/api/supabase";
 import { supabase } from "@/api/supabase";
 
 interface SubscriptionStatus {
-  status: 'free' | 'trial' | 'active' | 'cancelled' | 'expired';
-  trial_ends_at: string | null;
+  status: 'free' | 'active' | 'cancelled';
   is_active: boolean;
 }
 
@@ -30,9 +29,9 @@ export function UpgradeButton() {
       setUser(session.user);
 
       // Get subscription status from Supabase
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('subscriptions')
-        .select('status, trial_ends_at, ends_at')
+        .select('status')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -41,14 +40,12 @@ export function UpgradeButton() {
       if (data) {
         setSubscription({
           status: data.status,
-          trial_ends_at: data.trial_ends_at,
-          is_active: ['trial', 'active'].includes(data.status)
+          is_active: data.status === 'active'
         });
       } else {
         // No subscription = free user
         setSubscription({
           status: 'free',
-          trial_ends_at: null,
           is_active: false
         });
       }
@@ -78,16 +75,6 @@ export function UpgradeButton() {
 
   // Show different UI based on subscription status
   if (subscription?.is_active) {
-    if (subscription.status === 'trial') {
-      const trialEnds = subscription.trial_ends_at 
-        ? new Date(subscription.trial_ends_at).toLocaleDateString('de-DE')
-        : '';
-      return (
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary">Testphase bis {trialEnds}</Badge>
-        </div>
-      );
-    }
     return (
       <div className="flex items-center gap-2">
         <Badge variant="default">Pro</Badge>
@@ -119,14 +106,14 @@ export function useSubscription() {
     try {
       const { data: { session } } = await getSession();
       if (!session?.user) {
-        setSubscription({ status: 'free', trial_ends_at: null, is_active: false });
+        setSubscription({ status: 'free', is_active: false });
         setLoading(false);
         return;
       }
 
       const { data } = await supabase
         .from('subscriptions')
-        .select('status, trial_ends_at')
+        .select('status')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -135,15 +122,14 @@ export function useSubscription() {
       if (data) {
         setSubscription({
           status: data.status,
-          trial_ends_at: data.trial_ends_at,
-          is_active: ['trial', 'active'].includes(data.status)
+          is_active: data.status === 'active'
         });
       } else {
-        setSubscription({ status: 'free', trial_ends_at: null, is_active: false });
+        setSubscription({ status: 'free', is_active: false });
       }
     } catch (error) {
       console.error('Subscription check error:', error);
-      setSubscription({ status: 'free', trial_ends_at: null, is_active: false });
+      setSubscription({ status: 'free', is_active: false });
     } finally {
       setLoading(false);
     }
