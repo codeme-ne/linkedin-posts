@@ -1,10 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const CLAUDE_API_KEY = import.meta.env.VITE_CLAUDE_API_KEY
+// API Key wird jetzt serverseitig in der Edge Function verwendet
+const CLAUDE_API_KEY = 'not-needed' // Dummy-Wert, wird von Edge Function überschrieben
 
 const anthropic = new Anthropic({
   apiKey: CLAUDE_API_KEY,
-  dangerouslyAllowBrowser: true
+  dangerouslyAllowBrowser: true,
+  baseURL: '/api/claude' // Geht zur Edge Function statt direkt zu Anthropic
 });
 
 const linkedInFromNewsletterPrompt = `
