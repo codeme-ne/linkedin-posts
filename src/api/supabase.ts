@@ -60,8 +60,17 @@ export const updateSavedPost = async (id: number, content: string) => {
 } 
 
 // Auth helpers
-export const signInWithEmail = (email: string) =>
-  supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
+export const signInWithEmail = (email: string) => {
+  // Verwende die richtige URL basierend auf der Umgebung
+  const redirectUrl = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5173'
+    : 'https://linkedin-posts-ashen.vercel.app';
+    
+  return supabase.auth.signInWithOtp({ 
+    email, 
+    options: { emailRedirectTo: redirectUrl } 
+  });
+}
 
 export const signOut = () => supabase.auth.signOut()
 
