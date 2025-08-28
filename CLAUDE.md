@@ -28,14 +28,14 @@ npm run preview
 ## Environment Setup
 
 Create `.env` from `.env.example` with:
-- `VITE_CLAUDE_API_KEY` - Anthropic Claude API key  
+- `VITE_CLAUDE_API_KEY` - Anthropic Claude API key (not actually used client-side, kept for compatibility)
 - `VITE_SUPABASE_URL` - Supabase project URL
 - `VITE_SUPABASE_ANON_KEY` - Supabase anon key
 - `VITE_LINKEDIN_ACCESS_TOKEN` (optional) - LinkedIn API token with w_member_social
 - `VITE_LINKEDIN_AUTHOR_URN` (optional) - LinkedIn author URN
 - `VITE_OPIK_API_KEY` (optional) - Opik tracking API key
 
-**Note**: Only `VITE_` prefixed variables are exposed to the client. The Edge Function uses `CLAUDE_API_KEY` (without prefix) on Vercel.
+**Important**: The Claude API key is handled server-side. The Edge Function uses `CLAUDE_API_KEY` (without VITE_ prefix) on Vercel.
 
 ## Architecture
 
@@ -51,9 +51,10 @@ Create `.env` from `.env.example` with:
 
 ### API Architecture
 The app uses an Edge Function proxy pattern for Claude API calls:
-1. Client calls `/api/claude` (configured in `/src/api/claude.ts`)
-2. Edge Function (`/api/claude.ts`) proxies to Anthropic API with server-side key
+1. Client calls `/api/claude/v1/messages` (configured in `/src/api/claude.ts`)
+2. Edge Function (`/api/claude/v1/messages.ts`) proxies to Anthropic API with server-side key
 3. Keeps API key secure, never exposed to client
+4. Production URL: `https://linkedin-posts-ashen.vercel.app/api/claude`
 
 ### Routing Structure
 - `/` - Public landing page
@@ -75,7 +76,7 @@ Main table: `saved_posts`
 - `/src/design-system/` - Custom design system with tokens and action buttons
 - `/src/pages/` - Route pages (Landing, Generator, SignUp)
 - `/src/config/` - Configuration files (platforms)
-- `/api/` - Vercel Edge Functions
+- `/api/` - Vercel Edge Functions (Claude proxy, webhooks)
 - `/supabase/migrations/` - Database migrations
 
 ### Path Aliases
@@ -85,11 +86,16 @@ Main table: `saved_posts`
 ## Content Generation Flow
 
 1. User inputs text in Generator component
-2. Platform-specific function called (e.g., `linkedInPostsFromNewsletter`)
-3. Request sent to Edge Function proxy at `/api/claude`
+2. Platform-specific function called (e.g., `linkedInPostsFromNewsletter`, `xTweetsFromBlog`)
+3. Request sent to Edge Function proxy at `/api/claude/v1/messages`
 4. Edge Function adds API key and forwards to Anthropic
-5. Response parsed for platform-specific format (LINKEDIN:, X:, INSTAGRAM: prefixes)
+5. Response parsed for platform-specific format
 6. Posts displayed and can be saved to Supabase
+
+### Platform-specific Generation
+- **LinkedIn**: Uses custom German prompt with specific formatting rules (short sentences, line breaks, no hashtags/emojis)
+- **X (Twitter)**: Complex German prompt with blog analysis, tweet extraction, and sanitization (280 char limit, no emojis/hashtags)
+- **Instagram**: Adapts LinkedIn posts with hashtags, max 2200 characters
 
 ## Important Conventions
 
@@ -99,4 +105,28 @@ Main table: `saved_posts`
 4. **Error Handling**: Use toast notifications for user feedback
 5. **Auth Flow**: All `/app` routes require authentication via ProtectedRoute component
 6. **API Security**: Never expose API keys client-side; use Edge Function proxy pattern
-7. **Post Format Parsing**: Each platform uses specific prefixes (LINKEDIN:, X:, INSTAGRAM:) for multi-post parsing
+7. **Post Format Parsing**: 
+   - LinkedIn: Posts prefixed with `LINKEDIN:` 
+   - X: Tweets extracted from XML tags `<tweet1>` through `<tweet5>`
+   - Instagram: Adapted from LinkedIn posts with hashtags
+
+## Testing Approach
+
+Check README or search codebase to determine testing framework and commands. No specific test commands are currently defined in package.json.
+
+## SQL Migration Notes
+
+When adding multiple columns to a PostgreSQL table, each column needs its own `ADD COLUMN` clause:
+```sql
+-- Correct syntax
+ALTER TABLE public.subscriptions
+  ADD COLUMN IF NOT EXISTS column1 text,
+  ADD COLUMN IF NOT EXISTS column2 text,
+  ADD COLUMN IF NOT EXISTS column3 text DEFAULT 'value';
+
+-- Incorrect syntax (will cause error)
+ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS
+  column1 text,
+  column2 text,
+  column3 text DEFAULT 'value';
+```

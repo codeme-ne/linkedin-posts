@@ -1,0 +1,153 @@
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
+import { getSession } from "@/api/supabase";
+import { supabase } from "@/api/supabase";
+
+interface SubscriptionStatus {
+  status: 'free' | 'trial' | 'active' | 'cancelled' | 'expired';
+  trial_ends_at: string | null;
+  is_active: boolean;
+}
+
+export function UpgradeButton() {
+  const [user, setUser] = useState<any>(null);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkSubscriptionStatus();
+  }, []);
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      const { data: { session } } = await getSession();
+      if (!session?.user) {
+        setLoading(false);
+        return;
+      }
+      
+      setUser(session.user);
+
+      // Get subscription status from Supabase
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('status, trial_ends_at, ends_at')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (data) {
+        setSubscription({
+          status: data.status,
+          trial_ends_at: data.trial_ends_at,
+          is_active: ['trial', 'active'].includes(data.status)
+        });
+      } else {
+        // No subscription = free user
+        setSubscription({
+          status: 'free',
+          trial_ends_at: null,
+          is_active: false
+        });
+      }
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpgrade = () => {
+    if (!user) return;
+    
+    // Stripe Payment Link for Beta Lifetime Deal
+    const stripePaymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK || 
+      'https://buy.stripe.com/9B628qejY6rtfPi8Fl0x200';
+    
+    // Add user ID and email as metadata for webhook processing
+    const url = `${stripePaymentLink}?client_reference_id=${user.id}&prefilled_email=${encodeURIComponent(user.email)}`;
+    
+    window.open(url, '_blank');
+  };
+
+  if (loading) {
+    return <Button disabled>Lade...</Button>;
+  }
+
+  // Show different UI based on subscription status
+  if (subscription?.is_active) {
+    if (subscription.status === 'trial') {
+      const trialEnds = subscription.trial_ends_at 
+        ? new Date(subscription.trial_ends_at).toLocaleDateString('de-DE')
+        : '';
+      return (
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">Testphase bis {trialEnds}</Badge>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center gap-2">
+        <Badge variant="default">Pro</Badge>
+      </div>
+    );
+  }
+
+  // Free user - show upgrade button
+  return (
+    <Button 
+      onClick={handleUpgrade}
+      className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+    >
+      Beta Lifetime Deal - nur 49€
+    </Button>
+  );
+}
+
+// Hook to use in other components
+export function useSubscription() {
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkStatus();
+  }, []);
+
+  const checkStatus = async () => {
+    try {
+      const { data: { session } } = await getSession();
+      if (!session?.user) {
+        setSubscription({ status: 'free', trial_ends_at: null, is_active: false });
+        setLoading(false);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('subscriptions')
+        .select('status, trial_ends_at')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (data) {
+        setSubscription({
+          status: data.status,
+          trial_ends_at: data.trial_ends_at,
+          is_active: ['trial', 'active'].includes(data.status)
+        });
+      } else {
+        setSubscription({ status: 'free', trial_ends_at: null, is_active: false });
+      }
+    } catch (error) {
+      console.error('Subscription check error:', error);
+      setSubscription({ status: 'free', trial_ends_at: null, is_active: false });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { subscription, loading, refetch: checkStatus };
+}
