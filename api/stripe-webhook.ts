@@ -103,7 +103,7 @@ export default async function handler(req: Request) {
           // Get user by ID
           const { data: userData, error } = await supabase.auth.admin.getUserById(userId);
           if (!error && userData?.user) {
-            user = userData.user;
+            user = userData.user as any;
           }
         }
         
@@ -111,7 +111,7 @@ export default async function handler(req: Request) {
           // Fall back to email lookup
           const { data: userData, error } = await supabase.auth.admin.listUsers();
           if (!error && userData?.users) {
-            user = userData.users.find(u => u.email === userEmail);
+            user = userData.users.find(u => u.email === userEmail) as any;
           }
         }
         
@@ -119,20 +119,41 @@ export default async function handler(req: Request) {
           console.log('Found user:', user.id);
           
           // Create or update subscription record
-          const { error } = await supabase.from('subscriptions').upsert({
-            user_id: user.id,
-            stripe_customer_id: paymentIntent.customer || null,
-            stripe_payment_intent_id: paymentIntent.id,
-            payment_provider: 'stripe',
-            status: 'active', // Beta Lifetime Deal = always active
-            trial_ends_at: null, // No trial for lifetime deal
-            renews_at: null, // No renewal for lifetime deal
-            ends_at: null, // Never expires
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'user_id'
-          });
+          // First check if subscription exists
+          const { data: existingSub } = await supabase
+            .from('subscriptions')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
+          let error;
+          if (existingSub) {
+            // Update existing subscription
+            const { error: updateError } = await supabase
+              .from('subscriptions')
+              .update({
+                stripe_customer_id: paymentIntent.customer || null,
+                stripe_payment_intent_id: paymentIntent.id,
+                status: 'active',
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user.id);
+            error = updateError;
+          } else {
+            // Create new subscription
+            const { error: insertError } = await supabase
+              .from('subscriptions')
+              .insert({
+                user_id: user.id,
+                stripe_customer_id: paymentIntent.customer || null,
+                stripe_payment_intent_id: paymentIntent.id,
+                payment_provider: 'stripe',
+                status: 'active',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+            error = insertError;
+          }
 
           if (error) {
             console.error('Error updating subscription:', error);
@@ -141,8 +162,8 @@ export default async function handler(req: Request) {
 
           console.log('Subscription activated for user:', user.id);
         } else {
-          console.error('User not found for payment:', { userEmail, userId });
-          // Still return 200 to acknowledge receipt
+          console.log('User not found for payment_intent event - likely handled by checkout.session.completed');
+          // Return 200 to acknowledge receipt - checkout.session.completed will handle the subscription
         }
         break;
       }
@@ -161,34 +182,55 @@ export default async function handler(req: Request) {
         if (userId) {
           const { data: userData, error } = await supabase.auth.admin.getUserById(userId);
           if (!error && userData?.user) {
-            user = userData.user;
+            user = userData.user as any;
           }
         }
         
         if (!user && userEmail) {
           const { data: userData, error } = await supabase.auth.admin.listUsers();
           if (!error && userData?.users) {
-            user = userData.users.find(u => u.email === userEmail);
+            user = userData.users.find(u => u.email === userEmail) as any;
           }
         }
         
         if (user) {
           console.log('Found user:', user.id);
           
-          const { error } = await supabase.from('subscriptions').upsert({
-            user_id: user.id,
-            stripe_customer_id: session.customer || null,
-            stripe_payment_intent_id: session.payment_intent || null,
-            payment_provider: 'stripe',
-            status: 'active',
-            trial_ends_at: null,
-            renews_at: null,
-            ends_at: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'user_id'
-          });
+          // First check if subscription exists
+          const { data: existingSub } = await supabase
+            .from('subscriptions')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
+          let error;
+          if (existingSub) {
+            // Update existing subscription
+            const { error: updateError } = await supabase
+              .from('subscriptions')
+              .update({
+                stripe_customer_id: session.customer || null,
+                stripe_payment_intent_id: session.payment_intent || null,
+                status: 'active',
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user.id);
+            error = updateError;
+          } else {
+            // Create new subscription
+            const { error: insertError } = await supabase
+              .from('subscriptions')
+              .insert({
+                user_id: user.id,
+                stripe_customer_id: session.customer || null,
+                stripe_payment_intent_id: session.payment_intent || null,
+                payment_provider: 'stripe',
+                status: 'active',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+            error = insertError;
+          }
 
           if (error) {
             console.error('Error updating subscription:', error);
