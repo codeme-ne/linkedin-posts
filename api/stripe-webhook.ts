@@ -97,7 +97,7 @@ export default async function handler(req: Request) {
         console.log('Processing payment for:', { userEmail, userId });
 
         // Try to find user by ID first, then by email
-        let user = null;
+        let user: { id: string; email?: string } | null = null;
         
         if (userId) {
           // Get user by ID
