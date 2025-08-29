@@ -144,6 +144,28 @@ The app uses an Edge Function proxy pattern for Claude API calls:
 
 Check README or search codebase to determine testing framework and commands. No specific test commands are currently defined in package.json.
 
+## Visual Assets & Graphics
+
+### Landing Page Content Flow Graphic
+The landing page features a custom content flow visualization component (`/src/components/ContentFlowGraphic.tsx`) that illustrates how the app transforms newsletters/blogs into social media posts. This component uses:
+- SVG icons for platforms (LinkedIn, X/Twitter, Instagram)
+- Animated gradients and hover effects
+- Responsive design with mobile/desktop layouts
+- Brand colors (#5f56e8 primary, #7c3aed accent)
+
+### Canva MCP Integration (if available)
+When Canva MCP is connected, you can:
+- Create professional graphics for the landing page
+- Design infographics showing the content transformation flow
+- Generate social media post previews
+- Export designs in various formats (PNG, SVG, PDF)
+
+To use Canva MCP:
+1. Ensure Canva MCP is connected via `/mcp` command
+2. Use `mcp__canva__search-designs` to find existing templates
+3. Use `mcp__canva__create-folder` to organize assets
+4. Use `mcp__canva__export-design` to export graphics for web use
+
 ## Common TypeScript Fixes
 
 - **Unused parameters**: Remove or prefix with underscore (`_param`)

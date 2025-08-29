@@ -1,70 +1,99 @@
 export const colors = {
-  // Primary colors
+  // Primary colors - angepasst an aktuelles Theme (Violett)
   primary: {
-    DEFAULT: '#8B5CF6', // Lila für Hauptaktionen (Speichern)
-    hover: '#7C3AED',
-    active: '#6D28D9',
-    light: '#A78BFA',
-    dark: '#5B21B6',
+    DEFAULT: 'hsl(262 83% 58%)', // Hauptfarbe aus CSS-Variablen
+    hover: 'hsl(262 83% 52%)',
+    active: 'hsl(262 83% 46%)',
+    light: 'hsl(262 83% 68%)',
+    dark: 'hsl(262 83% 40%)',
+    foreground: 'hsl(210 40% 98%)',
+  },
+  
+  // Accent colors - angepasst an aktuelles Theme (Blau)
+  accent: {
+    DEFAULT: 'hsl(217 91% 60%)', // Akzentfarbe aus CSS-Variablen
+    hover: 'hsl(217 91% 54%)',
+    active: 'hsl(217 91% 48%)',
+    light: 'hsl(217 91% 70%)',
+    dark: 'hsl(217 91% 42%)',
+    foreground: 'hsl(210 40% 98%)',
+  },
+  
+  // Claude AI brand color - bestehend aus ContentFlowGraphic
+  claude: {
+    DEFAULT: '#D97757', // Claude AI Markenfarbe
+    hover: '#C56649',
+    active: '#B15A3F',
+    light: '#E88A6A',
+    dark: '#A84A35',
   },
   
   // LinkedIn brand color
   linkedin: {
-    DEFAULT: '#0077B5', // LinkedIn Blau
-    hover: '#006097',
-    active: '#004C7A',
-    light: '#0A9CE6',
-    dark: '#005885',
+    DEFAULT: '#0A66C2', // LinkedIn Blau
+    hover: '#084E99',
+    active: '#063A70',
+    light: '#3B82E6',
+    dark: '#042847',
   },
   
-  // Secondary colors
+  // Secondary colors - angepasst an shadcn/ui
   secondary: {
-    DEFAULT: '#6B7280', // Grau für sekundäre Aktionen
-    hover: '#4B5563',
-    active: '#374151',
-    light: '#9CA3AF',
-    dark: '#1F2937',
+    DEFAULT: 'hsl(210 40% 96%)', // Sekundäre Hintergrundfarbe
+    hover: 'hsl(210 40% 92%)',
+    active: 'hsl(210 40% 88%)',
+    foreground: 'hsl(222.2 84% 4.9%)',
+  },
+  
+  // Muted colors - für weniger wichtige Elemente
+  muted: {
+    DEFAULT: 'hsl(210 40% 96%)',
+    foreground: 'hsl(215.4 16.3% 46.9%)',
   },
   
   // Destructive colors
   destructive: {
-    DEFAULT: '#EF4444', // Rot für Lösch-Aktionen
-    hover: '#DC2626',
-    active: '#B91C1C',
-    light: '#F87171',
-    dark: '#991B1B',
+    DEFAULT: 'hsl(0 84.2% 60.2%)', // Rot für Lösch-Aktionen
+    hover: 'hsl(0 84.2% 54%)',
+    active: 'hsl(0 84.2% 48%)',
+    light: 'hsl(0 84.2% 70%)',
+    dark: 'hsl(0 62.8% 30.6%)',
+    foreground: 'hsl(0 0% 98%)',
   },
   
-  // Neutral colors
-  neutral: {
-    white: '#FFFFFF',
-    black: '#000000',
-    gray: {
-      50: '#F9FAFB',
-      100: '#F3F4F6',
-      200: '#E5E7EB',
-      300: '#D1D5DB',
-      400: '#9CA3AF',
-      500: '#6B7280',
-      600: '#4B5563',
-      700: '#374151',
-      800: '#1F2937',
-      900: '#111827',
-    },
-  },
-  
-  // Background colors
+  // Base colors - angepasst an CSS-Variablen
   background: {
-    primary: '#FFFFFF',
-    secondary: '#F9FAFB',
-    tertiary: '#F3F4F6',
+    DEFAULT: 'hsl(210 40% 98%)', // Haupthintergrund
+    secondary: 'hsl(210 40% 96%)', // Sekundärer Hintergrund
+    tertiary: 'hsl(210 40% 94%)', // Tertiärer Hintergrund
+  },
+  
+  foreground: {
+    DEFAULT: 'hsl(222.2 84% 4.9%)', // Haupttext
+    muted: 'hsl(215.4 16.3% 46.9%)', // Gedämpfter Text
   },
   
   // Border colors
   border: {
-    DEFAULT: '#E5E7EB',
-    light: '#F3F4F6',
-    dark: '#D1D5DB',
+    DEFAULT: 'hsl(214.3 31.8% 91.4%)',
+    light: 'hsl(214.3 31.8% 95%)',
+    dark: 'hsl(214.3 31.8% 85%)',
+  },
+  
+  // Card colors
+  card: {
+    DEFAULT: 'hsl(0 0% 100%)',
+    foreground: 'hsl(222.2 84% 4.9%)',
+  },
+  
+  // Dark mode support
+  dark: {
+    background: 'hsl(0 0% 3.9%)',
+    foreground: 'hsl(0 0% 98%)',
+    card: 'hsl(0 0% 3.9%)',
+    border: 'hsl(0 0% 14.9%)',
+    muted: 'hsl(0 0% 14.9%)',
+    'muted-foreground': 'hsl(0 0% 63.9%)',
   },
 } as const
 
