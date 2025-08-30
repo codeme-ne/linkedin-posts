@@ -37,6 +37,7 @@ import { PLATFORM_LABEL } from "@/config/platforms";
 import { InstagramLogo } from "@/design-system/components/Icons/InstagramLogo";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { PaywallModal } from "@/components/PaywallModal";
+import { extractFromUrl } from "@/api/extract";
 
 export default function Generator() {
   const [inputText, setInputText] = useState("");
@@ -46,6 +47,7 @@ export default function Generator() {
     instagram: [],
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [editing, setEditing] = useState<{ platform: Platform; index: number } | null>(null);
   const [editedContent, setEditedContent] = useState("");
@@ -57,6 +59,7 @@ export default function Generator() {
   const { canTransform, incrementUsage, getRemainingCount, isPro } = useUsageTracking();
   // Track sidebar collapsed state to adjust content padding
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [sourceUrl, setSourceUrl] = useState("");
 
   useEffect(() => {
     getSession().then(({ data }) => {
@@ -106,6 +109,28 @@ export default function Generator() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleExtract = async () => {
+    if (!sourceUrl) return;
+    setIsExtracting(true);
+    try {
+  const result = await extractFromUrl(sourceUrl);
+      const prefill = [result.title, result.content]
+        .filter(Boolean)
+        .join("\n\n");
+      setInputText(prefill);
+      toast({ title: "Inhalt importiert", description: result.title || sourceUrl });
+    } catch (e) {
+      console.error("Extract error", e);
+      toast({
+        title: "Import fehlgeschlagen",
+        description: e instanceof Error ? e.message : String(e),
+        variant: "destructive",
+      });
+    } finally {
+      setIsExtracting(false);
     }
   };
 
@@ -218,12 +243,31 @@ export default function Generator() {
 
         <Card className="shadow-xl border-0 bg-card/50 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Newsletter eingeben</CardTitle>
+            <CardTitle>Newsletter eingeben oder importieren</CardTitle>
             <CardDescription>
-              Füge deinen Newsletter-Text ein und wähle die Zielplattformen
+              Füge deinen Newsletter-Text ein oder importiere ihn per URL, und wähle die Zielplattformen
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="flex gap-2 flex-col md:flex-row">
+              <input
+                type="url"
+                placeholder="https://example.com/dein-blogpost"
+                value={sourceUrl}
+                onChange={(e) => setSourceUrl(e.target.value)}
+                className="flex-1 h-10 px-3 rounded-md border bg-background"
+                aria-label="Quelle-URL"
+              />
+              <Button onClick={handleExtract} disabled={!sourceUrl || isExtracting} className="md:w-48">
+                {isExtracting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importiere…
+                  </>
+                ) : (
+                  <>Von URL importieren</>
+                )}
+              </Button>
+            </div>
             <Textarea
               placeholder="Newsletter hier einfügen..."
               value={inputText}

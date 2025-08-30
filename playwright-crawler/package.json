@@ -1,0 +1,6 @@
+{
+  "name": "playwright-crawler",
+  "private": true,
+  "deprecated": true,
+  "description": "Deprecated placeholder. Playwright service removed in favor of single /api/extract endpoint."
+}

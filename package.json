@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+  "@mozilla/readability": "^0.5.0",
     "@anthropic-ai/sdk": "^0.33.1",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-dialog": "^1.1.14",
@@ -21,6 +22,7 @@
     "@supabase/supabase-js": "^2.47.12",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+  "jsdom": "^24.1.0",
     "lucide-react": "^0.534.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -29,6 +31,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+  "@types/jsdom": "^21.1.7",
     "@eslint/js": "^9.17.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/react": "^18.3.18",
