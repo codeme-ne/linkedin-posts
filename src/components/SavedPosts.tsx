@@ -197,30 +197,32 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
       </div>
 
       {/* Desktop: Side panel */}
-      <div className={`hidden md:block fixed right-0 top-0 h-screen bg-white shadow-lg transition-transform duration-300 ${isCollapsed ? 'translate-x-[calc(100%-2rem)]' : 'translate-x-0'}`} style={{ width: '20rem' }}>
-        <div className="flex items-center relative">
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 hover:bg-gray-100 rounded-lg absolute left-0 z-30 bg-white"
-            style={{ boxShadow: isCollapsed ? '-4px 0 8px rgba(0,0,0,0.1)' : 'none' }}
-          >
-            <svg
-              className={`w-6 h-6 text-gray-600 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+      <div className={`hidden md:block fixed right-0 top-16 h-[calc(100vh-4rem)] bg-white shadow-lg transition-transform duration-300 z-20 ${isCollapsed ? 'translate-x-[calc(100%-3rem)]' : 'translate-x-0'}`} style={{ width: '22rem' }}>
+        <div className="h-full flex flex-col">
+          {/* Header with collapse button */}
+          <div className="flex items-center border-b border-gray-200 bg-gray-50/50">
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="p-3 hover:bg-gray-100 transition-colors duration-200"
+              aria-label={isCollapsed ? "Seitenleiste öffnen" : "Seitenleiste schließen"}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-          <h2 className="text-xl font-bold text-gray-800 p-4 pl-12 relative z-10">Gespeicherte Beiträge</h2>
-        </div>
-        
-        <div className="relative overflow-hidden">
-          {isCollapsed && (
-            <div className="absolute inset-0 bg-white z-20" style={{ left: '-2rem', width: 'calc(100% + 2rem)' }} />
-          )}
-          <div className="relative p-4 space-y-4 overflow-y-auto z-10" style={{ height: 'calc(100vh - 4rem)' }}>
+              <svg
+                className={`w-5 h-5 text-gray-600 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            <h2 className={`text-lg font-semibold text-gray-800 py-3 transition-opacity duration-300 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
+              Gespeicherte Beiträge
+            </h2>
+          </div>
+          
+          {/* Content area */}
+          <div className="flex-1 overflow-hidden">
+            <div className={`p-4 space-y-4 overflow-y-auto h-full transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           {!isAuthenticated ? (
             <div className="p-4 rounded-lg border border-gray-200 bg-white text-center space-y-2">
               <p className="text-gray-700">Bitte logge dich ein, um gespeicherte Beiträge zu sehen.</p>
@@ -325,9 +327,10 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
               )}
             </div>
           ))}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
     </>
   )
 } 

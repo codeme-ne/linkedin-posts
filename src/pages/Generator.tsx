@@ -157,42 +157,59 @@ export default function Generator() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-secondary p-4 md:p-8 overflow-x-hidden">
-      {/* User Info - responsive positioning */}
-      <div className="fixed top-4 right-4 z-40 flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-lg p-2 shadow-sm">
-        {userEmail ? (
-          <>
-            <span className="text-xs md:text-sm text-muted-foreground hidden sm:inline">Eingeloggt als {userEmail}</span>
-            <span className="text-xs text-muted-foreground sm:hidden">
-              {userEmail.split('@')[0]}
-            </span>
-            <Button variant="outline" size="sm" onClick={() => signOut()}>
-              Logout
-            </Button>
-          </>
-        ) : (
-          <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">Login</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Einloggen</DialogTitle>
-              </DialogHeader>
-              <Auth />
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-secondary overflow-x-hidden">
+      {/* Professional Header Bar */}
+      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Social Transformer
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {!isPro && userEmail && (
+              <Badge variant="outline" className="hidden md:inline-flex">
+                {getRemainingCount() > 0 
+                  ? `${getRemainingCount()} kostenlose Transformationen` 
+                  : "Upgrade für mehr"}
+              </Badge>
+            )}
+            {userEmail ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground hidden md:inline">
+                  {userEmail}
+                </span>
+                <Button variant="ghost" size="sm" onClick={() => signOut()}>
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="default" size="sm">Login</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Einloggen</DialogTitle>
+                  </DialogHeader>
+                  <Auth />
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        </div>
+      </header>
       
-      <div
-        className={`max-w-4xl mx-auto space-y-8 transition-transform duration-300 ${
-          isSidebarCollapsed 
-            ? "md:translate-x-[1.5rem] translate-x-0" 
-            : "md:translate-x-[-10rem] translate-x-0"
-        }`}
-      >
-        <div className="text-center space-y-4 pt-12 md:pt-0">
+      <div className="p-4 md:p-8">
+        <div
+          className={`max-w-4xl mx-auto space-y-8 transition-all duration-300 ${
+            isSidebarCollapsed 
+              ? "md:mr-12" 
+              : "md:mr-80"
+          }`}
+        >
+          <div className="text-center space-y-4 pt-8">
           <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
             Vom Newsletter zu viralen Posts
           </h1>
@@ -248,6 +265,9 @@ export default function Generator() {
             </Button>
           </CardContent>
         </Card>
+        
+        {/* Extra spacing for mobile to prevent button being covered */}
+        <div className="md:hidden h-16" aria-hidden="true" />
         {(["linkedin", "x", "instagram"] as Platform[]).map((platform) => {
           const items = postsByPlatform[platform] || [];
           if (items.length === 0) return null;
@@ -349,7 +369,9 @@ export default function Generator() {
             </Card>
           );
         })}
+        </div>
       </div>
+      
       <SavedPosts
         onCollapse={(collapsed) => setIsSidebarCollapsed(collapsed)}
         refreshKey={refreshKey}

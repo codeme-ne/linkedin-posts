@@ -4,6 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # Best Practices
 
+@claude füge hier die best practices ein für das Projekt
 
 
 ## Project Overview
