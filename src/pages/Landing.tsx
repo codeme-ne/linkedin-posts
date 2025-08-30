@@ -79,7 +79,7 @@ export default function Landing() {
       <HowItWorks />
 
       {/* Pricing Section - außerhalb des Containers für vollen Hintergrund */}
-      <PricingSection onSignup={() => navigate("/signup")} />
+      <PricingSection />
 
       {/* Footer Section - außerhalb des Containers für vollen Hintergrund */}
       <FooterBar />
