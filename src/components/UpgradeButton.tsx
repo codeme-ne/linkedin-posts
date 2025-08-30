@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getSession } from "@/api/supabase";
 import { supabase } from "@/api/supabase";
 
@@ -101,6 +101,7 @@ const CACHE_DURATION = 60000; // 1 minute cache
 export function useSubscription() {
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Check cache first
@@ -110,18 +111,20 @@ export function useSubscription() {
       return;
     }
 
+    // Set timeout fallback - increased to 10 seconds
+    timeoutRef.current = setTimeout(() => {
+      console.warn('Subscription check timed out after 10s, defaulting to free');
+      setSubscription({ status: 'free', is_active: false });
+      setLoading(false);
+    }, 10000); // 10 second timeout
+
     checkStatus();
 
-    // Set timeout fallback - increased to 10 seconds
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn('Subscription check timed out after 10s, defaulting to free');
-        setSubscription({ status: 'free', is_active: false });
-        setLoading(false);
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
-    }, 10000); // 10 second timeout (increased from 3)
-
-    return () => clearTimeout(timeout);
+    };
   }, []);
 
   const checkStatus = async () => {
@@ -138,6 +141,10 @@ export function useSubscription() {
         setSubscription(freeStatus);
         subscriptionCache = { data: freeStatus, timestamp: Date.now() };
         setLoading(false);
+        // Clear timeout since we're done
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
         return;
       }
 
@@ -181,6 +188,11 @@ export function useSubscription() {
       subscriptionCache = { data: freeStatus, timestamp: Date.now() };
     } finally {
       setLoading(false);
+      // Clear timeout since we're done
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        console.log('[Subscription Check] Timeout cleared');
+      }
     }
   };
 
