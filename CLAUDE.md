@@ -186,6 +186,51 @@ The app includes TWO extraction methods:
 - Tracks usage in `extraction_usage` table
 - Uses RPC function: `get_monthly_extraction_usage(user_id, 'firecrawl')`
 
+### ⚠️ CRITICAL BUG: Firecrawl API Integration Issue
+
+**Problem**: The `/api/extract-premium.ts` endpoint always returns "Kein Titel gefunden" because it's using the wrong Firecrawl API approach.
+
+**Root Cause**: The code uses Firecrawl's Extract API (`https://api.firecrawl.dev/v1/extract`) which is asynchronous and returns a job ID, not the extracted content. The code incorrectly tries to parse the response as if it contains `title`, `content`, and `summary` fields directly.
+
+**Firecrawl Extract API Response Structure**:
+```json
+{
+  "success": true,
+  "id": "job-id-here",
+  "invalidURLs": []
+}
+```
+
+**Solutions**:
+1. **Option 1: Use Firecrawl Scrape API** (Recommended for simplicity)
+   - Switch to `https://api.firecrawl.dev/v1/scrape` endpoint
+   - This is synchronous and returns content directly
+   - Response includes `markdown`, `content`, `metadata.title`
+
+2. **Option 2: Implement async job polling**
+   - After getting the job ID from Extract API
+   - Poll the job status endpoint until completion
+   - Then retrieve the extracted data
+
+**Quick Fix Example** (Option 1 - Scrape API):
+```javascript
+const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${firecrawlApiKey}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    url: url,
+    formats: ['markdown', 'html'],
+    onlyMainContent: true,
+    waitFor: 2000 // Wait for JS rendering
+  })
+});
+
+// Response will have: data.markdown, data.metadata.title, data.content
+```
+
 ### UI Implementation (Generator.tsx)
 - Checkbox for "Premium-Extraktion" visible to ALL users (good for conversion)
 - Free users see "Pro" badge next to checkbox
@@ -243,3 +288,24 @@ ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS
   column2 text,
   column3 text DEFAULT 'value';
 ```
+
+## Common Debugging Scenarios
+
+### Premium Extraction Returns "Kein Titel gefunden"
+- Check if `FIRECRAWL_API_KEY` is set in Vercel environment variables
+- Verify the Firecrawl API implementation (see critical bug section above)
+- Check browser console for API response structure
+- Verify user has active subscription with `status: 'active'`
+- Check extraction usage limits in database
+
+### Subscription Not Recognized
+- Verify Stripe webhook is processing payments correctly
+- Check `subscriptions` table for user's subscription status
+- Ensure `SUPABASE_SERVICE_ROLE_KEY` is set for webhook RLS bypass
+- Check browser console for subscription fetch errors
+
+### Content Not Extracting
+- For standard extraction: Check if Jina API is accessible
+- For premium: Verify Firecrawl API key and endpoint
+- Check CORS headers in Edge Function responses
+- Verify authentication token is being passed correctly

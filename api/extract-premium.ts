@@ -147,9 +147,6 @@ export default async function handler(req: Request) {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 
-  // Hilfsfunktion: prüft, ob ein unbekanntes Objekt einen Schlüssel besitzt
-  const hasKey = (obj: unknown, key: string): obj is Record<string, unknown> =>
-    typeof obj === 'object' && obj !== null && key in obj;
 
   // Handle Preflight
   if (req.method === 'OPTIONS') {
@@ -251,43 +248,21 @@ export default async function handler(req: Request) {
       );
     }
 
-    console.log('Rufe Firecrawl Extract API auf für:', url);
+    console.log('Rufe Firecrawl Scrape API auf für:', url);
     
-    // Nutze Extract API für verbesserte Textqualität
-    const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/extract', {
+    // Nutze Scrape API für synchrone Inhaltsextraktion
+    const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${firecrawlApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        urls: [url],
-        prompt: `Extrahiere den Hauptinhalt dieser Webseite und verbessere dabei:
-        1. Grammatik und Rechtschreibung
-        2. Formatierung und Struktur
-        3. Entferne überflüssige Elemente (Navigation, Footer, Werbung)
-        4. Behalte die ursprüngliche Bedeutung bei
-        5. Stelle sicher, dass der Text professionell und gut lesbar ist
-        
-        Gib den bereinigten Text zurück mit klarer Struktur.`,
-        schema: {
-          type: 'object',
-          properties: {
-            title: {
-              type: 'string',
-              description: 'Der Haupttitel des Artikels/Newsletters'
-            },
-            content: {
-              type: 'string', 
-              description: 'Der vollständige, bereinigte und verbesserte Haupttext'
-            },
-            summary: {
-              type: 'string',
-              description: 'Eine kurze Zusammenfassung in 2-3 Sätzen'
-            }
-          },
-          required: ['title', 'content']
-        }
+        url: url,
+        formats: ['markdown', 'html'],
+        onlyMainContent: true,
+        waitFor: 2000, // Warte auf JavaScript-Rendering
+        removeBase64Images: true // Entferne Base64-Bilder für kleinere Payloads
       }),
     });
 
@@ -315,61 +290,47 @@ export default async function handler(req: Request) {
       );
     }
 
-    const firecrawlResponse2 = await firecrawlResponse.json();
+    const firecrawlData = await firecrawlResponse.json();
 
-    // Unterstütze mehrere Formen der Firecrawl-Antwort:
-    // A) Direkt am Root: { title, content, summary }
-    // B) data: { title, content, summary }
-    // C) data: [{ url, data: { title, content, summary } }, ...]
-    const dataNode = firecrawlResponse2?.data;
-    let extractedCandidate: unknown;
+    // Scrape API Response Format:
+    // {
+    //   success: true,
+    //   data: {
+    //     markdown: "...",
+    //     content: "...",
+    //     html: "...",
+    //     metadata: {
+    //       title: "...",
+    //       description: "...",
+    //       ...
+    //     }
+    //   }
+    // }
 
-    const looksLikeExtract = (obj: unknown) =>
-      hasKey(obj, 'title') || hasKey(obj, 'content') || hasKey(obj, 'summary');
+    console.log('Firecrawl Scrape API Response:', {
+      success: firecrawlData?.success,
+      hasData: !!firecrawlData?.data,
+      hasMarkdown: !!firecrawlData?.data?.markdown,
+      hasContent: !!firecrawlData?.data?.content,
+      hasTitle: !!firecrawlData?.data?.metadata?.title
+    });
 
-    if (looksLikeExtract(firecrawlResponse2)) {
-      // A) Root-Objekt enthält bereits die Felder
-      extractedCandidate = firecrawlResponse2 as unknown;
-    } else if (Array.isArray(dataNode)) {
-      // C) Array-Form
-      const first = dataNode[0];
-      extractedCandidate = hasKey(first, 'data') ? first.data : first;
-    } else if (looksLikeExtract(dataNode)) {
-      // B) data ist das Objekt
-      extractedCandidate = dataNode as unknown;
-    } else {
-      // Fallback: benutze dataNode oder Root
-      extractedCandidate = dataNode ?? firecrawlResponse2;
-    }
-    const extractedData: Partial<{
-      title?: string;
-      content?: string;
-      summary?: string;
-      pageTitle?: string;
-      markdown?: string;
-      metadata?: { title?: string };
-    }> = (typeof extractedCandidate === 'object' && extractedCandidate !== null)
-      ? (extractedCandidate as Record<string, unknown>)
-      : {};
-
-    // Defensive Logging, ohne riesige Payloads zu spammen
-    try {
-      console.log('Firecrawl Extract Response shape:', {
-        success: hasKey(firecrawlResponse2, 'success') ? (firecrawlResponse2 as Record<string, unknown>).success : undefined,
-        rootKeys: Object.keys((typeof firecrawlResponse2 === 'object' && firecrawlResponse2) ? (firecrawlResponse2 as Record<string, unknown>) : {}),
-        dataType: Array.isArray(firecrawlResponse2?.data) ? 'array' : typeof firecrawlResponse2?.data,
-        arrayLength: Array.isArray(firecrawlResponse2?.data) ? firecrawlResponse2.data.length : undefined,
-        fields: extractedData && typeof extractedData === 'object' ? Object.keys(extractedData) : []
-      });
-    } catch (e) {
-      console.debug('Firecrawl response shape logging skipped', e);
-    }
+    // Extrahiere die relevanten Daten aus der Scrape API Response
+    const extractedData = {
+      title: firecrawlData?.data?.metadata?.title || 
+             firecrawlData?.data?.metadata?.ogTitle || 
+             firecrawlData?.data?.metadata?.description ||
+             'Kein Titel gefunden',
+      content: firecrawlData?.data?.content || '',
+      markdown: firecrawlData?.data?.markdown || '',
+      metadata: firecrawlData?.data?.metadata || {}
+    };
     
     // 6. Response formatieren
     const response: ExtractPremiumResponse = {
-      title: extractedData.title || extractedData.pageTitle || extractedData.metadata?.title || 'Kein Titel gefunden',
-      content: extractedData.content || extractedData.summary || '',
-      markdown: extractedData.markdown || extractedData.content, // Der bereinigte Content ist oft Markdown-ähnlich
+      title: extractedData.title,
+      content: extractedData.content || extractedData.markdown || '',
+      markdown: extractedData.markdown || extractedData.content,
       metadata: {
         sourceUrl: url,
         extractedAt: new Date().toISOString(),

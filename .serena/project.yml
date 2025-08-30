@@ -63,9 +63,6 @@ excluded_tools: []
 
 # initial prompt for the project. It will always be given to the LLM upon activating the project
 # (contrary to the memories, which are loaded on demand).
-initial_prompt: >-
-	Dieses Projekt ist eine TypeScript/React (Vite) App zum Extrahieren und Generieren von Social-Posts (insb. LinkedIn) mit Supabase, Stripe und der Claude API.
-	Arbeite mit minimalen, geprüften Änderungen innerhalb der bestehenden Strukturen (Design System, Hooks, API-Routen), halte Code typensicher (TS), lint-frei und UI-konsistent (Tailwind/DS).
-	Vermeide Secrets/Netzwerk-Leaks, respektiere .gitignore, und bevorzuge kleine, nachvollziehbare Patches mit kurzer Begründung und optionalen Quick-Tests.
+initial_prompt: ""
 
 project_name: "linkedin-posts"
