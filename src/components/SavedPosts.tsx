@@ -23,7 +23,7 @@ interface SavedPostsProps {
 
 export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginClick }: SavedPostsProps) {
   const [savedPosts, setSavedPosts] = useState<SavedPost[]>([])
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(true)
   const [editingPost, setEditingPost] = useState<{ id: number, content: string } | null>(null)
 
   useEffect(() => {
@@ -109,8 +109,9 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
                   <textarea
                     value={editingPost.content}
                     onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                    rows={3}
+                    className="w-full p-2 border border-gray-300 rounded-lg text-sm resize-y"
+                    rows={Math.max(8, editingPost.content.split('\n').length + 2)}
+                    style={{ minHeight: '150px' }}
                   />
                   <div className="flex justify-end space-x-2">
                     <Button
@@ -246,8 +247,9 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
                   <textarea
                     value={editingPost.content}
                     onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
-                    rows={3}
+                    className="w-full p-2 border border-gray-300 rounded-lg resize-y"
+                    rows={Math.max(10, editingPost.content.split('\n').length + 2)}
+                    style={{ minHeight: '200px' }}
                   />
                   <div className="flex justify-end space-x-2">
                     <Button

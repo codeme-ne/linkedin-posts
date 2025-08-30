@@ -93,47 +93,88 @@ export function UpgradeButton() {
   );
 }
 
+// Cache for subscription status to avoid redundant queries
+let subscriptionCache: { data: SubscriptionStatus | null; timestamp: number } | null = null;
+const CACHE_DURATION = 60000; // 1 minute cache
+
 // Hook to use in other components
 export function useSubscription() {
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check cache first
+    if (subscriptionCache && Date.now() - subscriptionCache.timestamp < CACHE_DURATION) {
+      setSubscription(subscriptionCache.data);
+      setLoading(false);
+      return;
+    }
+
     checkStatus();
+
+    // Set timeout fallback
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('Subscription check timed out, defaulting to free');
+        setSubscription({ status: 'free', is_active: false });
+        setLoading(false);
+      }
+    }, 3000); // 3 second timeout
+
+    return () => clearTimeout(timeout);
   }, []);
 
   const checkStatus = async () => {
     try {
       const { data: { session } } = await getSession();
       if (!session?.user) {
-        setSubscription({ status: 'free', is_active: false });
+        const freeStatus = { status: 'free' as const, is_active: false };
+        setSubscription(freeStatus);
+        subscriptionCache = { data: freeStatus, timestamp: Date.now() };
         setLoading(false);
         return;
       }
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('subscriptions')
         .select('status')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
 
-      if (data) {
-        setSubscription({
-          status: data.status,
+      if (error) {
+        console.error('Subscription query error:', error);
+        const freeStatus = { status: 'free' as const, is_active: false };
+        setSubscription(freeStatus);
+        subscriptionCache = { data: freeStatus, timestamp: Date.now() };
+      } else if (data) {
+        const subStatus = {
+          status: data.status as 'free' | 'active' | 'cancelled',
           is_active: data.status === 'active'
-        });
+        };
+        setSubscription(subStatus);
+        subscriptionCache = { data: subStatus, timestamp: Date.now() };
       } else {
-        setSubscription({ status: 'free', is_active: false });
+        const freeStatus = { status: 'free' as const, is_active: false };
+        setSubscription(freeStatus);
+        subscriptionCache = { data: freeStatus, timestamp: Date.now() };
       }
     } catch (error) {
       console.error('Subscription check error:', error);
-      setSubscription({ status: 'free', is_active: false });
+      const freeStatus = { status: 'free' as const, is_active: false };
+      setSubscription(freeStatus);
+      subscriptionCache = { data: freeStatus, timestamp: Date.now() };
     } finally {
       setLoading(false);
     }
   };
 
-  return { subscription, loading, refetch: checkStatus };
+  const refetch = async () => {
+    subscriptionCache = null; // Clear cache
+    setLoading(true);
+    await checkStatus();
+  };
+
+  return { subscription, loading, refetch };
 }
