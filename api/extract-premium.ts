@@ -188,7 +188,7 @@ export default async function handler(req: Request) {
       .eq('user_id', user.id)
       .single();
 
-    if (subError || !subscription?.is_active) {
+    if (subError || subscription?.status !== 'active') {
       return new Response(
         JSON.stringify({ 
           error: 'Premium-Abo erforderlich',
