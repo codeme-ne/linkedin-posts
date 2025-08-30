@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { linkedInPostsFromNewsletter, xTweetsFromBlog } from "@/api/claude";
+import { linkedInPostsFromNewsletter, xTweetsFromBlog, instagramPostsFromBlog } from "@/api/claude";
 import { savePost } from "@/api/supabase";
 import { SavedPosts } from "@/components/SavedPosts";
 import {
@@ -86,12 +86,8 @@ export default function Generator() {
         next.x = await xTweetsFromBlog(inputText);
       }
       if (selectedPlatforms.includes("instagram")) {
-        next.instagram = baseLinkedInPosts.map((p) => {
-          const body = p.trim();
-          const hashtags = "\n\n#startup #produkt #growth #founder";
-          const combined = `${body}${hashtags}`;
-          return combined.length > 2200 ? combined.slice(0, 2198) + "…" : combined;
-        });
+        // Nutze den speziellen Instagram-Prompt
+        next.instagram = await instagramPostsFromBlog(inputText);
       }
       setPostsByPlatform(next);
       const names = selectedPlatforms.join(", ");
