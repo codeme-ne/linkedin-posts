@@ -260,9 +260,8 @@ export default async function handler(req: Request) {
       body: JSON.stringify({
         url: url,
         formats: ['markdown', 'html'],
-        onlyMainContent: true,
         waitFor: 2000, // Warte 2 Sekunden für JavaScript-Rendering
-        screenshot: false, // Screenshot optional, kostet extra Credits
+        onlyMainContent: true,
       }),
     });
 
