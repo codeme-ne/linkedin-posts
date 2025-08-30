@@ -55,6 +55,8 @@ export default function Generator() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(["linkedin"]);
   const [showPaywall, setShowPaywall] = useState(false);
   const { canTransform, incrementUsage, getRemainingCount, isPro } = useUsageTracking();
+  // Track sidebar collapsed state to adjust content padding
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     getSession().then(({ data }) => {
@@ -168,13 +170,6 @@ export default function Generator() {
           </div>
           
           <div className="flex items-center gap-4">
-            {!isPro && userEmail && (
-              <Badge variant="outline" className="hidden md:inline-flex">
-                {getRemainingCount() > 0 
-                  ? `${getRemainingCount()} kostenlose Transformationen` 
-                  : "Upgrade für mehr"}
-              </Badge>
-            )}
             {/* Mobile Settings button */}
             <Link to="/settings" className="md:hidden">
               <Button variant="ghost" size="sm" aria-label="Einstellungen">
@@ -186,9 +181,6 @@ export default function Generator() {
             </Link>
             {userEmail ? (
               <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground hidden md:inline">
-                  {userEmail}
-                </span>
                 <Button variant="ghost" size="sm" onClick={() => signOut()}>
                   Logout
                 </Button>
@@ -210,8 +202,8 @@ export default function Generator() {
         </div>
       </header>
       
-      <div className="p-4 md:p-8">
-  <div className={`max-w-4xl mx-auto space-y-8 md:pr-[3rem]`}>
+  <div className="p-4 md:p-8 pt-6 md:pt-8">
+  <div className={`max-w-4xl mx-auto space-y-8 ${isSidebarCollapsed ? 'md:pr-[3rem]' : 'md:pr-[22rem]'}`}>
           <div className="text-center space-y-4 pt-8">
           <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
             Vom Newsletter zu viralen Posts
@@ -269,8 +261,8 @@ export default function Generator() {
           </CardContent>
         </Card>
         
-        {/* Extra spacing for mobile to prevent button being covered */}
-        <div className="md:hidden h-16" aria-hidden="true" />
+  {/* Extra spacing for mobile to prevent content being covered by bottom drawer + safe area */}
+  <div className="md:hidden" style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }} aria-hidden="true" />
         {(["linkedin", "x", "instagram"] as Platform[]).map((platform) => {
           const items = postsByPlatform[platform] || [];
           if (items.length === 0) return null;
@@ -376,7 +368,7 @@ export default function Generator() {
       </div>
       
       <SavedPosts
-        onCollapse={() => {}}
+        onCollapse={setIsSidebarCollapsed}
         refreshKey={refreshKey}
         isAuthenticated={!!userEmail}
         onLoginClick={() => setLoginOpen(true)}

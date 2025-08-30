@@ -68,7 +68,7 @@ export default function Settings() {
                 <div className="text-sm text-muted-foreground">Aktueller Plan</div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{planLabel}</span>
-                  {isPro ? <Badge>Pro</Badge> : <Badge variant="outline">Free</Badge>}
+                  {isPro && <Badge>Pro</Badge>}
                 </div>
               </div>
               {!isPro && (
@@ -96,14 +96,13 @@ export default function Settings() {
         <Card className="bg-card/50 backdrop-blur-sm border-0 shadow">
           <CardHeader>
             <CardTitle>Gespeicherte Inhalte</CardTitle>
-            <CardDescription>Deine gespeicherten Beiträge findest du rechts in der Seitenleiste</CardDescription>
+            <CardDescription>
+              Am Handy in der unteren Leiste und am Desktop in der rechten Seitenleiste.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Alle gespeicherten Beiträge erscheinen in der Seitenleiste „Gespeicherte Beiträge“. Von dort kannst du sie bearbeiten, teilen oder löschen.
-            </p>
+          <CardContent className="pt-2">
             <Link to="/app">
-              <Button variant="outline">Zum Generator</Button>
+              <Button variant="outline" className="mt-1">Zum Generator</Button>
             </Link>
           </CardContent>
         </Card>

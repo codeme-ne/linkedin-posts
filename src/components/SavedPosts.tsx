@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { SavedPost, getSavedPosts, deleteSavedPost, updateSavedPost } from '../api/supabase'
 import { SaveButton, EditButton, DeleteButton, LinkedInShareButton, XShareButton, InstagramShareButton } from '../design-system/components/ActionButtons'
 import { Button } from '../design-system/components/Button'
@@ -71,17 +70,11 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
 
   return (
     <>
-      {/* Mobile: Bottom drawer */}
-      <div className={`md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg transition-transform duration-300 z-50 ${isCollapsed ? 'translate-y-[calc(100%-3rem)]' : 'translate-y-0'}`} style={{ maxHeight: '50vh' }}>
-        <div className="flex items-center justify-between p-3 border-b">
+  {/* Mobile: Bottom drawer */}
+  <div className={`md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg transition-transform duration-300 z-40 pb-[env(safe-area-inset-bottom)] ${isCollapsed ? 'translate-y-[calc(100%-3rem)]' : 'translate-y-0'}`} style={{ maxHeight: '50vh' }}>
+  <div className="flex items-center justify-between p-3 border-b">
           <h2 className="text-lg font-bold text-gray-800">Gespeicherte Beiträge</h2>
           <div className="flex items-center gap-1">
-            <Link to="/settings" className="p-2 hover:bg-gray-100 rounded-lg" aria-label="Einstellungen">
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.983 13.983a2 2 0 110-3.999 2 2 0 010 3.999z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 12a8.5 8.5 0 00-.172-1.708l2.03-1.572a.5.5 0 00.12-.656l-1.922-3.328a.5.5 0 00-.607-.226l-2.395.96a8.587 8.587 0 00-1.48-.861l-.366-2.538A.5.5 0 0014.268 1h-4.536a.5.5 0 00-.494.413l-.366 2.538a8.587 8.587 0 00-1.48.861l-2.396-.96a.5.5 0 00-.607.226L1.88 7.064a.5.5 0 00.12.656l2.03 1.572A8.5 8.5 0 003.858 12c0 .58.06 1.146.172 1.708l-2.03 1.572a.5.5 0 00-.12.656l1.922 3.328a.5.5 0 00.607.226l2.396-.96c.46.327.955.612 1.48.861l.366 2.538a.5.5 0 00.494.413h4.536a.5.5 0 00.494-.413l.366-2.538c.524-.249 1.02-.534 1.48-.861l2.395.96a.5.5 0 00.607-.226l1.922-3.328a.5.5 0 00-.12-.656l-2.03-1.572c.112-.562.172-1.129.172-1.708z" />
-              </svg>
-            </Link>
             <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="p-2 hover:bg-gray-100 rounded-lg"
@@ -97,7 +90,7 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
           </button>
           </div>
         </div>
-        <div className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: 'calc(50vh - 4rem)' }}>
+  <div className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: 'calc(50vh - 4rem)' }}>
           {!isAuthenticated ? (
             <div className="p-4 rounded-lg border border-gray-200 bg-white text-center space-y-2">
               <p className="text-gray-700 text-sm">Bitte logge dich ein, um gespeicherte Beiträge zu sehen.</p>
@@ -205,11 +198,14 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
         </div>
       </div>
 
-      {/* Desktop: Side panel */}
-      <div className={`hidden md:block fixed right-0 top-16 h-[calc(100vh-4rem)] bg-white shadow-lg transition-transform duration-300 z-20 ${isCollapsed ? 'translate-x-[calc(100%-3rem)]' : 'translate-x-0'}`} style={{ width: '22rem' }}>
+      {/* Desktop: Side panel (full right edge, below header) */}
+      <div
+        className={`hidden md:block fixed right-0 top-16 h-[calc(100vh-4rem)] bg-white shadow-lg transition-transform duration-300 z-20 ${isCollapsed ? 'translate-x-[calc(100%-3rem)]' : 'translate-x-0'}`}
+        style={{ width: '22rem' }}
+      >
         <div className="h-full flex flex-col">
           {/* Header with collapse button */}
-          <div className="flex items-center border-b border-gray-200 bg-gray-50/50">
+          <div className="flex items-center h-16 border-b border-gray-200 bg-gray-50/50 sticky top-0 z-10">
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-3 hover:bg-gray-100 transition-colors duration-200"
