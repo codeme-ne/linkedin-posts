@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Download, Zap, AlertCircle } from 'lucide-react';
 import { extractFromUrl } from '@/api/extract';
 import { extractPremiumFromUrl, canUsePremiumExtraction } from '@/api/extract-premium';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useSubscription } from '@/components/UpgradeButton';
 import { toast } from 'sonner';
 
 interface ExtractButtonProps {
@@ -30,7 +30,6 @@ export function ExtractButton({
     try {
       let content: string;
       let title: string | undefined;
-      let usedMethod: 'free' | 'premium' = 'free';
 
       // Auto-Modus: Wähle beste verfügbare Methode
       if (method === 'auto' && subscription?.is_active) {
@@ -40,7 +39,6 @@ export function ExtractButton({
             const premiumResult = await extractPremiumFromUrl(url);
             content = premiumResult.content;
             title = premiumResult.title;
-            usedMethod = 'premium';
             
             // Zeige verbleibende Nutzungen
             if (premiumResult.usage) {
@@ -70,7 +68,6 @@ export function ExtractButton({
         const premiumResult = await extractPremiumFromUrl(url);
         content = premiumResult.content;
         title = premiumResult.title;
-        usedMethod = 'premium';
         
         if (premiumResult.usage) {
           toast.success(

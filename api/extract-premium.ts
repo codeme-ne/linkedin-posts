@@ -60,7 +60,7 @@ function getSupabaseClient(authHeader?: string) {
 }
 
 // Extrahiere User ID aus JWT Token
-async function getUserFromAuth(authHeader: string, supabase: any) {
+async function getUserFromAuth(authHeader: string, supabase: ReturnType<typeof getSupabaseClient>) {
   try {
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -79,7 +79,7 @@ async function getUserFromAuth(authHeader: string, supabase: any) {
 
 // Prüfe und aktualisiere Nutzungslimit
 async function checkAndUpdateUsage(
-  supabase: any, 
+  supabase: ReturnType<typeof getSupabaseClient>, 
   userId: string, 
   url: string
 ): Promise<{ allowed: boolean; usage: UsageInfo | null; error?: string }> {

@@ -39,7 +39,7 @@ export default function Settings() {
       await signOut();
       toast({ title: "Abgemeldet", description: "Du wurdest erfolgreich abgemeldet." });
       navigate("/");
-    } catch (error) {
+    } catch {
       toast({ 
         title: "Fehler", 
         description: "Beim Abmelden ist ein Fehler aufgetreten.",
