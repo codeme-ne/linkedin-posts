@@ -1,11 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-type PricingSectionProps = {
-  onSignup: () => void;
-};
-
-export function PricingSection({ onSignup }: PricingSectionProps) {
+export function PricingSection() {
   return (
     <section className="py-24 bg-slate-50 dark:bg-slate-900 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
@@ -146,7 +142,9 @@ export function PricingSection({ onSignup }: PricingSectionProps) {
                 <Button 
                   className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-105 transition-all duration-300" 
                   size="lg"
-                  onClick={onSignup}
+                  onClick={() => {
+                    window.open('https://buy.stripe.com/9B628qejY6rtfPi8Fl0x200', '_blank');
+                  }}
                 >
                   Jetzt sichern - Nur begrenzt verfügbar
                 </Button>

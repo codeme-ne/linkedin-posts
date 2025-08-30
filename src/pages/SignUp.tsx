@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Auth } from "@/components/Auth";
 import { getSession, onAuthStateChange } from "@/api/supabase";
 
@@ -43,10 +42,6 @@ export default function SignUp() {
             </div>
             <h2 className="font-bold text-2xl tracking-tight">Social Transformer</h2>
           </div>
-          <div className="space-x-2">
-            <Button variant="ghost" onClick={() => navigate("/")}>Zurück</Button>
-            <Button variant="ghost" onClick={() => navigate("/app")}>Demo</Button>
-          </div>
         </header>
 
         {/* Main content */}
@@ -65,49 +60,8 @@ export default function SignUp() {
                 <p className="text-xs text-muted-foreground mt-4">
                   Mit der Registrierung stimmst du zu, dass wir deine E-Mail zur Anmeldung verwenden.
                 </p>
-              </CardContent>
+            </CardContent>
             </Card>
-
-            <div className="bg-white/30 dark:bg-slate-800/30 backdrop-blur-md rounded-xl p-6 border border-slate-200 dark:border-slate-700 mt-10">
-              <h3 className="font-medium mb-4 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 22a10 10 0 100-20 10 10 0 000 20z" />
-                  <path d="M8 14l2-2 4 4" />
-                  <path d="M14 10l2-2" />
-                </svg>
-                So einfach geht's
-              </h3>
-              <div className="space-y-4">
-                <div className="flex gap-3 items-start">
-                  <span className="flex-shrink-0 flex items-center justify-center rounded-full bg-primary/10 w-6 h-6 text-xs font-medium text-primary mt-0.5">1</span>
-                  <div>
-                    <p className="font-medium">Newsletter einfügen</p>
-                    <p className="text-sm text-muted-foreground">Kopiere deinen Inhalt in das Textfeld</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 items-start">
-                  <span className="flex-shrink-0 flex items-center justify-center rounded-full bg-primary/10 w-6 h-6 text-xs font-medium text-primary mt-0.5">2</span>
-                  <div>
-                    <p className="font-medium">Plattformen auswählen</p>
-                    <p className="text-sm text-muted-foreground">Wähle LinkedIn, X oder Instagram</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 items-start">
-                  <span className="flex-shrink-0 flex items-center justify-center rounded-full bg-primary/10 w-6 h-6 text-xs font-medium text-primary mt-0.5">3</span>
-                  <div>
-                    <p className="font-medium">KI-Transformation starten</p>
-                    <p className="text-sm text-muted-foreground">Claude AI erstellt optimierte Beiträge</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 items-start">
-                  <span className="flex-shrink-0 flex items-center justify-center rounded-full bg-primary/10 w-6 h-6 text-xs font-medium text-primary mt-0.5">4</span>
-                  <div>
-                    <p className="font-medium">Beiträge teilen</p>
-                    <p className="text-sm text-muted-foreground">Bearbeite, speichere und teile direkt auf den Plattformen</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </main>
 
