@@ -147,16 +147,21 @@ Check README or search codebase to determine testing framework and commands. No 
 ## URL Content Extraction
 
 The app includes URL extraction functionality at `/api/extract` (Edge Function) that:
-1. Fetches webpage content directly or via JS-rendering services
-2. Uses Mozilla Readability to extract main article content
-3. Falls back to Jina Reader for markdown-formatted content
-4. Returns title, byline, excerpt, and clean text content
+
+1. Uses Jina Reader API (`https://r.jina.ai/`) for reliable content extraction
+2. Excludes navigation, footers, sidebars, and other non-content elements via CSS selectors
+3. Returns markdown-formatted content with title, excerpt, and plain text
+4. Validates URLs and enforces 30-second timeout for extraction
 
 Extraction flow:
-- Direct fetch attempt with standard headers
-- If content too short (<400 chars), tries JS-rendering via Browserless/ScrapingBee
-- Falls back to free Jina Reader API (`https://r.jina.ai/`) as last resort
-- Requires Node runtime (not Edge) due to JSDOM dependency
+
+- Validates URL format and protocol (http/https only)
+- Builds Jina URL with CSS exclusion parameters for common non-content elements
+- Excluded elements: nav, header, footer, sidebar, menu, newsletter, social, ads, etc.
+- Sends request to Jina Reader with markdown format preference
+- Extracts title from first markdown heading if present
+- Validates minimum content length (100 chars)
+- Now uses Edge runtime (no Node dependencies)
 
 ## Common TypeScript Fixes
 

@@ -57,8 +57,23 @@ export default async function handler(req: Request) {
       });
     }
 
-    // Use Jina Reader - simple and effective
-    const jinaUrl = `https://r.jina.ai/${url}`;
+    // Use Jina Reader with CSS exclusions for cleaner extraction
+    // Exclude common navigation, footer, sidebar, and other non-content elements
+    const excludeSelectors = [
+      'nav', 'header', 'footer', '.header', '.footer', '.navigation',
+      '.navbar', '.sidebar', '.menu', '.subscribe', '.newsletter',
+      '.social', '.share', '.comments', '.related', '.advertisement',
+      '.ads', '.popup', '.modal', '.cookie', '.banner',
+      // Newsletter-specific exclusions
+      '.past-issues', '.archive', '.archives', '.previous-issues',
+      '.newsletter-list', '.issue-list', '.back-issues', '.all-issues',
+      // Common sections to exclude
+      '.author-bio', '.about-author', '.recommended', '.suggestions',
+      '.trending', '.popular', '.latest', '.recent-posts'
+    ].join(',');
+    
+    // Build Jina URL with exclusion parameters
+    const jinaUrl = `https://r.jina.ai/${encodeURIComponent(url)}?x-respond-with=markdown&x-css-exclude=${encodeURIComponent(excludeSelectors)}`;
     
     console.log('Fetching content from:', url);
     
@@ -71,7 +86,6 @@ export default async function handler(req: Request) {
         headers: {
           'Accept': 'text/markdown, text/plain',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'X-Return-Format': 'markdown', // Request markdown format from Jina
         },
         signal: controller.signal,
       });
@@ -118,8 +132,8 @@ export default async function handler(req: Request) {
         headers: { ...cors, 'Content-Type': 'application/json' },
       });
       
-    } catch (fetchError: any) {
-      if (fetchError.name === 'AbortError') {
+    } catch (fetchError) {
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
         console.error('Request timeout after 30 seconds');
         return new Response(
           JSON.stringify({ error: 'Request timed out. The page took too long to load.' }),
@@ -129,12 +143,12 @@ export default async function handler(req: Request) {
       throw fetchError;
     }
     
-  } catch (error: any) {
+  } catch (error) {
     console.error('Extract error:', error);
     
     // Return user-friendly error message
-    const errorMessage = error.message || 'Failed to extract content';
-    const statusCode = error.status || 500;
+    const errorMessage = error instanceof Error ? error.message : 'Failed to extract content';
+    const statusCode = 500;
     
     return new Response(
       JSON.stringify({ 
