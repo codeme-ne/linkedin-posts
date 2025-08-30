@@ -140,9 +140,13 @@ The app uses an Edge Function proxy pattern for Claude API calls:
    - Creates/updates subscription records in Supabase
 4. **Beta Lifetime Deal**: 49€ one-time payment, no expiration date
 
-## Testing Approach
+## Stripe Testing
 
-Check README or search codebase to determine testing framework and commands. No specific test commands are currently defined in package.json.
+Use test mode credentials during development:
+- Test card: `4242 4242 4242 4242`
+- Payment link already configured in env vars
+- Webhook endpoint: `/api/stripe-webhook`
+- Local testing: Use Stripe CLI with `stripe listen --forward-to localhost:3000/api/stripe-webhook`
 
 ## URL Content Extraction
 
@@ -164,11 +168,20 @@ Extraction flow:
 - Validates minimum content length (100 chars)
 - Now uses Edge runtime (no Node dependencies)
 
-## Common TypeScript Fixes
+## Code Quality Checks
 
-- **Unused parameters**: Remove or prefix with underscore (`_param`)
-- **Unused imports**: Remove from import statements
-- **Type checking**: Run `npm run build` to catch type errors before deployment
+Before committing or deploying:
+- **TypeScript**: Run `npm run build` to catch type errors
+- **Linting**: Run `npm run lint` to check code style
+- **Unused code**: Remove or prefix unused parameters with underscore (`_param`)
+- **Development server**: Runs on port 5173 (http://localhost:5173)
+
+## Recent Development Activity
+
+The most recent commits focused on:
+- URL content extraction improvements using Jina Reader API
+- Removal of JSDOM/Readability dependencies in favor of Edge runtime compatibility
+- Enhanced footer truncation for cleaner content extraction
 
 ## Database Migrations
 

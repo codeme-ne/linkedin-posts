@@ -19,19 +19,80 @@ type ExtractResponse = {
 function truncateContent(content: string): string {
   // End markers that usually indicate footer/archive sections
   const endMarkers = [
+    // English - Newsletter specific
     'read past issues',
     'newsletter archive',
     'browse our archive',
     'subscribe',
     'unsubscribe',
-    '©',
-    'copyright',
     'view in browser',
     'forward to a friend',
+    'forward to friend',
+    'update preferences',
+    'manage preferences',
+    'email preferences',
+    'update your preferences',
+    'update subscription',
+    'manage subscription',
+    'why am i getting this',
+    'you are receiving this',
+    'sent to you because',
+    'mailing list',
+    
+    // English - Blog specific
+    'related posts',
+    'you might also like',
+    'you may also like',
+    'see also',
+    'continue reading',
+    'read more posts',
+    'more articles',
+    'similar articles',
+    'related articles',
+    'recommended for you',
+    'more from',
+    
+    // German - Newsletter specific
+    'abmelden',
+    'abbestellen',
+    'newsletter abbestellen',
+    'im browser ansehen',
+    'im browser anzeigen',
+    'an einen freund weiterleiten',
+    'weiterleiten',
+    'einstellungen verwalten',
+    'einstellungen ändern',
+    'präferenzen verwalten',
+    'e-mail-einstellungen',
+    
+    // German - Blog specific
+    'weitere artikel',
+    'ähnliche beiträge',
+    'verwandte artikel',
+    'mehr lesen',
+    'weiterlesen',
+    'das könnte sie auch interessieren',
+    'das könnte dich auch interessieren',
+    'siehe auch',
+    'empfohlene artikel',
+    'mehr aus',
+    'verwandte beiträge',
+    
+    // Common footer markers (multilingual)
+    '©',
+    'copyright',
+    'impressum',
+    'datenschutz',
+    'privacy policy',
+    'terms of service',
+    'contact us',
+    'kontakt',
+    'about us',
+    'über uns',
   ];
   
-  // Only search last 30% of content (footers are at the end)
-  const searchStart = Math.floor(content.length * 0.7);
+  // Search from 20% of content (newsletter archives can appear early)
+  const searchStart = Math.floor(content.length * 0.2);
   const lowerContent = content.toLowerCase();
   
   for (const marker of endMarkers) {
