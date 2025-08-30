@@ -317,13 +317,30 @@ export default async function handler(req: Request) {
 
     const firecrawlResponse2 = await firecrawlResponse.json();
 
-    // Unterstütze beide Formen der Firecrawl-Antwort:
-    // 1) data: { title, content, summary }
-    // 2) data: [{ url, data: { title, content, summary } }, ...]
-    const base = Array.isArray(firecrawlResponse2?.data)
-      ? firecrawlResponse2.data[0]
-      : firecrawlResponse2?.data;
-    const extractedCandidate: unknown = hasKey(base, 'data') ? base.data : base;
+    // Unterstütze mehrere Formen der Firecrawl-Antwort:
+    // A) Direkt am Root: { title, content, summary }
+    // B) data: { title, content, summary }
+    // C) data: [{ url, data: { title, content, summary } }, ...]
+    const dataNode = firecrawlResponse2?.data;
+    let extractedCandidate: unknown;
+
+    const looksLikeExtract = (obj: unknown) =>
+      hasKey(obj, 'title') || hasKey(obj, 'content') || hasKey(obj, 'summary');
+
+    if (looksLikeExtract(firecrawlResponse2)) {
+      // A) Root-Objekt enthält bereits die Felder
+      extractedCandidate = firecrawlResponse2 as unknown;
+    } else if (Array.isArray(dataNode)) {
+      // C) Array-Form
+      const first = dataNode[0];
+      extractedCandidate = hasKey(first, 'data') ? first.data : first;
+    } else if (looksLikeExtract(dataNode)) {
+      // B) data ist das Objekt
+      extractedCandidate = dataNode as unknown;
+    } else {
+      // Fallback: benutze dataNode oder Root
+      extractedCandidate = dataNode ?? firecrawlResponse2;
+    }
     const extractedData: Partial<{
       title?: string;
       content?: string;
@@ -338,7 +355,8 @@ export default async function handler(req: Request) {
     // Defensive Logging, ohne riesige Payloads zu spammen
     try {
       console.log('Firecrawl Extract Response shape:', {
-        success: firecrawlResponse2?.success,
+        success: hasKey(firecrawlResponse2, 'success') ? (firecrawlResponse2 as Record<string, unknown>).success : undefined,
+        rootKeys: Object.keys((typeof firecrawlResponse2 === 'object' && firecrawlResponse2) ? (firecrawlResponse2 as Record<string, unknown>) : {}),
         dataType: Array.isArray(firecrawlResponse2?.data) ? 'array' : typeof firecrawlResponse2?.data,
         arrayLength: Array.isArray(firecrawlResponse2?.data) ? firecrawlResponse2.data.length : undefined,
         fields: extractedData && typeof extractedData === 'object' ? Object.keys(extractedData) : []
