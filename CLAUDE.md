@@ -66,7 +66,10 @@ The app uses an Edge Function proxy pattern for Claude API calls:
 - `/` - Public landing page
 - `/signup` - Authentication page  
 - `/app` - Protected generator (requires auth via ProtectedRoute)
+- `/settings` - Protected settings page (requires auth via ProtectedRoute)
 - All undefined routes redirect to landing
+
+**Note**: For SPA routing on Vercel, `vercel.json` redirects all routes to `index.html`
 
 ### Database Schema
 
@@ -211,6 +214,8 @@ The most recent commits focused on:
 - **Usage Tracking**: Implemented 20/month limit with database tracking
 - **UI Enhancement**: Added premium extraction checkbox with paywall for free users
 - **Database Setup**: Created `extraction_usage` table and tracking functions
+- **SPA Routing Fix**: Added `vercel.json` for proper client-side routing on Vercel
+- **Subscription Check Optimization**: Fixed timeout bug with useRef, added database indexes for performance
 
 ## Database Setup Notes
 
