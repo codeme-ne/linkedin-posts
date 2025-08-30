@@ -26,10 +26,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Settings as SettingsIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Auth } from "@/components/Auth";
 import { getSession, onAuthStateChange, signOut } from "@/api/supabase";
+import { Link } from "react-router-dom";
 import { PlatformSelector } from "@/components/PlatformSelector";
 import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";
@@ -45,7 +46,6 @@ export default function Generator() {
     instagram: [],
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [editing, setEditing] = useState<{ platform: Platform; index: number } | null>(null);
   const [editedContent, setEditedContent] = useState("");
@@ -120,8 +120,8 @@ export default function Generator() {
       await savePost(content, platform);
       setRefreshKey((prev) => prev + 1);
       toast({
-        title: "Beitrag gespeichert! 💾",
-        description: "Der Beitrag wurde erfolgreich gespeichert.",
+  title: "Erfolgreich gespeichert",
+  description: "Du findest den Beitrag in der Seitenleiste \"Gespeicherte Beiträge\".",
       });
     } catch (error) {
       console.error("Save post error:", error);
@@ -175,6 +175,15 @@ export default function Generator() {
                   : "Upgrade für mehr"}
               </Badge>
             )}
+            {/* Mobile Settings button */}
+            <Link to="/settings" className="md:hidden">
+              <Button variant="ghost" size="sm" aria-label="Einstellungen">
+                <SettingsIcon className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link to="/settings" className="hidden md:block">
+              <Button variant="ghost" size="sm">Einstellungen</Button>
+            </Link>
             {userEmail ? (
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground hidden md:inline">
@@ -202,13 +211,7 @@ export default function Generator() {
       </header>
       
       <div className="p-4 md:p-8">
-        <div
-          className={`max-w-4xl mx-auto space-y-8 transition-all duration-300 ${
-            isSidebarCollapsed 
-              ? "md:mr-12" 
-              : "md:mr-80"
-          }`}
-        >
+  <div className={`max-w-4xl mx-auto space-y-8 md:pr-[3rem]`}>
           <div className="text-center space-y-4 pt-8">
           <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
             Vom Newsletter zu viralen Posts
@@ -373,7 +376,7 @@ export default function Generator() {
       </div>
       
       <SavedPosts
-        onCollapse={(collapsed) => setIsSidebarCollapsed(collapsed)}
+        onCollapse={() => {}}
         refreshKey={refreshKey}
         isAuthenticated={!!userEmail}
         onLoginClick={() => setLoginOpen(true)}

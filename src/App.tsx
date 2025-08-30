@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import Landing from '@/pages/Landing'
 import Generator from '@/pages/Generator'
 import SignUp from '@/pages/SignUp'
+import Settings from '@/pages/Settings'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { Toaster } from '@/components/ui/toaster'
 
@@ -16,6 +17,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Generator />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           }
         />
