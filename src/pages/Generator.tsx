@@ -60,6 +60,8 @@ export default function Generator() {
   // Track sidebar collapsed state to adjust content padding
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sourceUrl, setSourceUrl] = useState("");
+  const [usePremiumExtraction, setUsePremiumExtraction] = useState(false);
+  const [extractionUsage, setExtractionUsage] = useState<{ used: number; limit: number; remaining: number } | null>(null);
 
   useEffect(() => {
     getSession().then(({ data }) => {
@@ -114,14 +116,68 @@ export default function Generator() {
 
   const handleExtract = async () => {
     if (!sourceUrl) return;
+    
+    // Check if trying to use premium without Pro
+    if (usePremiumExtraction && !isPro) {
+      setShowPaywall(true);
+      return;
+    }
+    
     setIsExtracting(true);
     try {
-  const result = await extractFromUrl(sourceUrl);
+      let result;
+      
+      if (usePremiumExtraction && isPro) {
+        // Premium extraction with Firecrawl
+        const { data: session } = await getSession();
+        if (!session) throw new Error("Keine aktive Session");
+        
+        const response = await fetch("/api/extract-premium", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.session?.access_token}`,
+          },
+          body: JSON.stringify({ url: sourceUrl }),
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          if (data.usage) {
+            setExtractionUsage(data.usage);
+          }
+          throw new Error(data.error || "Premium-Extraktion fehlgeschlagen");
+        }
+        
+        result = {
+          title: data.title,
+          content: data.content || data.markdown,
+        };
+        
+        // Update usage information
+        if (data.usage) {
+          setExtractionUsage(data.usage);
+          toast({ 
+            title: "Premium-Import erfolgreich ✨", 
+            description: `${data.usage.remaining} von ${data.usage.limit} Premium-Extraktionen übrig diesen Monat`
+          });
+        } else {
+          toast({ 
+            title: "Premium-Import erfolgreich ✨", 
+            description: data.title || "Inhalt wurde mit verbesserter Qualität importiert"
+          });
+        }
+      } else {
+        // Standard extraction with Jina
+        result = await extractFromUrl(sourceUrl);
+        toast({ title: "Inhalt importiert", description: result.title || sourceUrl });
+      }
+      
       const prefill = [result.title, result.content]
         .filter(Boolean)
         .join("\n\n");
       setInputText(prefill);
-      toast({ title: "Inhalt importiert", description: result.title || sourceUrl });
     } catch (e) {
       console.error("Extract error", e);
       toast({
@@ -249,24 +305,57 @@ export default function Generator() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex gap-2 flex-col md:flex-row">
-              <input
-                type="url"
-                placeholder="https://example.com/dein-blogpost"
-                value={sourceUrl}
-                onChange={(e) => setSourceUrl(e.target.value)}
-                className="flex-1 h-10 px-3 rounded-md border bg-background"
-                aria-label="Quelle-URL"
-              />
-              <Button onClick={handleExtract} disabled={!sourceUrl || isExtracting} className="md:w-48">
-                {isExtracting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importiere…
-                  </>
-                ) : (
-                  <>Von URL importieren</>
-                )}
-              </Button>
+            <div className="space-y-3">
+              <div className="flex gap-2 flex-col md:flex-row">
+                <input
+                  type="url"
+                  placeholder="https://example.com/dein-blogpost"
+                  value={sourceUrl}
+                  onChange={(e) => setSourceUrl(e.target.value)}
+                  className="flex-1 h-10 px-3 rounded-md border bg-background"
+                  aria-label="Quelle-URL"
+                />
+                <Button onClick={handleExtract} disabled={!sourceUrl || isExtracting} className="md:w-48">
+                  {isExtracting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importiere…
+                    </>
+                  ) : (
+                    <>Von URL importieren</>
+                  )}
+                </Button>
+              </div>
+              
+              {/* Premium extraction toggle - visible to all, but gated for free users */}
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={usePremiumExtraction}
+                    onChange={(e) => {
+                      if (!isPro && e.target.checked) {
+                        setShowPaywall(true);
+                        return;
+                      }
+                      setUsePremiumExtraction(e.target.checked);
+                    }}
+                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <span className="text-muted-foreground">
+                    Premium-Extraktion
+                    {!isPro ? (
+                      <Badge variant="secondary" className="ml-2 text-xs">Pro</Badge>
+                    ) : extractionUsage && (
+                      <span className="ml-2 text-xs">
+                        ({extractionUsage.remaining}/20 übrig)
+                      </span>
+                    )}
+                  </span>
+                </label>
+                <span className="text-xs text-muted-foreground">
+                  Bessere Qualität • JavaScript-Support
+                </span>
+              </div>
             </div>
             <Textarea
               placeholder="Newsletter hier einfügen..."
