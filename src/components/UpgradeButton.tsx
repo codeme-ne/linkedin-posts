@@ -112,22 +112,28 @@ export function useSubscription() {
 
     checkStatus();
 
-    // Set timeout fallback
+    // Set timeout fallback - increased to 10 seconds
     const timeout = setTimeout(() => {
       if (loading) {
-        console.warn('Subscription check timed out, defaulting to free');
+        console.warn('Subscription check timed out after 10s, defaulting to free');
         setSubscription({ status: 'free', is_active: false });
         setLoading(false);
       }
-    }, 3000); // 3 second timeout
+    }, 10000); // 10 second timeout (increased from 3)
 
     return () => clearTimeout(timeout);
   }, []);
 
   const checkStatus = async () => {
     try {
+      console.log('[Subscription Check] Starting...');
+      const startTime = Date.now();
+      
       const { data: { session } } = await getSession();
+      console.log('[Subscription Check] Session fetched in', Date.now() - startTime, 'ms');
+      
       if (!session?.user) {
+        console.log('[Subscription Check] No session found, defaulting to free');
         const freeStatus = { status: 'free' as const, is_active: false };
         setSubscription(freeStatus);
         subscriptionCache = { data: freeStatus, timestamp: Date.now() };
@@ -135,33 +141,41 @@ export function useSubscription() {
         return;
       }
 
+      console.log('[Subscription Check] User ID:', session.user.id);
+      const queryStart = Date.now();
+      
       const { data, error } = await supabase
         .from('subscriptions')
         .select('status')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
+        .maybeSingle();
+
+      console.log('[Subscription Check] Query completed in', Date.now() - queryStart, 'ms');
+      console.log('[Subscription Check] Result:', data, 'Error:', error);
 
       if (error) {
-        console.error('Subscription query error:', error);
+        console.error('[Subscription Check] Error fetching subscription:', error);
+        // Default to free on error
         const freeStatus = { status: 'free' as const, is_active: false };
         setSubscription(freeStatus);
         subscriptionCache = { data: freeStatus, timestamp: Date.now() };
       } else if (data && data.status === 'active') {
-        const subStatus = {
-          status: 'active' as const,
-          is_active: true
-        };
-        setSubscription(subStatus);
-        subscriptionCache = { data: subStatus, timestamp: Date.now() };
+        console.log('[Subscription Check] Active subscription found');
+        const activeStatus = { status: 'active' as const, is_active: true };
+        setSubscription(activeStatus);
+        subscriptionCache = { data: activeStatus, timestamp: Date.now() };
       } else {
+        console.log('[Subscription Check] No active subscription, defaulting to free');
         const freeStatus = { status: 'free' as const, is_active: false };
         setSubscription(freeStatus);
         subscriptionCache = { data: freeStatus, timestamp: Date.now() };
       }
+      
+      console.log('[Subscription Check] Total time:', Date.now() - startTime, 'ms');
     } catch (error) {
-      console.error('Subscription check error:', error);
+      console.error('[Subscription Check] Unexpected error:', error);
       const freeStatus = { status: 'free' as const, is_active: false };
       setSubscription(freeStatus);
       subscriptionCache = { data: freeStatus, timestamp: Date.now() };
@@ -170,11 +184,5 @@ export function useSubscription() {
     }
   };
 
-  const refetch = async () => {
-    subscriptionCache = null; // Clear cache
-    setLoading(true);
-    await checkStatus();
-  };
-
-  return { subscription, loading, refetch };
+  return { subscription, loading };
 }

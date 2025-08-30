@@ -52,6 +52,7 @@ Create `.env` from `.env.example` with:
 - **AI Integration**: Anthropic Claude API via Edge Function proxy
 - **Routing**: React Router v6
 - **UI Components**: Radix UI primitives with custom shadcn/ui implementations
+- **Icons**: Lucide React for consistent iconography
 - **Deployment**: Vercel with Edge Functions
 
 ### API Architecture
@@ -111,7 +112,7 @@ The app uses an Edge Function proxy pattern for Claude API calls:
 - `/src/pages/` - Route pages (Landing, Generator, SignUp)
 - `/src/config/` - Configuration files (platforms)
 - `/api/` - Vercel Edge Functions (Claude proxy, webhooks)
-- `/supabase/migrations/` - Database migrations
+- `/supabase/` - Local Supabase config (`config.toml`)
 
 ### Path Aliases
 - `@/` resolves to `/src/` directory
@@ -195,10 +196,12 @@ The app includes TWO extraction methods:
 ## Code Quality Checks
 
 Before committing or deploying:
-- **TypeScript**: Run `npm run build` to catch type errors
+- **TypeScript**: Run `npm run build` to catch type errors (uses project references)
 - **Linting**: Run `npm run lint` to check code style
 - **Unused code**: Remove or prefix unused parameters with underscore (`_param`)
 - **Development server**: Runs on port 5173 (http://localhost:5173)
+
+**Note**: No testing framework is currently configured. Consider adding Vitest or Jest for unit tests.
 
 ## Recent Development Activity
 
