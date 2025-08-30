@@ -40,7 +40,7 @@ type UsageInfo = {
 };
 
 // Initialisiere Supabase Client mit Service Role für RLS-Bypass
-function getSupabaseClient(authHeader?: string) {
+function getSupabaseClient() {
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   
@@ -53,9 +53,7 @@ function getSupabaseClient(authHeader?: string) {
       autoRefreshToken: false,
       persistSession: false,
     },
-    global: {
-      headers: authHeader ? { Authorization: authHeader } : {},
-    },
+    // WICHTIG: Keine Authorization-Header hier, damit Service Role aktiv bleibt
   });
 }
 
@@ -171,7 +169,7 @@ export default async function handler(req: Request) {
       );
     }
 
-    const supabase = getSupabaseClient(authHeader);
+    const supabase = getSupabaseClient();
     const user = await getUserFromAuth(authHeader, supabase);
     
     if (!user) {
