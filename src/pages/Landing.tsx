@@ -9,6 +9,7 @@ import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesGrid } from "@/components/landing/FeaturesGrid";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { FooterBar } from "@/components/landing/FooterBar";
+import { CTASection } from "@/components/landing/CTASection";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -80,6 +81,9 @@ export default function Landing() {
 
       {/* Pricing Section - außerhalb des Containers für vollen Hintergrund */}
       <PricingSection />
+
+      {/* CTA Section - new section before footer */}
+      <CTASection />
 
       {/* Footer Section - außerhalb des Containers für vollen Hintergrund */}
       <FooterBar />
