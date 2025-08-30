@@ -147,6 +147,10 @@ export default async function handler(req: Request) {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 
+  // Hilfsfunktion: prüft, ob ein unbekanntes Objekt einen Schlüssel besitzt
+  const hasKey = (obj: unknown, key: string): obj is Record<string, unknown> =>
+    typeof obj === 'object' && obj !== null && key in obj;
+
   // Handle Preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: cors });
@@ -312,30 +316,52 @@ export default async function handler(req: Request) {
     }
 
     const firecrawlResponse2 = await firecrawlResponse.json();
-    
-    // Extract API Response: { success: true, data: { title, content, summary } }
-    const extractedData = firecrawlResponse2.data || {};
-    
-    console.log('Firecrawl Extract Response:', {
-      success: firecrawlResponse2.success,
-      hasData: !!firecrawlResponse2.data,
-      fields: Object.keys(extractedData)
-    });
+
+    // Unterstütze beide Formen der Firecrawl-Antwort:
+    // 1) data: { title, content, summary }
+    // 2) data: [{ url, data: { title, content, summary } }, ...]
+    const base = Array.isArray(firecrawlResponse2?.data)
+      ? firecrawlResponse2.data[0]
+      : firecrawlResponse2?.data;
+    const extractedCandidate: unknown = hasKey(base, 'data') ? base.data : base;
+    const extractedData: Partial<{
+      title?: string;
+      content?: string;
+      summary?: string;
+      pageTitle?: string;
+      markdown?: string;
+      metadata?: { title?: string };
+    }> = (typeof extractedCandidate === 'object' && extractedCandidate !== null)
+      ? (extractedCandidate as Record<string, unknown>)
+      : {};
+
+    // Defensive Logging, ohne riesige Payloads zu spammen
+    try {
+      console.log('Firecrawl Extract Response shape:', {
+        success: firecrawlResponse2?.success,
+        dataType: Array.isArray(firecrawlResponse2?.data) ? 'array' : typeof firecrawlResponse2?.data,
+        arrayLength: Array.isArray(firecrawlResponse2?.data) ? firecrawlResponse2.data.length : undefined,
+        fields: extractedData && typeof extractedData === 'object' ? Object.keys(extractedData) : []
+      });
+    } catch (e) {
+      console.debug('Firecrawl response shape logging skipped', e);
+    }
     
     // 6. Response formatieren
     const response: ExtractPremiumResponse = {
-      title: extractedData.title || 'Kein Titel gefunden',
+      title: extractedData.title || extractedData.pageTitle || extractedData.metadata?.title || 'Kein Titel gefunden',
       content: extractedData.content || extractedData.summary || '',
-      markdown: extractedData.content, // Der bereinigte Content ist bereits Markdown-ähnlich
+      markdown: extractedData.markdown || extractedData.content, // Der bereinigte Content ist oft Markdown-ähnlich
       metadata: {
         sourceUrl: url,
         extractedAt: new Date().toISOString(),
         extractionType: 'firecrawl',
       },
+      // Nutzung bereits in checkAndUpdateUsage erhöht; hier nicht nochmals inkrementieren
       usage: usage ? {
-        used: usage.used_count + 1,
+        used: usage.used_count,
         limit: usage.limit_count,
-        remaining: usage.remaining_count - 1,
+        remaining: usage.remaining_count,
         resetsAt: usage.reset_at,
       } : undefined,
     };
