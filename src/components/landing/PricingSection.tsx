@@ -3,31 +3,33 @@ import { Button } from "@/components/ui/button";
 
 export function PricingSection() {
   return (
-    <section className="py-16 md:py-24 bg-slate-50 dark:bg-slate-900 relative overflow-hidden">
+    <section className="py-16 md:py-24 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-64 md:w-96 h-64 md:h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 w-64 md:w-96 h-64 md:h-96 bg-accent/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-to-r from-primary/5 to-accent/5 rounded-full blur-3xl" />
       </div>
       <div className="relative z-10 max-w-6xl mx-auto px-4">
         <div className="text-center mb-12 md:mb-16">
-          <Badge variant="outline" className="px-3 py-1 text-sm font-medium rounded-full border-primary/30 bg-primary/5 text-primary mb-4 md:mb-6 animate-pulse">
-            Nur für kurze Zeit
+          <Badge variant="outline" className="px-3 py-1 text-sm font-medium rounded-full border-primary/30 bg-primary/5 text-primary mb-4 md:mb-6">
+            Lifetime Deal
           </Badge>
-          <h2 className="text-3xl md:text-5xl font-bold leading-tight tracking-tight mb-4 md:mb-6">Einmalzahlung statt Abo</h2>
+          <h2 className="text-3xl md:text-5xl font-bold leading-tight tracking-tight mb-4 md:mb-6">
+            Einmalzahlung statt{" "}
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              monatliche Kosten
+            </span>
+          </h2>
           <p className="text-lg md:text-xl leading-relaxed text-muted-foreground max-w-2xl mx-auto">
-            Verwandle deine Newsletter automatisch in virale Social-Media-Posts.<br className="hidden md:block" />
-            <span className="font-semibold text-primary">Spare über 70% im ersten Jahr.</span>
+            Keine versteckten Gebühren, keine Abo-Fallen.<br className="hidden md:block" />
+            <span className="font-semibold">Zahle einmal, nutze für immer.</span>
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
-          <div className="relative opacity-60 transform md:scale-95">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-100/10 to-slate-50/10 dark:from-slate-700/10 dark:to-slate-800/10 rounded-2xl blur-xl" />
-              <div className="relative bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
-                <div className="absolute top-4 right-4 bg-slate-500/10 backdrop-blur-sm text-slate-600 dark:text-slate-400 text-xs font-medium px-3 py-1 rounded-full border border-slate-300 dark:border-slate-600">
-                  Bald verfügbar
-                </div>
+        <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
+          <div className="relative opacity-60">
+            <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg">
+              <Badge variant="secondary" className="mb-4">
+                Bald verfügbar
+              </Badge>
                 <h3 className="text-lg md:text-xl font-semibold leading-snug mb-4 text-slate-500 dark:text-slate-400">Standard Abo</h3>
                 <div className="mb-6 md:mb-8">
                   <span className="text-2xl md:text-3xl font-bold text-slate-400 dark:text-slate-500 line-through">19€</span>
@@ -68,20 +70,15 @@ export function PricingSection() {
                   </li>
                 </ul>
                 <button disabled className="w-full border rounded-md py-2 md:py-3 text-sm font-medium opacity-70">Demnächst verfügbar</button>
-              </div>
             </div>
           </div>
 
-          <div className="relative transform md:scale-105">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl blur-xl" />
-              <div className="relative bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl">
-                <div className="absolute -top-3 md:-top-4 left-1/2 transform -translate-x-1/2 z-20">
-                  <div className="bg-gradient-to-r from-[#D97757] to-[#C56649] text-white px-3 md:px-4 py-1 rounded-full shadow-lg text-xs md:text-sm font-semibold whitespace-nowrap">
-                    SPARE 179€ IM ERSTEN JAHR
-                  </div>
-                </div>
-                <h3 className="text-lg md:text-xl font-semibold leading-snug mb-4 mt-2">Lifetime Deal</h3>
+          <div className="relative">
+            <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl border-2 border-primary/20 shadow-xl hover:shadow-2xl transition-all duration-300">
+              <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 px-3 py-1 mb-4">
+                BELIEBTESTE WAHL
+              </Badge>
+              <h3 className="text-lg md:text-xl font-semibold leading-snug mb-4">Lifetime Deal</h3>
                 <div className="mb-6 md:mb-8">
                   <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">49€</span>
                   <span className="text-muted-foreground ml-2 text-sm md:text-base">einmalig</span>
@@ -157,30 +154,6 @@ export function PricingSection() {
                   </svg>
                   Sichere Zahlung über Stripe
                 </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-12 md:mt-20 text-center">
-          <div className="inline-flex items-center gap-2 bg-primary/5 backdrop-blur-sm text-primary px-3 md:px-4 py-2 rounded-full mb-8 md:mb-12 border border-primary/20">
-            <svg className="w-4 md:w-5 h-4 md:h-5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="font-medium text-xs md:text-sm">Nur noch wenige Plätze verfügbar</span>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-4xl mx-auto">
-            <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md rounded-xl p-4 md:p-6 border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-xl transition-all duration-300">
-              <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2 md:mb-3">∅ 15 Min</div>
-              <p className="text-xs md:text-sm leading-normal text-muted-foreground">Pro Newsletter-Transformation gespart</p>
-            </div>
-            <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md rounded-xl p-4 md:p-6 border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-xl transition-all duration-300">
-              <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2 md:mb-3">3-5x</div>
-              <p className="text-xs md:text-sm leading-normal text-muted-foreground">Mehr Engagement auf Social Media</p>
-            </div>
-            <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md rounded-xl p-4 md:p-6 border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-xl transition-all duration-300">
-              <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2 md:mb-3">100%</div>
-              <p className="text-xs md:text-sm leading-normal text-muted-foreground">Plattform-optimierte Formatierung</p>
             </div>
           </div>
         </div>
