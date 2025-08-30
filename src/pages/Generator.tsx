@@ -152,7 +152,7 @@ export default function Generator() {
         
         result = {
           title: data.title,
-          content: data.content || data.markdown,
+          content: data.markdown || data.content || "",
         };
         
         // Update usage information

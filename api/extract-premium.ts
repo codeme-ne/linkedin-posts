@@ -247,9 +247,9 @@ export default async function handler(req: Request) {
       );
     }
 
-    console.log('Rufe Firecrawl API auf für:', url);
+    console.log('Rufe Firecrawl API v2 auf für:', url);
     
-    const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+    const firecrawlResponse = await fetch('https://api.firecrawl.dev/v2/scrape', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${firecrawlApiKey}`,
@@ -257,8 +257,7 @@ export default async function handler(req: Request) {
       },
       body: JSON.stringify({
         url: url,
-        formats: ['markdown', 'html'],
-        waitFor: 2000, // Warte 2 Sekunden für JavaScript-Rendering
+        formats: ['markdown'],
         onlyMainContent: true,
       }),
     });
@@ -287,12 +286,15 @@ export default async function handler(req: Request) {
       );
     }
 
-    const firecrawlData = await firecrawlResponse.json();
+    const firecrawlResponse2 = await firecrawlResponse.json();
+    
+    // v2 API: Daten sind unter 'data' verschachtelt
+    const firecrawlData = firecrawlResponse2.data || firecrawlResponse2;
     
     // 6. Response formatieren
     const response: ExtractPremiumResponse = {
-      title: firecrawlData.metadata?.title || firecrawlData.metadata?.ogTitle,
-      content: firecrawlData.markdown || firecrawlData.content || '',
+      title: firecrawlData.metadata?.title || firecrawlData.title,
+      content: firecrawlData.markdown || '',
       markdown: firecrawlData.markdown,
       html: firecrawlData.html,
       screenshot: firecrawlData.screenshot,
