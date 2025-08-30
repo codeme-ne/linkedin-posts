@@ -153,12 +153,6 @@ export default function Settings() {
                   <div className="flex items-center gap-2">
                     {isPro && <Crown className="h-4 w-4 text-yellow-500" />}
                     <span className="font-medium">{planLabel}</span>
-                    {isPro && (
-                      <Badge className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        Pro
-                      </Badge>
-                    )}
                   </div>
                 </div>
                 
@@ -168,11 +162,19 @@ export default function Settings() {
                       <span className="text-sm text-muted-foreground">Verfügbar heute:</span>
                       <span className="font-bold text-lg">{Math.max(0, getRemainingCount())}</span>
                     </div>
-                    <div className="pt-2">
-                      <UpgradeButton />
-                    </div>
                   </>
                 )}
+                
+                <div className="pt-2">
+                  {!isPro ? (
+                    <UpgradeButton />
+                  ) : (
+                    <Badge className="w-full justify-center bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0 py-2">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Pro Lifetime Zugang
+                    </Badge>
+                  )}
+                </div>
 
                 {billingPortalUrl && isPro && (
                   <Button 

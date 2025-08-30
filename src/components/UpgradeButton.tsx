@@ -35,15 +35,15 @@ export function UpgradeButton() {
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (data) {
+      if (data && data.status === 'active') {
         setSubscription({
-          status: data.status,
-          is_active: data.status === 'active'
+          status: 'active',
+          is_active: true
         });
       } else {
-        // No subscription = free user
+        // No subscription or status !== 'active' = free user
         setSubscription({
           status: 'free',
           is_active: false
@@ -148,10 +148,10 @@ export function useSubscription() {
         const freeStatus = { status: 'free' as const, is_active: false };
         setSubscription(freeStatus);
         subscriptionCache = { data: freeStatus, timestamp: Date.now() };
-      } else if (data) {
+      } else if (data && data.status === 'active') {
         const subStatus = {
-          status: data.status as 'free' | 'active' | 'cancelled',
-          is_active: data.status === 'active'
+          status: 'active' as const,
+          is_active: true
         };
         setSubscription(subStatus);
         subscriptionCache = { data: subStatus, timestamp: Date.now() };

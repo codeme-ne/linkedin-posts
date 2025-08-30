@@ -313,8 +313,14 @@ export default async function handler(req: Request) {
 
     const firecrawlResponse2 = await firecrawlResponse.json();
     
-    // Extract API gibt strukturierte Daten zurück
-    const extractedData = firecrawlResponse2.data?.[0] || firecrawlResponse2;
+    // Extract API Response: { success: true, data: { title, content, summary } }
+    const extractedData = firecrawlResponse2.data || {};
+    
+    console.log('Firecrawl Extract Response:', {
+      success: firecrawlResponse2.success,
+      hasData: !!firecrawlResponse2.data,
+      fields: Object.keys(extractedData)
+    });
     
     // 6. Response formatieren
     const response: ExtractPremiumResponse = {
