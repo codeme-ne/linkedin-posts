@@ -149,16 +149,17 @@ Check README or search codebase to determine testing framework and commands. No 
 The app includes URL extraction functionality at `/api/extract` (Edge Function) that:
 
 1. Uses Jina Reader API (`https://r.jina.ai/`) for reliable content extraction
-2. Excludes navigation, footers, sidebars, and other non-content elements via CSS selectors
-3. Returns markdown-formatted content with title, excerpt, and plain text
-4. Validates URLs and enforces 30-second timeout for extraction
+2. Uses `x-remove-selector` header to exclude basic non-content elements (nav, header, footer)
+3. Applies post-processing truncation to remove newsletter footers and archives
+4. Returns markdown-formatted content with title, excerpt, and plain text
 
 Extraction flow:
 
 - Validates URL format and protocol (http/https only)
-- Builds Jina URL with CSS exclusion parameters for common non-content elements
-- Excluded elements: nav, header, footer, sidebar, menu, newsletter, social, ads, etc.
-- Sends request to Jina Reader with markdown format preference
+- Sends request to Jina Reader with `x-remove-selector` header for basic cleanup
+- Applies `truncateContent()` function to remove footer sections
+- Truncation searches only last 30% of content for efficiency
+- Common end markers: "read past issues", "subscribe", "©", etc.
 - Extracts title from first markdown heading if present
 - Validates minimum content length (100 chars)
 - Now uses Edge runtime (no Node dependencies)

@@ -15,6 +15,35 @@ type ExtractResponse = {
   siteName?: string | null;
 };
 
+// Simple function to truncate content at common footer markers
+function truncateContent(content: string): string {
+  // End markers that usually indicate footer/archive sections
+  const endMarkers = [
+    'read past issues',
+    'newsletter archive',
+    'browse our archive',
+    'subscribe',
+    'unsubscribe',
+    '©',
+    'copyright',
+    'view in browser',
+    'forward to a friend',
+  ];
+  
+  // Only search last 30% of content (footers are at the end)
+  const searchStart = Math.floor(content.length * 0.7);
+  const lowerContent = content.toLowerCase();
+  
+  for (const marker of endMarkers) {
+    const index = lowerContent.indexOf(marker, searchStart);
+    if (index !== -1) {
+      return content.slice(0, index).trim();
+    }
+  }
+  
+  return content;
+}
+
 export default async function handler(req: Request) {
   const cors = {
     'Access-Control-Allow-Origin': '*',
@@ -57,23 +86,8 @@ export default async function handler(req: Request) {
       });
     }
 
-    // Use Jina Reader with CSS exclusions for cleaner extraction
-    // Exclude common navigation, footer, sidebar, and other non-content elements
-    const excludeSelectors = [
-      'nav', 'header', 'footer', '.header', '.footer', '.navigation',
-      '.navbar', '.sidebar', '.menu', '.subscribe', '.newsletter',
-      '.social', '.share', '.comments', '.related', '.advertisement',
-      '.ads', '.popup', '.modal', '.cookie', '.banner',
-      // Newsletter-specific exclusions
-      '.past-issues', '.archive', '.archives', '.previous-issues',
-      '.newsletter-list', '.issue-list', '.back-issues', '.all-issues',
-      // Common sections to exclude
-      '.author-bio', '.about-author', '.recommended', '.suggestions',
-      '.trending', '.popular', '.latest', '.recent-posts'
-    ].join(',');
-    
-    // Build Jina URL with exclusion parameters
-    const jinaUrl = `https://r.jina.ai/${encodeURIComponent(url)}?x-respond-with=markdown&x-css-exclude=${encodeURIComponent(excludeSelectors)}`;
+    // Use Jina Reader for content extraction
+    const jinaUrl = `https://r.jina.ai/${encodeURIComponent(url)}`;
     
     console.log('Fetching content from:', url);
     
@@ -86,6 +100,9 @@ export default async function handler(req: Request) {
         headers: {
           'Accept': 'text/markdown, text/plain',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          // Use Jina's x-remove-selector to remove common non-content elements
+          'x-remove-selector': 'nav,header,footer,.newsletter,.subscribe,.archive,.sidebar,.social',
+          'x-respond-with': 'markdown',
         },
         signal: controller.signal,
       });
@@ -97,7 +114,7 @@ export default async function handler(req: Request) {
         throw new Error(`Content extraction failed with status: ${response.status}`);
       }
       
-      const content = await response.text();
+      let content = await response.text();
       
       // Basic content validation
       if (!content || content.trim().length < 100) {
@@ -106,6 +123,9 @@ export default async function handler(req: Request) {
           { status: 422, headers: { ...cors, 'Content-Type': 'application/json' } }
         );
       }
+      
+      // Apply truncation to remove footer/archive sections
+      content = truncateContent(content);
       
       // Extract title from first markdown heading if present
       const titleMatch = content.match(/^#\s+(.+?)$/m);
