@@ -6,21 +6,48 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { 
+  User, 
+  CreditCard, 
+  FileText, 
+  HelpCircle, 
+  LogOut, 
+  ArrowLeft,
+  Mail,
+  Shield,
+  FileHeart,
+  Crown,
+  Sparkles
+} from "lucide-react";
 
 export default function Settings() {
   const { subscription, loading } = useSubscription();
   const { getRemainingCount, isPro } = useUsageTracking();
   const [email, setEmail] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     getSession().then(({ data }) => setEmail(data.session?.user.email ?? null));
   }, []);
 
   const handleLogout = async () => {
-    await signOut();
-    toast({ title: "Abgemeldet", description: "Du wurdest erfolgreich abgemeldet." });
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      toast({ title: "Abgemeldet", description: "Du wurdest erfolgreich abgemeldet." });
+      navigate("/");
+    } catch (error) {
+      toast({ 
+        title: "Fehler", 
+        description: "Beim Abmelden ist ein Fehler aufgetreten.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const planLabel = loading
@@ -29,95 +56,212 @@ export default function Settings() {
     ? "Pro (Lifetime)"
     : "Free";
 
-  // Optional: Billing-Portal Link, falls in Env vorhanden (nur anzeigen, wenn gesetzt)
   const billingPortalUrl = import.meta.env.VITE_STRIPE_BILLING_PORTAL as string | undefined;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-secondary p-4 md:p-8">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">Einstellungen</h1>
-            <p className="text-muted-foreground">Verwalte Abo, Konto und App-Einstellungen</p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-secondary">
+      {/* Mobile Header */}
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b md:hidden">
+        <div className="flex items-center justify-between p-4">
           <Link to="/app">
-            <Button variant="ghost">Zurück</Button>
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
           </Link>
+          <h1 className="text-lg font-semibold">Einstellungen</h1>
+          <div className="w-10" /> {/* Spacer for centering */}
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden md:block border-b bg-background/50 backdrop-blur-sm">
+        <div className="max-w-5xl mx-auto px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                Einstellungen
+              </h1>
+              <p className="text-muted-foreground mt-1">Verwalte dein Konto und deine Präferenzen</p>
+            </div>
+            <Link to="/app">
+              <Button variant="outline" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Zurück zum Generator
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-5xl mx-auto p-4 md:p-8">
+        <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+          
+          {/* Account Card */}
+          <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow md:col-span-2 lg:col-span-1">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Konto</CardTitle>
+                  <CardDescription className="text-xs">Persönliche Informationen</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">E-Mail:</span>
+                </div>
+                <div className="font-medium truncate">{email ?? "Nicht eingeloggt"}</div>
+              </div>
+              
+              {email && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="w-full gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  {isLoggingOut ? "Abmelden..." : "Abmelden"}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Subscription Card */}
+          <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow md:col-span-2 lg:col-span-1">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-accent/10">
+                  <CreditCard className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Abo-Status</CardTitle>
+                  <CardDescription className="text-xs">Dein aktueller Plan</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Plan:</span>
+                  <div className="flex items-center gap-2">
+                    {isPro && <Crown className="h-4 w-4 text-yellow-500" />}
+                    <span className="font-medium">{planLabel}</span>
+                    {isPro && (
+                      <Badge className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white border-0">
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        Pro
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                {!isPro && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Verfügbar heute:</span>
+                      <span className="font-bold text-lg">{Math.max(0, getRemainingCount())}</span>
+                    </div>
+                    <div className="pt-2">
+                      <UpgradeButton />
+                    </div>
+                  </>
+                )}
+
+                {billingPortalUrl && isPro && (
+                  <Button 
+                    variant="secondary" 
+                    onClick={() => window.open(billingPortalUrl, "_blank")}
+                    className="w-full text-sm"
+                  >
+                    Rechnungen verwalten
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions Card */}
+          <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow md:col-span-2 lg:col-span-1">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-secondary/10">
+                  <FileText className="h-5 w-5 text-secondary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Schnellzugriff</CardTitle>
+                  <CardDescription className="text-xs">Wichtige Funktionen</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Link to="/app" className="block">
+                <Button variant="outline" className="w-full justify-start gap-2">
+                  <FileHeart className="h-4 w-4" />
+                  Gespeicherte Posts
+                </Button>
+              </Link>
+              <p className="text-xs text-muted-foreground px-1">
+                Mobile: Untere Leiste | Desktop: Rechte Seitenleiste
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Support Card - Full Width on Mobile/Tablet, Normal on Desktop */}
+          <Card className="bg-card/50 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow col-span-full lg:col-span-3">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-muted">
+                  <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Support & Rechtliches</CardTitle>
+                  <CardDescription className="text-xs">Hilfe und wichtige Dokumente</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.open("mailto:support@example.com", "_blank")}
+                  className="gap-2 justify-start"
+                >
+                  <Mail className="h-4 w-4" />
+                  Support
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => window.open("/privacy", "_blank")}
+                  className="gap-2 justify-start"
+                >
+                  <Shield className="h-4 w-4" />
+                  Datenschutz
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => window.open("/imprint", "_blank")}
+                  className="gap-2 justify-start"
+                >
+                  <FileText className="h-4 w-4" />
+                  Impressum
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <Card className="bg-card/50 backdrop-blur-sm border-0 shadow">
-          <CardHeader>
-            <CardTitle>Konto</CardTitle>
-            <CardDescription>Deine Zugangsdaten und Status</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-muted-foreground">E-Mail</div>
-                <div className="font-medium">{email ?? "Nicht eingeloggt"}</div>
-              </div>
-              {email && (
-                <Button variant="outline" onClick={handleLogout}>Logout</Button>
-              )}
-            </div>
-
-            <div className="h-px w-full bg-border" />
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-muted-foreground">Aktueller Plan</div>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{planLabel}</span>
-                  {isPro && <Badge>Pro</Badge>}
-                </div>
-              </div>
-              {!isPro && (
-                <div className="text-right">
-                  <div className="text-xs text-muted-foreground">Freie Transformationen heute</div>
-                  <div className="font-medium">{Math.max(0, getRemainingCount())}</div>
-                </div>
-              )}
-            </div>
-
-            {!isPro && (
-              <div className="pt-2">
-                <UpgradeButton />
-              </div>
-            )}
-
-            {billingPortalUrl && (
-              <div className="pt-2">
-                <Button variant="secondary" onClick={() => window.open(billingPortalUrl!, "_blank")}>Rechnungen & Zahlung verwalten</Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/50 backdrop-blur-sm border-0 shadow">
-          <CardHeader>
-            <CardTitle>Gespeicherte Inhalte</CardTitle>
-            <CardDescription>
-              Am Handy in der unteren Leiste und am Desktop in der rechten Seitenleiste.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <Link to="/app">
-              <Button variant="outline" className="mt-1">Zum Generator</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/50 backdrop-blur-sm border-0 shadow">
-          <CardHeader>
-            <CardTitle>Support & Rechtliches</CardTitle>
-            <CardDescription>Hilfreiche Links</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => window.open("mailto:support@example.com", "_blank")}>Support kontaktieren</Button>
-            <Button variant="ghost" onClick={() => window.open("/privacy", "_blank")}>Datenschutz</Button>
-            <Button variant="ghost" onClick={() => window.open("/imprint", "_blank")}>Impressum</Button>
-          </CardContent>
-        </Card>
+        {/* App Version Footer - Mobile Only */}
+        <div className="mt-8 text-center text-xs text-muted-foreground md:hidden">
+          <p>Social Transformer v1.0.0</p>
+          <p className="mt-1">© 2024 Alle Rechte vorbehalten</p>
+        </div>
       </div>
     </div>
   );
