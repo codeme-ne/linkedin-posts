@@ -32,9 +32,9 @@ export function HeroSection({ isVisible, onSignup, onDemo }: HeroSectionProps) {
         </span>
       </h1>
       <p className="text-lg md:text-xl leading-relaxed text-muted-foreground max-w-2xl">
-        <span className="font-semibold">15 Minuten sparen pro Post.</span> Kopiere deinen Newsletter rein, 
+        <span className="font-semibold">15 Minuten sparen pro Post.</span> Kopiere deinen Newsletter rein oder gib eine URL ein, 
         erhalte perfekt formatierte Social-Media-Beiträge raus. 
-        <span className="text-primary font-medium"> KI-optimiert für maximales Engagement.</span>
+        <span className="text-primary font-medium"> Prompts optimiert mit Anthropic Console.</span>
       </p>
       <div className="flex flex-col sm:flex-row gap-4 pt-4 md:pt-8">
         <Button 
