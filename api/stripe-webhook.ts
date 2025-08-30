@@ -103,7 +103,7 @@ export default async function handler(req: Request) {
           // Get user by ID
           const { data: userData, error } = await supabase.auth.admin.getUserById(userId);
           if (!error && userData?.user) {
-            user = userData.user as any;
+            user = { id: userData.user.id, email: userData.user.email };
           }
         }
         
@@ -111,7 +111,7 @@ export default async function handler(req: Request) {
           // Fall back to email lookup
           const { data: userData, error } = await supabase.auth.admin.listUsers();
           if (!error && userData?.users) {
-            user = userData.users.find(u => u.email === userEmail) as any;
+            user = userData.users.find(u => u.email === userEmail) || null;
           }
         }
         
@@ -177,19 +177,19 @@ export default async function handler(req: Request) {
         console.log('Checkout completed for:', { userEmail, userId });
 
         // Similar logic as payment_intent.succeeded
-        let user = null;
+        let user: { id: string; email?: string } | null = null;
         
         if (userId) {
           const { data: userData, error } = await supabase.auth.admin.getUserById(userId);
           if (!error && userData?.user) {
-            user = userData.user as any;
+            user = { id: userData.user.id, email: userData.user.email };
           }
         }
         
         if (!user && userEmail) {
           const { data: userData, error } = await supabase.auth.admin.listUsers();
           if (!error && userData?.users) {
-            user = userData.users.find(u => u.email === userEmail) as any;
+            user = userData.users.find(u => u.email === userEmail) || null;
           }
         }
         
