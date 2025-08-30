@@ -40,6 +40,7 @@ Create `.env` from `.env.example` with:
 - `CLAUDE_API_KEY` - Server-side Claude API key (without VITE_ prefix)
 - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret for payment processing  
 - `SUPABASE_SERVICE_ROLE_KEY` - Required for webhook to bypass RLS and save payment data
+- `FIRECRAWL_API_KEY` - Firecrawl API key for premium content extraction (Pro users only)
 
 ## Architecture
 
@@ -89,6 +90,19 @@ The app uses an Edge Function proxy pattern for Claude API calls:
 - `current_period_start/end` (timestamptz)
 - `trial_starts_at/ends_at` (timestamptz)
 - `created_at/updated_at` (timestamptz)
+- `extraction_limit` (integer, default: 20) - Monthly limit for premium extractions
+- `extraction_reset_at` (timestamptz) - When the monthly limit resets
+
+**`extraction_usage` table:**
+- `id` (uuid, primary key)
+- `user_id` (uuid, references auth.users)
+- `extraction_type` (text: 'jina' or 'firecrawl')
+- `url` (text)
+- `extracted_at` (timestamptz)
+- `success` (boolean)
+- `error_message` (text)
+- `metadata` (jsonb)
+- `created_at` (timestamptz)
 
 ### Key Directories
 - `/src/api/` - API integrations (Claude, Supabase, LinkedIn)
@@ -150,23 +164,33 @@ Use test mode credentials during development:
 
 ## URL Content Extraction
 
-The app includes URL extraction functionality at `/api/extract` (Edge Function) that:
+The app includes TWO extraction methods:
 
-1. Uses Jina Reader API (`https://r.jina.ai/`) for reliable content extraction
-2. Uses `x-remove-selector` header to exclude basic non-content elements (nav, header, footer)
-3. Applies post-processing truncation to remove newsletter footers and archives
-4. Returns markdown-formatted content with title, excerpt, and plain text
+### 1. Standard Extraction (Free for all users)
+**Endpoint**: `/api/extract` (Edge Function)
+- Uses Jina Reader API (`https://r.jina.ai/`)
+- Basic content extraction with footer truncation
+- Unlimited usage for all users
+- Returns markdown-formatted content with title and plain text
 
-Extraction flow:
+### 2. Premium Extraction (Pro users only)
+**Endpoint**: `/api/extract-premium` (Edge Function)
+- Uses Firecrawl API (requires `FIRECRAWL_API_KEY`)
+- JavaScript rendering support for dynamic content
+- Better quality extraction for complex websites
+- Limited to 20 extractions per month per Pro user
+- Tracks usage in `extraction_usage` table
+- Uses RPC function: `get_monthly_extraction_usage(user_id, 'firecrawl')`
 
-- Validates URL format and protocol (http/https only)
-- Sends request to Jina Reader with `x-remove-selector` header for basic cleanup
-- Applies `truncateContent()` function to remove footer sections
-- Truncation searches only last 30% of content for efficiency
-- Common end markers: "read past issues", "subscribe", "©", etc.
-- Extracts title from first markdown heading if present
-- Validates minimum content length (100 chars)
-- Now uses Edge runtime (no Node dependencies)
+### UI Implementation (Generator.tsx)
+- Checkbox for "Premium-Extraktion" visible to ALL users (good for conversion)
+- Free users see "Pro" badge next to checkbox
+- When free users try to check it, they get the paywall modal
+- Pro users see usage count: "(X/20 übrig)" 
+- State managed with:
+  - `usePremiumExtraction` - boolean for checkbox state
+  - `extractionUsage` - object with used/limit/remaining counts
+- Located above the textarea input field
 
 ## Code Quality Checks
 
@@ -179,17 +203,22 @@ Before committing or deploying:
 ## Recent Development Activity
 
 The most recent commits focused on:
-- URL content extraction improvements using Jina Reader API
-- Removal of JSDOM/Readability dependencies in favor of Edge runtime compatibility
-- Enhanced footer truncation for cleaner content extraction
 
-## Database Migrations
+- **Premium Extraction Feature**: Added Firecrawl API integration for Pro users
+- **Usage Tracking**: Implemented 20/month limit with database tracking
+- **UI Enhancement**: Added premium extraction checkbox with paywall for free users
+- **Database Setup**: Created `extraction_usage` table and tracking functions
 
-Located in `/supabase/migrations/`. Key migrations:
+## Database Setup Notes
 
-- `002_add_subscription_fields.sql` - Stripe subscription tables and functions
-- `20250827_add_platform_to_saved_posts.sql` - Platform field for saved posts
-- `20250827_enable_auth_for_saved_posts.sql` - RLS policies for auth
+**IMPORTANT**: All migrations have been applied. The `/supabase/migrations/` folder was removed after successful deployment.
+
+The database schema is now live in Supabase with:
+
+- `extraction_usage` table for tracking premium extraction usage
+- `extraction_limit` and `extraction_reset_at` columns in subscriptions table
+- `get_monthly_extraction_usage` RPC function for usage checks
+- RLS policies enabled for security
 
 When adding multiple columns to a PostgreSQL table, each column needs its own `ADD COLUMN` clause:
 
