@@ -247,18 +247,43 @@ export default async function handler(req: Request) {
       );
     }
 
-    console.log('Rufe Firecrawl API v2 auf für:', url);
+    console.log('Rufe Firecrawl Extract API auf für:', url);
     
-    const firecrawlResponse = await fetch('https://api.firecrawl.dev/v2/scrape', {
+    // Nutze Extract API für verbesserte Textqualität
+    const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/extract', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${firecrawlApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        url: url,
-        formats: ['markdown'],
-        onlyMainContent: true,
+        urls: [url],
+        prompt: `Extrahiere den Hauptinhalt dieser Webseite und verbessere dabei:
+        1. Grammatik und Rechtschreibung
+        2. Formatierung und Struktur
+        3. Entferne überflüssige Elemente (Navigation, Footer, Werbung)
+        4. Behalte die ursprüngliche Bedeutung bei
+        5. Stelle sicher, dass der Text professionell und gut lesbar ist
+        
+        Gib den bereinigten Text zurück mit klarer Struktur.`,
+        schema: {
+          type: 'object',
+          properties: {
+            title: {
+              type: 'string',
+              description: 'Der Haupttitel des Artikels/Newsletters'
+            },
+            content: {
+              type: 'string', 
+              description: 'Der vollständige, bereinigte und verbesserte Haupttext'
+            },
+            summary: {
+              type: 'string',
+              description: 'Eine kurze Zusammenfassung in 2-3 Sätzen'
+            }
+          },
+          required: ['title', 'content']
+        }
       }),
     });
 
@@ -288,16 +313,14 @@ export default async function handler(req: Request) {
 
     const firecrawlResponse2 = await firecrawlResponse.json();
     
-    // v2 API: Daten sind unter 'data' verschachtelt
-    const firecrawlData = firecrawlResponse2.data || firecrawlResponse2;
+    // Extract API gibt strukturierte Daten zurück
+    const extractedData = firecrawlResponse2.data?.[0] || firecrawlResponse2;
     
     // 6. Response formatieren
     const response: ExtractPremiumResponse = {
-      title: firecrawlData.metadata?.title || firecrawlData.title,
-      content: firecrawlData.markdown || '',
-      markdown: firecrawlData.markdown,
-      html: firecrawlData.html,
-      screenshot: firecrawlData.screenshot,
+      title: extractedData.title || 'Kein Titel gefunden',
+      content: extractedData.content || extractedData.summary || '',
+      markdown: extractedData.content, // Der bereinigte Content ist bereits Markdown-ähnlich
       metadata: {
         sourceUrl: url,
         extractedAt: new Date().toISOString(),
