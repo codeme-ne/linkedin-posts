@@ -69,30 +69,158 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
   }
 
   return (
-    <div className={`fixed right-0 top-0 h-screen bg-white shadow-lg transition-transform duration-300 ${isCollapsed ? 'translate-x-[calc(100%-2rem)]' : 'translate-x-0'}`} style={{ width: '20rem' }}>
-      <div className="flex items-center relative">
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-2 hover:bg-gray-100 rounded-lg absolute left-0 z-30 bg-white"
-          style={{ boxShadow: isCollapsed ? '-4px 0 8px rgba(0,0,0,0.1)' : 'none' }}
-        >
-          <svg
-            className={`w-6 h-6 text-gray-600 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+    <>
+      {/* Mobile: Bottom drawer */}
+      <div className={`md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg transition-transform duration-300 z-50 ${isCollapsed ? 'translate-y-[calc(100%-3rem)]' : 'translate-y-0'}`} style={{ maxHeight: '50vh' }}>
+        <div className="flex items-center justify-between p-3 border-b">
+          <h2 className="text-lg font-bold text-gray-800">Gespeicherte Beiträge</h2>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-2 hover:bg-gray-100 rounded-lg"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-        <h2 className="text-xl font-bold text-gray-800 p-4 pl-12 relative z-10">Gespeicherte Beiträge</h2>
+            <svg
+              className={`w-5 h-5 text-gray-600 transition-transform duration-300 ${isCollapsed ? '' : 'rotate-180'}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            </svg>
+          </button>
+        </div>
+        <div className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: 'calc(50vh - 4rem)' }}>
+          {!isAuthenticated ? (
+            <div className="p-4 rounded-lg border border-gray-200 bg-white text-center space-y-2">
+              <p className="text-gray-700 text-sm">Bitte logge dich ein, um gespeicherte Beiträge zu sehen.</p>
+              {onLoginClick && (
+                <Button onClick={onLoginClick} variant="primary" size="sm">Login</Button>
+              )}
+            </div>
+          ) : savedPosts.length === 0 ? (
+            <div className="p-4 rounded-lg border border-gray-200 bg-white text-center">
+              <p className="text-gray-700 text-sm">Noch keine gespeicherten Beiträge.</p>
+            </div>
+          ) : savedPosts.map((post) => (
+            <div key={post.id} className="p-3 rounded-lg border border-gray-200 bg-white">
+              {editingPost?.id === post.id ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={editingPost.content}
+                    onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
+                    className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                    rows={3}
+                  />
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      onClick={() => setEditingPost(null)}
+                      variant="ghost"
+                      size="sm"
+                    >
+                      Abbrechen
+                    </Button>
+                    <SaveButton
+                      onClick={() => handleEdit(post.id, editingPost.content)}
+                      size="sm"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-gray-800 whitespace-pre-wrap text-sm">{post.content}</p>
+                  <div className="mt-3 flex justify-end">
+                    <div className="flex gap-1">
+                      <EditButton
+                        onClick={() => setEditingPost({ id: post.id, content: post.content })}
+                        size="sm"
+                        text=""
+                        title="Beitrag bearbeiten"
+                      />
+                      {post.platform === 'x' ? (
+                        <XShareButton
+                          tweetContent={post.content}
+                          size="sm"
+                          text=""
+                          title="Auf X teilen"
+                        />
+                      ) : post.platform === 'instagram' ? (
+                        <InstagramShareButton
+                          postContent={post.content}
+                          size="sm"
+                          text=""
+                          title="Auf Instagram teilen"
+                        />
+                      ) : (
+                        <LinkedInShareButton
+                          postContent={post.content}
+                          size="sm"
+                          text=""
+                          title="Auf LinkedIn teilen"
+                        />
+                      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <div>
+                            <DeleteButton
+                              size="sm"
+                              text=""
+                              title="Beitrag löschen"
+                            />
+                          </div>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Möchtest du diesen Beitrag wirklich löschen?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Diese Aktion kann nicht rückgängig gemacht werden.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Nein</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => handleDelete(post.id)}
+                            >
+                              Ja
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
-      
-      <div className="relative overflow-hidden">
-        {isCollapsed && (
-          <div className="absolute inset-0 bg-white z-20" style={{ left: '-2rem', width: 'calc(100% + 2rem)' }} />
-        )}
-        <div className="relative p-4 space-y-4 overflow-y-auto z-10" style={{ height: 'calc(100vh - 4rem)' }}>
+
+      {/* Desktop: Side panel */}
+      <div className={`hidden md:block fixed right-0 top-0 h-screen bg-white shadow-lg transition-transform duration-300 ${isCollapsed ? 'translate-x-[calc(100%-2rem)]' : 'translate-x-0'}`} style={{ width: '20rem' }}>
+        <div className="flex items-center relative">
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-2 hover:bg-gray-100 rounded-lg absolute left-0 z-30 bg-white"
+            style={{ boxShadow: isCollapsed ? '-4px 0 8px rgba(0,0,0,0.1)' : 'none' }}
+          >
+            <svg
+              className={`w-6 h-6 text-gray-600 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <h2 className="text-xl font-bold text-gray-800 p-4 pl-12 relative z-10">Gespeicherte Beiträge</h2>
+        </div>
+        
+        <div className="relative overflow-hidden">
+          {isCollapsed && (
+            <div className="absolute inset-0 bg-white z-20" style={{ left: '-2rem', width: 'calc(100% + 2rem)' }} />
+          )}
+          <div className="relative p-4 space-y-4 overflow-y-auto z-10" style={{ height: 'calc(100vh - 4rem)' }}>
           {!isAuthenticated ? (
             <div className="p-4 rounded-lg border border-gray-200 bg-white text-center space-y-2">
               <p className="text-gray-700">Bitte logge dich ein, um gespeicherte Beiträge zu sehen.</p>
@@ -200,5 +328,6 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
         </div>
       </div>
     </div>
+    </>
   )
 } 

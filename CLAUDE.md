@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+# Best Practices
+
+
+
 ## Project Overview
 
 Social Transformer - A React-based SaaS application that transforms newsletters and blog posts into platform-optimized social media content for LinkedIn, X (Twitter), and Instagram using Claude AI. Features a Stripe-powered Beta Lifetime Deal (49€) with subscription management.
