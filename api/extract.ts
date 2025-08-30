@@ -1,8 +1,7 @@
 // Serverless function: Extract main article content from a URL using Mozilla Readability
 // Runs on Node runtime (not Edge) because it uses JSDOM.
 
-import { JSDOM } from 'jsdom';
-import { Readability } from '@mozilla/readability';
+// Use dynamic imports inside the handler to reduce cold-start/import-time issues on some platforms
 
 export const config = {
   // Ensure a Node runtime for JSDOM support
@@ -20,6 +19,9 @@ type ExtractResponse = {
 };
 
 export default async function handler(req: Request) {
+  // Dynamically import heavy libs (helps with certain serverless runtimes)
+  const { JSDOM } = await import('jsdom');
+  const { Readability } = await import('@mozilla/readability');
   const cors = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -122,7 +124,7 @@ export default async function handler(req: Request) {
 
     try {
       html = await fetchDirect();
-      const dom = new JSDOM(html, { url, contentType: 'text/html' });
+  const dom = new JSDOM(html, { url, contentType: 'text/html' });
       const doc = dom.window.document;
   const reader = new Readability(doc, { keepClasses: true });
       article = reader.parse();
@@ -136,9 +138,9 @@ export default async function handler(req: Request) {
     // Step 2: If parsing failed or content too short, try rendered provider
     if (tooShort) {
       try {
-        html = await fetchRendered();
-        const dom = new JSDOM(html, { url, contentType: 'text/html' });
-        const doc = dom.window.document;
+  html = await fetchRendered();
+  const dom = new JSDOM(html, { url, contentType: 'text/html' });
+  const doc = dom.window.document;
   const reader = new Readability(doc, { keepClasses: true });
         article = reader.parse();
         siteName = (doc.querySelector('meta[property="og:site_name"]') as HTMLMetaElement | null)?.content ?? siteName ?? null;
