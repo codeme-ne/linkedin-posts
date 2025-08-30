@@ -64,6 +64,7 @@ function truncateContent(content: string): string {
     'einstellungen ändern',
     'präferenzen verwalten',
     'e-mail-einstellungen',
+    'mehr anzeigen',
     
     // German - Blog specific
     'weitere artikel',
