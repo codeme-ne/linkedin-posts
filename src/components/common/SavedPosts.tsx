@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { SavedPost, getSavedPosts, deleteSavedPost, updateSavedPost } from '../api/supabase'
-import { SaveButton, EditButton, DeleteButton, LinkedInShareButton, XShareButton, InstagramShareButton } from '../design-system/components/ActionButtons'
-import { Button } from '../design-system/components/Button'
+import { SavedPost, getSavedPosts, deleteSavedPost, updateSavedPost } from '@/api/supabase'
+import { SaveButton, EditButton, DeleteButton, LinkedInShareButton, XShareButton, InstagramShareButton } from '@/design-system/components/ActionButtons'
+import { Button } from '@/design-system/components/Button'
 import {
   AlertDialog,
   AlertDialogTrigger,

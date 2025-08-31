@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { useSubscription, UpgradeButton } from "@/components/UpgradeButton";
+import { useSubscription, UpgradeButton } from "@/components/common/UpgradeButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Lock } from "lucide-react";

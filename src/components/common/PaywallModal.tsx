@@ -1,4 +1,4 @@
-import { UpgradeButton } from "@/components/UpgradeButton";
+import { UpgradeButton } from "@/components/common/UpgradeButton";
 import {
   Dialog,
   DialogContent,

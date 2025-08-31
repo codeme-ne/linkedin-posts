@@ -42,3 +42,11 @@ pnpm-debug.log*
 
 # Screenshots
 screenshots/
+
+# Tools
+.serena
+.claude
+
+# Supabase
+supabase/.branches
+supabase/.temp

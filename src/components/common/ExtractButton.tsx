@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Download, Zap, AlertCircle } from 'lucide-react';
 import { extractFromUrl } from '@/api/extract';
 import { extractPremiumFromUrl, canUsePremiumExtraction } from '@/api/extract-premium';
-import { useSubscription } from '@/components/UpgradeButton';
+import { useSubscription } from '@/components/common/UpgradeButton';
 import { toast } from 'sonner';
 
 interface ExtractButtonProps {

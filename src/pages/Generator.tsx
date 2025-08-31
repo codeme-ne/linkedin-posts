@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { linkedInPostsFromNewsletter, xTweetsFromBlog, instagramPostsFromBlog } from "@/api/claude";
 import { savePost } from "@/api/supabase";
-import { SavedPosts } from "@/components/SavedPosts";
+import { SavedPosts } from "@/components/common/SavedPosts";
 import {
   createLinkedInDraftPost,
   createLinkedInShareUrl,
@@ -28,15 +28,15 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Settings as SettingsIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Auth } from "@/components/Auth";
+import { Auth } from "@/components/common/Auth";
 import { getSession, onAuthStateChange, signOut } from "@/api/supabase";
 import { Link } from "react-router-dom";
-import { PlatformSelector } from "@/components/PlatformSelector";
+import { PlatformSelector } from "@/components/common/PlatformSelector";
 import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";
 import { InstagramLogo } from "@/design-system/components/Icons/InstagramLogo";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
-import { PaywallModal } from "@/components/PaywallModal";
+import { PaywallModal } from "@/components/common/PaywallModal";
 import { extractFromUrl } from "@/api/extract";
 
 export default function Generator() {

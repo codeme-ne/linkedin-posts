@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Auth } from "@/components/Auth";
+import { Auth } from "@/components/common/Auth";
 import { getSession, onAuthStateChange } from "@/api/supabase";
 
 export default function SignUp() {

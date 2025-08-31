@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSession, onAuthStateChange } from "@/api/supabase";
-import ContentFlowGraphic from "@/components/ContentFlowGraphic";
-import HowItWorks from "@/components/HowItWorks";
+import ContentFlowGraphic from "@/components/graphics/ContentFlowGraphic";
+import HowItWorks from "@/components/graphics/HowItWorks";
 import { DecorativeBackground } from "@/components/landing/DecorativeBackground";
 import { HeaderBar } from "@/components/landing/HeaderBar";
 import { HeroSection } from "@/components/landing/HeroSection";

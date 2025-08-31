@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useSubscription } from '@/components/UpgradeButton';
+import { useSubscription } from '@/components/common/UpgradeButton';
 
 const STORAGE_KEY = 'usage';
 const DAILY_LIMIT = 2;

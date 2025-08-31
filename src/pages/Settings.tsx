@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSubscription, UpgradeButton } from "@/components/UpgradeButton";
+import { useSubscription, UpgradeButton } from "@/components/common/UpgradeButton";
 import { getSession, signOut } from "@/api/supabase";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { Button } from "@/components/ui/button";
