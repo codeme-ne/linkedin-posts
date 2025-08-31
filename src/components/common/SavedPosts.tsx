@@ -19,11 +19,12 @@ interface SavedPostsProps {
   refreshKey?: number;
   isAuthenticated?: boolean;
   onLoginClick?: () => void;
+  initialExpanded?: boolean;
 }
 
-export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginClick }: SavedPostsProps) {
+export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginClick, initialExpanded }: SavedPostsProps) {
   const [savedPosts, setSavedPosts] = useState<SavedPost[]>([])
-  const [isCollapsed, setIsCollapsed] = useState(true)
+  const [isCollapsed, setIsCollapsed] = useState(!initialExpanded)
   const [editingPost, setEditingPost] = useState<{ id: number, content: string } | null>(null)
 
   useEffect(() => {
@@ -37,6 +38,12 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
   useEffect(() => {
     onCollapse(isCollapsed)
   }, [isCollapsed, onCollapse])
+
+  useEffect(() => {
+    if (initialExpanded !== undefined) {
+      setIsCollapsed(!initialExpanded)
+    }
+  }, [initialExpanded])
 
   const loadSavedPosts = async () => {
     try {

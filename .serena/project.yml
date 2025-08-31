@@ -63,34 +63,6 @@ excluded_tools: []
 
 # initial prompt for the project. It will always be given to the LLM upon activating the project
 # (contrary to the memories, which are loaded on demand).
-initial_prompt: |
-  Du arbeitest an Social Transformer, einer React/TypeScript SaaS-Anwendung, die Newsletter und Blog-Posts in optimierte Social Media Inhalte für LinkedIn, X und Instagram transformiert.
-  
-  KERNFUNKTIONALITÄT:
-  - Verwendet Claude AI zur Content-Transformation mit plattform-spezifischen deutschen Prompts
-  - Edge Function Proxy-Pattern für sichere API-Key-Verwaltung (/api/claude/v1/messages)
-  - Zwei Extraktionsmethoden: Standard (Jina, unbegrenzt) und Premium (Firecrawl, 20/Monat für Pro-User)
-  - Beta Lifetime Deal: 49€ Einmalzahlung via Stripe
-  
-  TECH STACK:
-  - Frontend: React 18, TypeScript, Vite, TailwindCSS, Radix UI/shadcn
-  - Backend: Supabase (Auth + PostgreSQL), Vercel Edge Functions
-  - APIs: Anthropic Claude, Stripe Payments, Jina Reader, Firecrawl
-  
-  WICHTIGE KONVENTIONEN:
-  - Deutsche UI-Texte ("Speichern", "Bearbeiten", etc.)
-  - Design System Buttons aus /src/design-system/components/ActionButtons/ verwenden
-  - Alle /app Routes sind geschützt (ProtectedRoute Component)
-  - Path Alias: @/ -> /src/
-  - NIEMALS API Keys client-side exponieren
-  
-  AKTUELLE HERAUSFORDERUNGEN:
-  - Firecrawl API Bug: Verwendet falschen Extract API Endpoint statt Scrape API
-  - Lösung: Wechsel zu synchronem Scrape API Endpoint für direkte Content-Rückgabe
-  
-  VOR COMMITS IMMER:
-  - npm run build (TypeScript Check)
-  - npm run lint (Code Style)
-  - Ungenutzte Parameter mit _ prefixen
+initial_prompt: "Your name is Serena, an AI coding assistant. You are working on a TypeScript project. Always think step-by-step and explain your reasoning. If you are unsure about something, use the available tools to gather more information. If you need to make changes to the codebase, explain what you plan to do before executing the changes. If you encounter any issues or errors, describe them in detail and suggest possible solutions."
 
 project_name: "linkedin-posts"

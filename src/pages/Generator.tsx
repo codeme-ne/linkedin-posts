@@ -30,7 +30,7 @@ import { Loader2, Settings as SettingsIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Auth } from "@/components/common/Auth";
 import { getSession, onAuthStateChange, signOut } from "@/api/supabase";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { PlatformSelector } from "@/components/common/PlatformSelector";
 import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";
@@ -40,6 +40,7 @@ import { PaywallModal } from "@/components/common/PaywallModal";
 import { extractFromUrl } from "@/api/extract";
 
 export default function Generator() {
+  const [searchParams] = useSearchParams();
   const [inputText, setInputText] = useState("");
   const [postsByPlatform, setPostsByPlatform] = useState<Record<Platform, string[]>>({
     linkedin: [],
@@ -505,6 +506,7 @@ export default function Generator() {
         refreshKey={refreshKey}
         isAuthenticated={!!userEmail}
         onLoginClick={() => setLoginOpen(true)}
+        initialExpanded={searchParams.get('expand') === 'saved'}
       />
       
       <PaywallModal 

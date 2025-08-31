@@ -203,7 +203,7 @@ export default function Settings() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Link to="/app" className="block">
+              <Link to="/app?expand=saved" className="block">
                 <Button variant="outline" className="w-full justify-start gap-2">
                   <FileHeart className="h-4 w-4" />
                   Gespeicherte Posts

@@ -47,11 +47,6 @@ export function Auth() {
       <Button type="submit" disabled={loading || !email} className="w-full">
         {loading ? 'Sende Link…' : sent ? 'Link erneut senden' : 'Login-Link senden'}
       </Button>
-      {sent && (
-        <p className="text-sm text-green-600">
-          Wir haben einen Magic Link an <span className="font-medium">{email}</span> gesendet. Prüfe bitte dein Postfach und ggf. den Spam-Ordner.
-        </p>
-      )}
     </form>
   )
 }
