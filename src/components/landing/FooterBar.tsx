@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/Logo";
 
 export function FooterBar() {
   return (
@@ -7,14 +8,11 @@ export function FooterBar() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Brand Column */}
           <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold">Social Transformer</h3>
-            </div>
+            <Logo 
+              className="w-10 h-10 shadow-md rounded-xl" 
+              showText={true} 
+              textClassName="text-xl font-bold"
+            />
             <p className="text-sm text-muted-foreground max-w-md">
               Verwandle Newsletter in virale Social-Media-Posts mit präzise optimierten 
               Claude AI Prompts. Entwickelt und getestet mit Anthropic Console für 

@@ -9,20 +9,11 @@ Social Transformer - A React-based SaaS application that transforms newsletters 
 ## Development Commands
 
 ```bash
-# Install dependencies
-npm install
-
-# Run development server (port 5173)
-npm run dev
-
-# Build (TypeScript check + Vite build)
-npm run build
-
-# Linting
-npm run lint
-
-# Production preview
-npm run preview
+npm install        # Install dependencies
+npm run dev        # Development server (http://localhost:5173)
+npm run build      # TypeScript check + production build
+npm run lint       # ESLint code quality check
+npm run preview    # Preview production build
 ```
 
 ## Environment Setup
@@ -45,31 +36,24 @@ Create `.env` from `.env.example` with:
 ## Architecture
 
 ### Tech Stack
-- **Framework**: React 18 with TypeScript
-- **Build Tool**: Vite
+- **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: TailwindCSS with custom design system
-- **Database**: Supabase (PostgreSQL)
-- **AI Integration**: Anthropic Claude API via Edge Function proxy
-- **Routing**: React Router v6
-- **UI Components**: Radix UI primitives with custom shadcn/ui implementations
-- **Icons**: Lucide React for consistent iconography
+- **Database**: Supabase (PostgreSQL with RLS)
+- **AI**: Anthropic Claude API via Edge Function proxy
+- **Payments**: Stripe (webhooks + payment links)
 - **Deployment**: Vercel with Edge Functions
 
-### API Architecture
-The app uses an Edge Function proxy pattern for Claude API calls:
-1. Client calls `/api/claude/v1/messages` (configured in `/src/api/claude.ts`)
-2. Edge Function (`/api/claude/v1/messages.ts`) proxies to Anthropic API with server-side key
-3. Keeps API key secure, never exposed to client
-4. Production URL: `https://linkedin-posts-ashen.vercel.app/api/claude`
+### Key Routes
+- `/` - Landing page (public)
+- `/signup` - Authentication
+- `/app` - Post generator (protected via ProtectedRoute)
+- `/settings` - User settings (protected)
 
-### Routing Structure
-- `/` - Public landing page
-- `/signup` - Authentication page  
-- `/app` - Protected generator (requires auth via ProtectedRoute)
-- `/settings` - Protected settings page (requires auth via ProtectedRoute)
-- All undefined routes redirect to landing
-
-**Note**: For SPA routing on Vercel, `vercel.json` redirects all routes to `index.html`
+### API Endpoints (Edge Functions)
+- `/api/claude/v1/messages` - Claude AI proxy (keeps API key server-side)
+- `/api/extract` - Standard content extraction (Jina Reader, free)
+- `/api/extract-premium` - Premium extraction (Firecrawl, Pro only, 20/month limit)
+- `/api/stripe-webhook` - Payment processing
 
 ### Database Schema
 
@@ -108,18 +92,14 @@ The app uses an Edge Function proxy pattern for Claude API calls:
 - `metadata` (jsonb)
 - `created_at` (timestamptz)
 
-### Key Directories
-- `/src/api/` - API integrations (Claude, Supabase, LinkedIn)
-- `/src/components/` - React components (Auth, UI primitives)
-- `/src/design-system/` - Custom design system with tokens and action buttons
-- `/src/pages/` - Route pages (Landing, Generator, SignUp)
-- `/src/config/` - Configuration files (platforms)
-- `/api/` - Vercel Edge Functions (Claude proxy, webhooks)
-- `/supabase/` - Local Supabase config (`config.toml`)
-
-### Path Aliases
-- `@/` resolves to `/src/` directory
-- Configured in both `vite.config.ts` and `tsconfig.json`
+### Project Structure
+- `/api/` - Vercel Edge Functions (Claude proxy, webhooks, extraction)
+- `/src/api/` - Client-side API integrations
+- `/src/components/` - React components
+- `/src/design-system/` - Custom design tokens and action buttons
+- `/src/pages/` - Route components (Landing, Generator, SignUp)
+- `/src/config/` - Platform configurations
+- **Path Alias**: `@/` → `/src/`
 
 ## Content Generation Flow
 
@@ -168,78 +148,15 @@ Use test mode credentials during development:
 
 ## URL Content Extraction
 
-The app includes TWO extraction methods:
-
-### 1. Standard Extraction (Free for all users)
-**Endpoint**: `/api/extract` (Edge Function)
-- Uses Jina Reader API (`https://r.jina.ai/`)
-- Basic content extraction with footer truncation
+### Standard Extraction (Free)
+- **Endpoint**: `/api/extract` - Uses Jina Reader API
 - Unlimited usage for all users
-- Returns markdown-formatted content with title and plain text
 
-### 2. Premium Extraction (Pro users only)
-**Endpoint**: `/api/extract-premium` (Edge Function)
-- Uses Firecrawl API (requires `FIRECRAWL_API_KEY`)
+### Premium Extraction (Pro only)
+- **Endpoint**: `/api/extract-premium` - Uses Firecrawl Scrape API  
 - JavaScript rendering support for dynamic content
-- Better quality extraction for complex websites
-- Limited to 20 extractions per month per Pro user
+- Limited to 20 extractions/month per user
 - Tracks usage in `extraction_usage` table
-- Uses RPC function: `get_monthly_extraction_usage(user_id, 'firecrawl')`
-
-### ⚠️ CRITICAL BUG: Firecrawl API Integration Issue
-
-**Problem**: The `/api/extract-premium.ts` endpoint always returns "Kein Titel gefunden" because it's using the wrong Firecrawl API approach.
-
-**Root Cause**: The code uses Firecrawl's Extract API (`https://api.firecrawl.dev/v1/extract`) which is asynchronous and returns a job ID, not the extracted content. The code incorrectly tries to parse the response as if it contains `title`, `content`, and `summary` fields directly.
-
-**Firecrawl Extract API Response Structure**:
-```json
-{
-  "success": true,
-  "id": "job-id-here",
-  "invalidURLs": []
-}
-```
-
-**Solutions**:
-1. **Option 1: Use Firecrawl Scrape API** (Recommended for simplicity)
-   - Switch to `https://api.firecrawl.dev/v1/scrape` endpoint
-   - This is synchronous and returns content directly
-   - Response includes `markdown`, `content`, `metadata.title`
-
-2. **Option 2: Implement async job polling**
-   - After getting the job ID from Extract API
-   - Poll the job status endpoint until completion
-   - Then retrieve the extracted data
-
-**Quick Fix Example** (Option 1 - Scrape API):
-```javascript
-const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${firecrawlApiKey}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    url: url,
-    formats: ['markdown', 'html'],
-    onlyMainContent: true,
-    waitFor: 2000 // Wait for JS rendering
-  })
-});
-
-// Response will have: data.markdown, data.metadata.title, data.content
-```
-
-### UI Implementation (Generator.tsx)
-- Checkbox for "Premium-Extraktion" visible to ALL users (good for conversion)
-- Free users see "Pro" badge next to checkbox
-- When free users try to check it, they get the paywall modal
-- Pro users see usage count: "(X/20 übrig)" 
-- State managed with:
-  - `usePremiumExtraction` - boolean for checkbox state
-  - `extractionUsage` - object with used/limit/remaining counts
-- Located above the textarea input field
 
 ## Code Quality Checks
 
@@ -251,52 +168,21 @@ Before committing or deploying:
 
 **Note**: No testing framework is currently configured. Consider adding Vitest or Jest for unit tests.
 
-## Recent Development Activity
 
-The most recent commits focused on:
+## Database Notes
 
-- **Premium Extraction Feature**: Added Firecrawl API integration for Pro users
-- **Usage Tracking**: Implemented 20/month limit with database tracking
-- **UI Enhancement**: Added premium extraction checkbox with paywall for free users
-- **Database Setup**: Created `extraction_usage` table and tracking functions
-- **SPA Routing Fix**: Added `vercel.json` for proper client-side routing on Vercel
-- **Subscription Check Optimization**: Fixed timeout bug with useRef, added database indexes for performance
+- All migrations have been applied and `/supabase/migrations/` was removed
+- RLS policies are enabled for all tables
+- `get_monthly_extraction_usage` RPC function tracks premium usage
 
-## Database Setup Notes
-
-**IMPORTANT**: All migrations have been applied. The `/supabase/migrations/` folder was removed after successful deployment.
-
-The database schema is now live in Supabase with:
-
-- `extraction_usage` table for tracking premium extraction usage
-- `extraction_limit` and `extraction_reset_at` columns in subscriptions table
-- `get_monthly_extraction_usage` RPC function for usage checks
-- RLS policies enabled for security
-
-When adding multiple columns to a PostgreSQL table, each column needs its own `ADD COLUMN` clause:
-
+**PostgreSQL Tip**: When adding multiple columns, each needs its own `ADD COLUMN`:
 ```sql
--- Correct syntax
 ALTER TABLE public.subscriptions
   ADD COLUMN IF NOT EXISTS column1 text,
-  ADD COLUMN IF NOT EXISTS column2 text,
-  ADD COLUMN IF NOT EXISTS column3 text DEFAULT 'value';
-
--- Incorrect syntax (will cause error)
-ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS
-  column1 text,
-  column2 text,
-  column3 text DEFAULT 'value';
+  ADD COLUMN IF NOT EXISTS column2 text;
 ```
 
 ## Common Debugging Scenarios
-
-### Premium Extraction Returns "Kein Titel gefunden"
-- Check if `FIRECRAWL_API_KEY` is set in Vercel environment variables
-- Verify the Firecrawl API implementation (see critical bug section above)
-- Check browser console for API response structure
-- Verify user has active subscription with `status: 'active'`
-- Check extraction usage limits in database
 
 ### Subscription Not Recognized
 - Verify Stripe webhook is processing payments correctly
@@ -306,6 +192,6 @@ ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS
 
 ### Content Not Extracting
 - For standard extraction: Check if Jina API is accessible
-- For premium: Verify Firecrawl API key and endpoint
+- For premium: Verify Firecrawl API key is set in environment variables
 - Check CORS headers in Edge Function responses
 - Verify authentication token is being passed correctly

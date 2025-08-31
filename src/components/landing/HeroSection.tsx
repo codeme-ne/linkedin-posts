@@ -6,10 +6,9 @@ import { useTypewriter } from "@/hooks/useTypewriter";
 type HeroSectionProps = {
   isVisible: boolean;
   onSignup: () => void;
-  onDemo: () => void;
 };
 
-export function HeroSection({ isVisible, onSignup, onDemo }: HeroSectionProps) {
+export function HeroSection({ isVisible, onSignup }: HeroSectionProps) {
   const phrases = useMemo(() => ([
     { text: "LinkedIn Post", color: "text-[#0a66c2]" },
     { text: "Twitter Thread", color: "text-black dark:text-white" },
@@ -43,14 +42,6 @@ export function HeroSection({ isVisible, onSignup, onDemo }: HeroSectionProps) {
           onClick={onSignup}
         >
           Kostenlos testen →
-        </Button>
-        <Button 
-          size="lg" 
-          variant="outline" 
-          className="w-full sm:w-auto font-semibold hover:scale-105 transition-all duration-300 px-6 md:px-8 py-5 md:py-6 text-sm md:text-base" 
-          onClick={onDemo}
-        >
-          Live-Demo ansehen
         </Button>
       </div>
     </div>

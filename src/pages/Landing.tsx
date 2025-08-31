@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSession, onAuthStateChange } from "@/api/supabase";
-import ContentFlowGraphic from "@/components/graphics/ContentFlowGraphic";
 import HowItWorks from "@/components/graphics/HowItWorks";
 import { DecorativeBackground } from "@/components/landing/DecorativeBackground";
 import { HeaderBar } from "@/components/landing/HeaderBar";
@@ -51,15 +50,15 @@ export default function Landing() {
           <div className="max-w-6xl w-full grid lg:grid-cols-2 items-start gap-10 lg:gap-16 mx-auto">
             {/* Left column: Marketing content with entrance animations */}
             <div className="space-y-8 flex flex-col justify-start">
-      <HeroSection isVisible={isVisible} onSignup={() => navigate("/signup")} onDemo={() => navigate("/app")} />
+      <HeroSection isVisible={isVisible} onSignup={() => navigate("/signup")} />
             </div>
 
-            {/* Right column: Content flow graphic & process */}
+            {/* Right column: Placeholder for Video/GIF */}
             <div className="flex flex-col justify-start">
-              {/* Content flow graphic next to hero on desktop; above features on mobile */}
               <div className={`self-start mt-6 lg:mt-0 transition-all duration-700 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} order-first lg:order-none`}>
-                <div className="lg:scale-110 transform-gpu">
-                  <ContentFlowGraphic />
+                {/* TODO: Video/GIF hier einfügen */}
+                <div className="w-full h-[400px] bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl flex items-center justify-center">
+                  <p className="text-muted-foreground">Video/GIF Platzhalter</p>
                 </div>
               </div>
             </div>
