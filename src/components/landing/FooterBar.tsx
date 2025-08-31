@@ -12,16 +12,24 @@ export function FooterBar() {
     }
   };
 
+  const navigateToTop = (path: string) => {
+    navigate(path);
+    // Nach Navigation zum Seitenanfang scrollen
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
-    <footer className="relative py-16 md:py-20 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
+    <footer className="relative py-12 sm:py-16 md:py-20 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
       <div className="relative max-w-6xl mx-auto px-4 z-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-8 sm:mb-12">
           {/* Brand Column */}
-          <div className="md:col-span-2 space-y-4">
+          <div className="sm:col-span-2 md:col-span-2 space-y-4">
             <Logo 
-              className="w-10 h-10 shadow-md rounded-xl" 
+              className="w-8 h-8 sm:w-10 sm:h-10 shadow-md rounded-xl" 
               showText={true} 
-              textClassName="text-xl font-bold"
+              textClassName="text-lg sm:text-xl font-bold"
             />
             <p className="text-sm text-muted-foreground max-w-md">
               Verwandle Newsletter in virale Social-Media-Posts mit präzise optimierten 
@@ -97,7 +105,7 @@ export function FooterBar() {
               </li>
               <li>
                 <button 
-                  onClick={() => navigate('/privacy')}
+                  onClick={() => navigateToTop('/privacy')}
                   className="text-sm hover:text-primary transition-colors text-left block w-full cursor-pointer relative z-20"
                 >
                   Datenschutz
@@ -105,7 +113,7 @@ export function FooterBar() {
               </li>
               <li>
                 <button 
-                  onClick={() => navigate('/terms')}
+                  onClick={() => navigateToTop('/terms')}
                   className="text-sm hover:text-primary transition-colors text-left block w-full cursor-pointer relative z-20"
                 >
                   AGB
@@ -113,7 +121,7 @@ export function FooterBar() {
               </li>
               <li>
                 <button 
-                  onClick={() => navigate('/imprint')}
+                  onClick={() => navigateToTop('/imprint')}
                   className="text-sm hover:text-primary transition-colors text-left block w-full cursor-pointer relative z-20"
                 >
                   Impressum

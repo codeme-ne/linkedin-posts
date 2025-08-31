@@ -10,9 +10,9 @@ export function HeaderBar({ isVisible, onSignup }: HeaderBarProps) {
   return (
     <header className={`flex justify-between items-center py-6 transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
       <Logo 
-        className="w-10 h-10 shadow-lg rounded-xl" 
+        className="w-8 h-8 sm:w-10 sm:h-10 shadow-lg rounded-xl" 
         showText={true} 
-        textClassName="font-bold text-2xl tracking-tight"
+        textClassName="font-bold text-lg sm:text-2xl tracking-tight"
       />
       <Button 
         variant="outline" 

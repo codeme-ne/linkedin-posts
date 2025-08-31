@@ -1,59 +1,79 @@
 import { ReactNode } from "react";
-import { useSubscription, UpgradeButton } from "@/components/common/UpgradeButton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useSubscription } from "@/components/common/UpgradeButton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Lock, Check, Loader2, Sparkles } from "lucide-react";
 
 interface PaywallGuardProps {
   children: ReactNode;
   feature?: string;
 }
 
-export function PaywallGuard({ children }: PaywallGuardProps) {
+export function PaywallGuard({ children, feature = 'This feature' }: PaywallGuardProps) {
   const { subscription, loading } = useSubscription();
+  const navigate = useNavigate();
+  const subscriptionStatus = subscription?.status;
+
+  const handleUpgrade = () => {
+    const paymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK;
+    if (paymentLink) {
+      window.open(paymentLink, '_blank');
+    } else {
+      console.error('Stripe payment link not configured');
+    }
+  };
 
   if (loading) {
+    return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+
+  if (subscriptionStatus !== 'active') {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <Card className="max-w-md mx-auto mt-8">
+        <CardHeader className="text-center">
+          <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <CardTitle>Beta Lifetime Deal - Einmalig 99€</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-center text-muted-foreground">
+            {feature} ist ein Pro-Feature. Upgraden Sie jetzt und erhalten Sie lebenslangen Zugang!
+          </p>
+          <ul className="space-y-2">
+            <li className="flex items-center text-sm">
+              <Check className="h-4 w-4 text-green-500 mr-2" />
+              <span>Unbegrenzte Posts</span>
+            </li>
+            <li className="flex items-center text-sm">
+              <Check className="h-4 w-4 text-green-500 mr-2" />
+              <span>Posts speichern & verwalten</span>
+            </li>
+            <li className="flex items-center text-sm">
+              <Check className="h-4 w-4 text-green-500 mr-2" />
+              <span>Direct-Posting</span>
+            </li>
+            <li className="flex items-center text-sm">
+              <Check className="h-4 w-4 text-green-500 mr-2" />
+              <span>Premium URL-Extraktion</span>
+            </li>
+            <li className="flex items-center text-sm">
+              <Check className="h-4 w-4 text-green-500 mr-2" />
+              <span>Alle zukünftigen Features</span>
+            </li>
+          </ul>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate('/app')} className="flex-1">
+              Zurück
+            </Button>
+            <Button onClick={handleUpgrade} className="flex-1">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Jetzt upgraden
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  // User has active subscription
-  if (subscription?.is_active) {
-    // Paid user - just show the content
-    return <>{children}</>;
-  }
-
-  // Free user - show upgrade prompt
-  return (
-    <Card className="max-w-2xl mx-auto mt-8">
-      <CardHeader>
-        <div className="flex items-center gap-2 mb-2">
-          <Lock className="h-5 w-5 text-muted-foreground" />
-          <Badge variant="secondary">Pro Feature</Badge>
-        </div>
-        <CardTitle>Beta Lifetime Deal - Einmalig 49€</CardTitle>
-        <CardDescription>
-          Sichere dir lebenslangen Zugang zur Social Transformer App und transformiere unbegrenzt viele Newsletter in perfekte Social Media Posts.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">Was du mit Pro bekommst:</p>
-          <ul className="text-sm space-y-1 ml-4">
-            <li>✓ Unbegrenzte Transformationen</li>
-            <li>✓ Alle Plattformen (LinkedIn, X, Instagram)</li>
-            <li>✓ Posts speichern und verwalten</li>
-            <li>✓ Direkt auf Plattformen teilen</li>
-          </ul>
-        </div>
-        <UpgradeButton />
-        <p className="text-xs text-muted-foreground text-center">
-          Einmalzahlung • Lifetime Access • Alle zukünftigen Updates inklusive
-        </p>
-      </CardContent>
-    </Card>
-  );
+  return <>{children}</>;
 }

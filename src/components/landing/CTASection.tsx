@@ -2,13 +2,13 @@ import { Button } from "@/components/ui/button";
 
 export function CTASection() {
   return (
-    <section className="py-16 md:py-24 relative overflow-hidden bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5">
+    <section className="py-12 sm:py-16 md:py-24 relative overflow-hidden bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5">
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-primary/10 to-accent/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[600px] md:w-[800px] h-[400px] sm:h-[600px] md:h-[800px] bg-gradient-to-r from-primary/10 to-accent/10 rounded-full blur-3xl animate-pulse" />
       </div>
       
       <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
-        <h2 className="text-3xl md:text-5xl font-bold mb-4 md:mb-6">
+        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-3 sm:mb-4 md:mb-6">
           Bereit, deine Newsletter-Reichweite zu{" "}
           <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             vervielfachen
@@ -16,14 +16,14 @@ export function CTASection() {
           ?
         </h2>
         
-        <p className="text-lg md:text-xl text-muted-foreground mb-8 md:mb-10 max-w-2xl mx-auto">
+        <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 md:mb-10 max-w-2xl mx-auto">
           Während andere noch kopieren und anpassen, transformierst du bereits deinen nächsten Newsletter in viralen Social-Media-Content.
         </p>
         
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6 sm:mb-8">
           <Button 
             size="lg"
-            className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-105 transition-all duration-300 px-8 py-6 text-base md:text-lg"
+            className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-105 transition-all duration-300 px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base md:text-lg"
             onClick={() => window.location.href = '/signup'}
           >
             Starte jetzt kostenlos →
@@ -32,7 +32,7 @@ export function CTASection() {
           <Button 
             size="lg"
             variant="outline"
-            className="w-full sm:w-auto font-semibold hover:scale-105 transition-all duration-300 px-8 py-6 text-base md:text-lg"
+            className="w-full sm:w-auto font-semibold hover:scale-105 transition-all duration-300 px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base md:text-lg"
             onClick={() => window.open('https://buy.stripe.com/9B628qejY6rtfPi8Fl0x200', '_blank')}
           >
             Direkt Lifetime sichern

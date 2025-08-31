@@ -79,7 +79,7 @@ export default function Terms() {
           <section>
             <h2 className="text-2xl font-semibold mt-8 mb-4">§ 5 Lifetime Deal</h2>
             <p className="mb-4">
-              (1) Der "Lifetime Deal" gewährt dem Kunden gegen eine einmalige Zahlung von 49 € ein zeitlich 
+              (1) Der "Lifetime Deal" gewährt dem Kunden gegen eine einmalige Zahlung von 99 € ein zeitlich 
               unbegrenztes Nutzungsrecht an der Plattform.
             </p>
             <p className="mb-4">

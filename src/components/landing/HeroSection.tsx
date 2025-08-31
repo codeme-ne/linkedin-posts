@@ -22,7 +22,7 @@ export function HeroSection({ isVisible, onSignup }: HeroSectionProps) {
       <Badge variant="outline" className="px-3 py-1 text-sm font-medium rounded-full border-primary/30 bg-primary/5 text-primary animate-pulse">
         Powered by Claude AI
       </Badge>
-      <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight">
         <span className="text-foreground">Mach aus jedem Newsletter einen</span>
         <br />
         <span className={`${phrases[currentIndex].color} transition-colors duration-300`}>
@@ -30,7 +30,7 @@ export function HeroSection({ isVisible, onSignup }: HeroSectionProps) {
           <span className="animate-pulse">|</span>
         </span>
       </h1>
-      <p className="text-lg md:text-xl leading-relaxed text-muted-foreground max-w-2xl">
+      <p className="text-base sm:text-lg md:text-xl leading-relaxed text-muted-foreground max-w-2xl">
         <span className="font-semibold">15 Minuten sparen pro Post.</span> Kopiere deinen Newsletter rein oder gib eine URL ein, 
         erhalte perfekt formatierte Social-Media-Beiträge raus. 
         <span className="text-primary font-medium"> Prompts optimiert mit Anthropic Console.</span>
@@ -38,7 +38,7 @@ export function HeroSection({ isVisible, onSignup }: HeroSectionProps) {
       <div className="flex flex-col sm:flex-row gap-4 pt-4 md:pt-8">
         <Button 
           size="lg" 
-          className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-105 transition-all duration-300 px-6 md:px-8 py-5 md:py-6 text-sm md:text-base" 
+          className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-105 transition-all duration-300 px-6 py-5 text-sm sm:text-base" 
           onClick={onSignup}
         >
           Kostenlos testen →

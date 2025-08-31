@@ -1,94 +1,110 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, ButtonHTMLAttributes, ReactNode } from "react";
 import { getSession } from "@/api/supabase";
 import { supabase } from "@/api/supabase";
+import { cn } from "@/lib/utils";
+import { Check, Loader2, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 interface SubscriptionStatus {
   status: 'free' | 'active' | 'cancelled';
   is_active: boolean;
 }
 
-export function UpgradeButton() {
-  const [user, setUser] = useState<any>(null);
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+interface UpgradeButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  children?: ReactNode;
+  feature?: string;
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  size?: "default" | "sm" | "lg" | "icon";
+  showBadge?: boolean;
+}
 
-  useEffect(() => {
-    checkSubscriptionStatus();
-  }, []);
+export function UpgradeButton({
+  children,
+  feature = 'Pro',
+  className,
+  variant = 'default',
+  size = 'default',
+  showBadge = true,
+  onClick,
+  ...props
+}: UpgradeButtonProps) {
+  const { subscription, loading } = useSubscription();
+  const subscriptionStatus = subscription?.status;
 
-  const checkSubscriptionStatus = async () => {
-    try {
-      const { data: { session } } = await getSession();
-      if (!session?.user) {
-        setLoading(false);
-        return;
-      }
-      
-      setUser(session.user);
-
-      // Get subscription status from Supabase
-      const { data } = await supabase
-        .from('subscriptions')
-        .select('status')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (data && data.status === 'active') {
-        setSubscription({
-          status: 'active',
-          is_active: true
-        });
-      } else {
-        // No subscription or status !== 'active' = free user
-        setSubscription({
-          status: 'free',
-          is_active: false
-        });
-      }
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-    } finally {
-      setLoading(false);
+  const handleClick = () => {
+    const paymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK;
+    if (paymentLink) {
+      window.open(paymentLink, '_blank');
+      // Re-check subscription after a delay
+      setTimeout(() => {
+        checkSubscription();
+      }, 5000);
+    } else {
+      console.error('Stripe payment link not configured');
+      toast.error('Zahlungslink nicht konfiguriert');
+    }
+    if (onClick) {
+      const syntheticEvent = {} as React.MouseEvent<HTMLButtonElement>;
+      onClick(syntheticEvent);
     }
   };
 
-  const handleUpgrade = () => {
-    if (!user) return;
-    
-    // Stripe Payment Link for Beta Lifetime Deal
-    const stripePaymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK || 
-      'https://buy.stripe.com/9B628qejY6rtfPi8Fl0x200';
-    
-    // Add user ID and email as metadata for webhook processing
-    const url = `${stripePaymentLink}?client_reference_id=${user.id}&prefilled_email=${encodeURIComponent(user.email)}`;
-    
-    window.open(url, '_blank');
+  const checkSubscription = () => {
+    // This will trigger a re-render when the subscription status changes
+    window.location.reload();
   };
 
+  // Show loading state
   if (loading) {
-    return <Button disabled>Lade...</Button>;
-  }
-
-  // Show different UI based on subscription status
-  if (subscription?.is_active) {
     return (
-      <div className="flex items-center gap-2">
-        <Badge variant="default">Pro</Badge>
-      </div>
+      <Button 
+        variant={variant} 
+        size={size} 
+        className={cn('relative', className)}
+        disabled
+        {...props}
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
+      </Button>
     );
   }
 
-  // Free user - show upgrade button
+  // User has active subscription - show children or default content
+  if (subscriptionStatus === 'active') {
+    return children ? (
+      <>{children}</>
+    ) : (
+      <Button 
+        variant="outline" 
+        size={size} 
+        className={cn('relative', className)}
+        disabled
+        {...props}
+      >
+        <Check className="h-4 w-4 mr-2" />
+        Pro aktiv
+      </Button>
+    );
+  }
+
+  // User needs to upgrade
   return (
-    <Button 
-      onClick={handleUpgrade}
-      className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+    <Button
+      variant={variant}
+      size={size}
+      className={cn('relative', className)}
+      onClick={handleClick}
+      {...props}
     >
-      Beta Lifetime Deal - nur 49€
+      {showBadge && (
+        <Badge className="absolute -top-2 -right-2 px-1.5 py-0.5 text-xs">
+          {feature}
+        </Badge>
+      )}
+      <Sparkles className="h-4 w-4 mr-2" />
+      Beta Lifetime Deal - nur 99€
     </Button>
   );
 }

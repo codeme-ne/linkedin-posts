@@ -21,8 +21,8 @@ const HowItWorks: React.FC = () => {
     },
     {
       number: 4,
-      title: "Kopieren & teilen",
-      description: "Ein Klick zum Kopieren, fertig zum Posten - spare 15 Minuten pro Newsletter"
+      title: "Direct-Posting oder Kopieren",
+      description: "Poste direkt zu LinkedIn, X & Instagram oder kopiere zum manuellen Teilen - spare 15 Minuten pro Newsletter"
     }
   ];
 

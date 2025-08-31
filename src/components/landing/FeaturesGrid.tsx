@@ -15,8 +15,8 @@ type FeaturesGridProps = {
 
 export function FeaturesGrid({ isVisible, variant = "desktop" }: FeaturesGridProps) {
   const containerClass = variant === "desktop"
-    ? `hidden lg:grid md:grid-cols-3 gap-4 transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`
-    : `grid md:grid-cols-2 gap-4 lg:hidden transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`;
+    ? `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`
+    : `grid grid-cols-1 sm:grid-cols-2 lg:hidden gap-4 transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`;
 
   return (
     <div className={containerClass}>
