@@ -27,7 +27,7 @@ const HowItWorks: React.FC = () => {
   ];
 
   return (
-    <section className="py-16 md:py-24 relative overflow-hidden">
+    <section id="how-it-works" className="py-16 md:py-24 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900" />
       <div className="relative z-10 max-w-6xl mx-auto px-4">
         <div className="text-center mb-12 md:mb-16">

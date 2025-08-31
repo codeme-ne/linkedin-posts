@@ -1,10 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
+import { useNavigate } from "react-router-dom";
 
 export function FooterBar() {
+  const navigate = useNavigate();
+  
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
-    <footer className="py-16 md:py-20 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
-      <div className="max-w-6xl mx-auto px-4">
+    <footer className="relative py-16 md:py-20 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
+      <div className="relative max-w-6xl mx-auto px-4 z-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Brand Column */}
           <div className="md:col-span-2 space-y-4">
@@ -21,15 +31,16 @@ export function FooterBar() {
             <div className="flex gap-3">
               <Button
                 size="sm"
-                className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white"
-                onClick={() => window.location.href = '/signup'}
+                className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white relative z-20"
+                onClick={() => navigate('/signup')}
               >
                 Jetzt starten →
               </Button>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => window.open('https://buy.stripe.com/9B628qejY6rtfPi8Fl0x200', '_blank')}
+                className="relative z-20"
+                onClick={() => window.open(import.meta.env.VITE_STRIPE_PAYMENT_LINK, '_blank')}
               >
                 Lifetime Deal
               </Button>
@@ -41,24 +52,36 @@ export function FooterBar() {
             <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Produkt</h4>
             <ul className="space-y-2">
               <li>
-                <a href="/app" className="text-sm hover:text-primary transition-colors">
+                <button 
+                  onClick={() => navigate('/app')}
+                  className="text-sm hover:text-primary transition-colors text-left block w-full cursor-pointer relative z-20"
+                >
                   Generator ausprobieren
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#pricing" className="text-sm hover:text-primary transition-colors">
+                <button 
+                  onClick={() => scrollToSection('pricing')}
+                  className="text-sm hover:text-primary transition-colors text-left block w-full cursor-pointer relative z-20"
+                >
                   Preise
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#features" className="text-sm hover:text-primary transition-colors">
+                <button 
+                  onClick={() => scrollToSection('features')}
+                  className="text-sm hover:text-primary transition-colors text-left block w-full cursor-pointer relative z-20"
+                >
                   Features
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#how-it-works" className="text-sm hover:text-primary transition-colors">
+                <button 
+                  onClick={() => scrollToSection('how-it-works')}
+                  className="text-sm hover:text-primary transition-colors text-left block w-full cursor-pointer relative z-20"
+                >
                   So funktioniert's
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -68,24 +91,33 @@ export function FooterBar() {
             <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Support</h4>
             <ul className="space-y-2">
               <li>
-                <a href="mailto:support@socialtransformer.de" className="text-sm hover:text-primary transition-colors">
+                <a href="mailto:lukas@zangerlcoachingdynamics.com" className="text-sm hover:text-primary transition-colors relative z-20 inline-block">
                   Kontakt
                 </a>
               </li>
               <li>
-                <a href="/privacy" className="text-sm hover:text-primary transition-colors">
+                <button 
+                  onClick={() => navigate('/privacy')}
+                  className="text-sm hover:text-primary transition-colors text-left block w-full cursor-pointer relative z-20"
+                >
                   Datenschutz
-                </a>
+                </button>
               </li>
               <li>
-                <a href="/terms" className="text-sm hover:text-primary transition-colors">
+                <button 
+                  onClick={() => navigate('/terms')}
+                  className="text-sm hover:text-primary transition-colors text-left block w-full cursor-pointer relative z-20"
+                >
                   AGB
-                </a>
+                </button>
               </li>
               <li>
-                <a href="/imprint" className="text-sm hover:text-primary transition-colors">
+                <button 
+                  onClick={() => navigate('/imprint')}
+                  className="text-sm hover:text-primary transition-colors text-left block w-full cursor-pointer relative z-20"
+                >
                   Impressum
-                </a>
+                </button>
               </li>
             </ul>
           </div>

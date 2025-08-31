@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 export function PricingSection() {
   return (
-    <section className="py-16 md:py-24 relative overflow-hidden">
+    <section id="pricing" className="py-16 md:py-24 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-to-r from-primary/5 to-accent/5 rounded-full blur-3xl" />
       </div>

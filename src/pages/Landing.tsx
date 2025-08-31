@@ -64,7 +64,7 @@ export default function Landing() {
             </div>
           </div>
           {/* Features grid below the hero+graphic section */}
-          <div className="max-w-6xl w-full mx-auto mt-10 lg:mt-14">
+          <div id="features" className="max-w-6xl w-full mx-auto mt-10 lg:mt-14">
             <div className="lg:hidden">
               <FeaturesGrid isVisible={isVisible} variant="mobile" />
             </div>
