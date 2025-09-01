@@ -135,6 +135,36 @@ npm run preview    # Preview production build
 npm run lint       # Run ESLint
 ```
 
+## Git Branches & Deployment Strategy
+
+### Branch Structure
+
+- **`playground`** - 🧪 **Playground/Development Branch**
+  - Contains experimental features (Newsletter Generator, etc.)
+  - Used for testing new functionality
+  - Deploys to Preview URLs on Vercel
+  - Safe to break/experiment
+
+- **`stable-posts-only`** - 🎯 **Production Branch**
+  - Contains only stable LinkedIn/X/Instagram post generation features
+  - Production deployment on Vercel
+  - Based on commit `df2c8f7` (before Newsletter Generator)
+  - User-facing stable version
+
+### Deployment Workflow
+
+1. **Experiment** on `playground` branch
+2. **Test** features via Preview deployments
+3. **Cherry-pick** stable features to `stable-posts-only`
+4. **Production** automatically deploys from `stable-posts-only`
+
+### Branch Commands
+
+```bash
+git checkout playground          # Switch to playground
+git checkout stable-posts-only   # Switch to production-ready code
+```
+
 ## License
 
 Private repository - All rights reserved

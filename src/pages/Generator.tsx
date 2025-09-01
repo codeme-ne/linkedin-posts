@@ -1,20 +1,12 @@
 import { useEffect, useState } from "react";
 import { linkedInPostsFromNewsletter, xTweetsFromBlog, instagramPostsFromBlog } from "@/api/claude";
 import { savePost } from "@/api/supabase";
-import { SavedPosts } from "@/components/common/SavedPosts";
-import {
-  createLinkedInDraftPost,
-  createLinkedInShareUrl,
-  LinkedInAPIError,
-} from "@/api/linkedin";
 import { Button } from "@/components/ui/button";
 import { Button as DSButton } from "@/design-system/components/Button";
 import {
   SaveButton,
   EditButton,
   LinkedInShareButton,
-  XShareButton,
-  InstagramShareButton,
 } from "@/design-system/components/ActionButtons";
 import {
   Card,
@@ -39,184 +31,55 @@ import { InstagramLogo } from "@/design-system/components/Icons/InstagramLogo";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { PaywallModal } from "@/components/common/PaywallModal";
 import { extractFromUrl } from "@/api/extract";
+import { PostSkeleton } from "@/components/common/PostSkeleton";
 
 export default function Generator() {
-  const [searchParams] = useSearchParams();
   const [inputText, setInputText] = useState("");
-  const [postsByPlatform, setPostsByPlatform] = useState<Record<Platform, string[]>>({
-    linkedin: [],
-    x: [],
-    instagram: [],
-    newsletter: [],
-  });
+  const [posts, setPosts] = useState<Array<{ platform: Platform; content: string; description?: string; title?: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [editing, setEditing] = useState<{ platform: Platform; index: number } | null>(null);
-  const [editedContent, setEditedContent] = useState("");
-  const { toast } = useToast();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [loginOpen, setLoginOpen] = useState(false);
-  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(["linkedin"]);
+  const [currentPlatformGenerating, setCurrentPlatformGenerating] = useState<Platform | null>(null);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [showAuth, setShowAuth] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
-  const { canTransform, incrementUsage, getRemainingCount, isPro } = useUsageTracking();
-  // Track sidebar collapsed state to adjust content padding
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { toast } = useToast();
+  const { getRemainingCount } = useUsageTracking();
+  const [searchParams] = useSearchParams();
+  
+  // URL extraction state
   const [sourceUrl, setSourceUrl] = useState("");
-  const [usePremiumExtraction, setUsePremiumExtraction] = useState(false);
-  const [extractionUsage, setExtractionUsage] = useState<{ used: number; limit: number; remaining: number } | null>(null);
-  // Progress tracking states
-  const [generationProgress, setGenerationProgress] = useState(0); // 0-100
-  const [currentPlatformGenerating, setCurrentPlatformGenerating] = useState<string>("");
-  const [totalPlatforms, setTotalPlatforms] = useState(0);
-  const [completedPlatforms, setCompletedPlatforms] = useState(0);
+  const [isExtracting, setIsExtracting] = useState(false);
 
   useEffect(() => {
-    getSession().then(({ data }) => {
-      setUserEmail(data.session?.user.email ?? null);
+    getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
     });
-    const { data: sub } = onAuthStateChange((_event, session) => {
-      setUserEmail(session?.user.email ?? null);
-      if (session) setLoginOpen(false);
-    });
-    return () => {
-      sub?.subscription?.unsubscribe?.();
-    };
-  }, []);
 
-  const handleRemix = async () => {
-    // Check usage limit
-    if (!canTransform()) {
-      setShowPaywall(true);
-      return;
-    }
-    
-    // Initialize progress tracking
-    setIsLoading(true);
-    setGenerationProgress(0);
-    setCompletedPlatforms(0);
-    setCurrentPlatformGenerating("");
-    setTotalPlatforms(selectedPlatforms.length);
-    
-    try {
-      const next: Record<Platform, string[]> = { linkedin: [], x: [], instagram: [], newsletter: [] };
-      const progressStep = 100 / selectedPlatforms.length;
-      
-      // Process each platform sequentially with progress updates
-      for (let i = 0; i < selectedPlatforms.length; i++) {
-        const platform = selectedPlatforms[i];
-        setCurrentPlatformGenerating(PLATFORM_LABEL[platform]);
-        
-        if (platform === "linkedin") {
-          next.linkedin = await linkedInPostsFromNewsletter(inputText);
-        } else if (platform === "x") {
-          // Nutze den exakten X-Prompt über Claude
-          next.x = await xTweetsFromBlog(inputText);
-        } else if (platform === "instagram") {
-          // Nutze den speziellen Instagram-Prompt
-          next.instagram = await instagramPostsFromBlog(inputText);
-        }
-        
-        // Update progress
-        const newCompleted = i + 1;
-        setCompletedPlatforms(newCompleted);
-        setGenerationProgress(newCompleted * progressStep);
-      }
-      
-      setPostsByPlatform(next);
-      const names = selectedPlatforms.join(", ");
-      toast({ title: "Beiträge erstellt!", description: `Generiert für: ${names}` });
-      
-      // Reset progress states
-      setCurrentPlatformGenerating("");
-      
-      // Increment usage after successful transformation
-      incrementUsage();
-    } catch (error) {
-      console.error("Remix error:", error);
-      toast({
-        title: "Fehler beim Erstellen",
-        description: "LinkedIn-Beiträge konnten nicht erstellt werden.",
-        variant: "destructive",
-      });
-      // Reset progress states on error
-      setGenerationProgress(0);
-      setCompletedPlatforms(0);
-      setCurrentPlatformGenerating("");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const { data: { subscription } } = onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleExtract = async () => {
     if (!sourceUrl) return;
     
-    // Check if trying to use premium without Pro
-    if (usePremiumExtraction && !isPro) {
-      setShowPaywall(true);
-      return;
-    }
-    
     setIsExtracting(true);
     try {
-      let result;
-      
-      if (usePremiumExtraction && isPro) {
-        // Premium extraction with Firecrawl
-        const { data: session } = await getSession();
-        if (!session) throw new Error("Keine aktive Session");
-        
-        const response = await fetch("/api/extract-premium", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${session?.session?.access_token}`,
-          },
-          body: JSON.stringify({ url: sourceUrl }),
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-          if (data.usage) {
-            setExtractionUsage(data.usage);
-          }
-          throw new Error(data.error || "Premium-Extraktion fehlgeschlagen");
-        }
-        
-        result = {
-          title: data.title,
-          content: data.markdown || data.content || "",
-        };
-        
-        // Update usage information
-        if (data.usage) {
-          setExtractionUsage(data.usage);
-          toast({ 
-            title: "Premium-Import erfolgreich ✨", 
-            description: `${data.usage.remaining} von ${data.usage.limit} Premium-Extraktionen übrig diesen Monat`
-          });
-        } else {
-          toast({ 
-            title: "Premium-Import erfolgreich ✨", 
-            description: data.title || "Inhalt wurde mit verbesserter Qualität importiert"
-          });
-        }
-      } else {
-        // Standard extraction with Jina
-        result = await extractFromUrl(sourceUrl);
-        toast({ title: "Inhalt importiert", description: result.title || sourceUrl });
-      }
-      
-      const prefill = [result.title, result.content]
-        .filter(Boolean)
-        .join("\n\n");
-      setInputText(prefill);
-    } catch (e) {
-      console.error("Extract error", e);
+      const extractedContent = await extractFromUrl(sourceUrl);
+      setInputText(extractedContent.content || extractedContent.toString());
       toast({
-        title: "Import fehlgeschlagen",
-        description: e instanceof Error ? e.message : String(e),
+        title: "Inhalt extrahiert",
+        description: "Der Inhalt wurde erfolgreich von der URL extrahiert.",
+      });
+    } catch (error) {
+      console.error('Extraction error:', error);
+      toast({
+        title: "Fehler",
+        description: "Der Inhalt konnte nicht extrahiert werden. Bitte versuchen Sie es erneut.",
         variant: "destructive",
       });
     } finally {
@@ -224,345 +87,312 @@ export default function Generator() {
     }
   };
 
-  const handleSavePost = async (content: string, platform: 'linkedin' | 'x' | 'instagram' = 'linkedin') => {
-    if (!userEmail) {
-      setLoginOpen(true);
+  const generatePosts = async () => {
+    if (!inputText.trim()) {
       toast({
-        title: "Login erforderlich",
-        description: "Bitte logge dich ein, um Beiträge zu speichern.",
+        title: "Fehler",
+        description: "Bitte geben Sie einen Text ein.",
+        variant: "destructive",
       });
       return;
     }
-    try {
-      await savePost(content, platform);
-      setRefreshKey((prev) => prev + 1);
+
+    if (selectedPlatforms.length === 0) {
       toast({
-  title: "Erfolgreich gespeichert",
-  description: "Du findest den Beitrag in der Seitenleiste \"Gespeicherte Beiträge\".",
+        title: "Fehler",
+        description: "Bitte wählen Sie mindestens eine Plattform aus.",
+        variant: "destructive",
       });
-    } catch (error) {
-      console.error("Save post error:", error);
+      return;
+    }
+
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
+
+    const remainingCount = getRemainingCount();
+    if (remainingCount <= 0) {
+      setShowPaywall(true);
+      return;
+    }
+
+    setIsLoading(true);
+    setPosts([]);
+    setGenerationProgress(0);
+
+    const newPosts: Array<{ platform: Platform; content: string; description?: string; title?: string }> = [];
+    const totalPlatforms = selectedPlatforms.length;
+
+    for (let i = 0; i < selectedPlatforms.length; i++) {
+      const platform = selectedPlatforms[i];
+      setCurrentPlatformGenerating(platform);
+      setGenerationProgress(((i) / totalPlatforms) * 100);
+
+      try {
+        let result;
+        if (platform === "linkedin") {
+          result = await linkedInPostsFromNewsletter(inputText);
+        } else if (platform === "x") {
+          result = await xTweetsFromBlog(inputText);
+        } else if (platform === "instagram") {
+          result = await instagramPostsFromBlog(inputText);
+        }
+
+        if (result) {
+          if (Array.isArray(result)) {
+            result.forEach((post: string) => {
+              newPosts.push({ platform, content: post });
+            });
+          } else if (typeof result === 'object' && 'posts' in result) {
+            (result as any).posts.forEach((post: string) => {
+              newPosts.push({ platform, content: post });
+            });
+          } else if (typeof result === 'string') {
+            newPosts.push({ platform, content: result });
+          }
+        }
+      } catch (error) {
+        console.error(`Error generating ${platform} posts:`, error);
+        toast({
+          title: "Fehler",
+          description: `Fehler beim Erstellen der ${PLATFORM_LABEL[platform]} Posts. Bitte versuchen Sie es erneut.`,
+          variant: "destructive",
+        });
+      }
+    }
+
+    setGenerationProgress(100);
+    setPosts(newPosts);
+    setIsLoading(false);
+    setCurrentPlatformGenerating(null);
+  };
+
+  const handleSave = async (post: string, platform: Platform) => {
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
+
+    try {
+      await savePost(user.id, post, platform);
       toast({
-        title: "Speichern fehlgeschlagen",
-        description: `Fehler beim Speichern: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        title: "Gespeichert",
+        description: `Post wurde zu ${PLATFORM_LABEL[platform]} gespeichert.`,
+      });
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Save error:', error);
+      toast({
+        title: "Fehler",
+        description: "Post konnte nicht gespeichert werden.",
         variant: "destructive",
       });
     }
   };
 
-  const handleStartEdit = (platform: Platform, index: number, content: string) => {
-    setEditing({ platform, index });
-    setEditedContent(content);
+  const handleSignOut = async () => {
+    await signOut();
+    setUser(null);
   };
 
-  const handleCancelEdit = () => {
-    setEditing(null);
-    setEditedContent("");
-  };
-
-  const handleSaveEdit = () => {
-    if (!editing) return;
-    const { platform, index } = editing;
-    const updated = { ...postsByPlatform };
-    updated[platform] = [...updated[platform]];
-    updated[platform][index] = editedContent;
-    setPostsByPlatform(updated);
-    setEditing(null);
-    setEditedContent("");
-  };
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-between items-center mb-8">
+            <Link to="/" className="text-2xl font-bold text-slate-800">
+              Social Transformer
+            </Link>
+          </div>
+          <Auth />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-secondary overflow-x-hidden">
-      {/* Professional Header Bar */}
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Social Transformer
-            </h1>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <Link to="/" className="text-2xl font-bold text-slate-800">
+            Social Transformer
+          </Link>
           
           <div className="flex items-center gap-4">
-            {/* Mobile Settings button */}
-            <Link to="/settings" className="md:hidden">
-              <Button variant="ghost" size="sm" aria-label="Einstellungen">
-                <SettingsIcon className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Link to="/settings" className="hidden md:block">
-              <Button variant="ghost" size="sm">Einstellungen</Button>
-            </Link>
-            {userEmail ? (
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" size="sm" onClick={() => signOut()}>
-                  Logout
+            <span className="text-sm text-slate-600">
+              {user?.email}
+            </span>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <SettingsIcon className="h-4 w-4 mr-2" />
+                  Einstellungen
                 </Button>
-              </div>
-            ) : (
-              <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="default" size="sm">Login</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Einloggen</DialogTitle>
-                  </DialogHeader>
-                  <Auth />
-                </DialogContent>
-              </Dialog>
-            )}
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Einstellungen</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Link to="/settings">
+                    <Button variant="outline" className="w-full justify-start">
+                      Erweiterte Einstellungen
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    onClick={handleSignOut}
+                    className="w-full justify-start"
+                  >
+                    Abmelden
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
-      </header>
-      
-  <div className="p-4 md:p-8 pt-6 md:pt-8">
-  <div className={`max-w-4xl mx-auto space-y-8 ${isSidebarCollapsed ? 'md:pr-[3rem]' : 'md:pr-[22rem]'}`}>
-          <div className="text-center space-y-4 pt-8">
-          <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-            Vom Newsletter zu viralen Posts
-          </h1>
-          <p className="text-muted-foreground text-base md:text-lg">
-            Mehr Sichtbarkeit aus vorhandenem Content
-          </p>
-          <Badge variant="secondary" className="text-xs md:text-sm">
-            Powered by Claude AI ✨
-          </Badge>
-        </div>
 
-        <Card className="shadow-xl border-0 bg-card/50 backdrop-blur-sm">
+        {/* URL Extraction Section */}
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Newsletter eingeben oder importieren</CardTitle>
+            <CardTitle>URL Inhalt extrahieren (Optional)</CardTitle>
             <CardDescription>
-              Füge deinen Newsletter-Text ein oder importiere ihn per URL, und wähle die Zielplattformen
+              Geben Sie eine URL ein, um automatisch den Inhalt zu extrahieren
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
-              <div className="flex gap-2 flex-col md:flex-row">
-                <input
-                  type="url"
-                  placeholder="https://example.com/dein-blogpost"
-                  value={sourceUrl}
-                  onChange={(e) => setSourceUrl(e.target.value)}
-                  className="flex-1 h-10 px-3 rounded-md border bg-background"
-                  aria-label="Quelle-URL"
-                />
-                <Button onClick={handleExtract} disabled={!sourceUrl || isExtracting} className="md:w-48">
-                  {isExtracting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importiere…
-                    </>
-                  ) : (
-                    <>Von URL importieren</>
-                  )}
-                </Button>
-              </div>
-              
-              {/* Premium extraction toggle - visible to all, but gated for free users */}
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={usePremiumExtraction}
-                    onChange={(e) => {
-                      if (!isPro && e.target.checked) {
-                        setShowPaywall(true);
-                        return;
-                      }
-                      setUsePremiumExtraction(e.target.checked);
-                    }}
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                  <span className="text-muted-foreground">
-                    Premium-Extraktion
-                    {!isPro ? (
-                      <Badge variant="secondary" className="ml-2 text-xs">Pro</Badge>
-                    ) : extractionUsage && (
-                      <span className="ml-2 text-xs">
-                        ({extractionUsage.remaining}/20 übrig)
-                      </span>
-                    )}
-                  </span>
-                </label>
-                <span className="text-xs text-muted-foreground">
-                  Bessere Qualität • JavaScript-Support
-                </span>
-              </div>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <input
+                type="url"
+                placeholder="https://beispiel.com/artikel"
+                value={sourceUrl}
+                onChange={(e) => setSourceUrl(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <Button
+                onClick={handleExtract}
+                disabled={!sourceUrl || isExtracting}
+              >
+                {isExtracting ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                Extrahieren
+              </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Input Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Newsletter oder Blog Post</CardTitle>
+            <CardDescription>
+              Fügen Sie hier Ihren Newsletter oder Blog Post ein, um ihn in Social Media Posts zu transformieren.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <Textarea
-              placeholder="Newsletter hier einfügen..."
+              placeholder="Fügen Sie hier Ihren Newsletter oder Blog Post ein..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="min-h-[12rem] text-base resize-none"
+              className="min-h-[200px] resize-none"
             />
-            <div className="space-y-2">
-              <PlatformSelector value={selectedPlatforms} onChange={setSelectedPlatforms} />
-              {!isPro && (
-                <div className="flex justify-center">
-                  <Badge variant="outline" className="px-3 py-1">
-                    {getRemainingCount() > 0 
-                      ? `${getRemainingCount()} kostenlose Transformationen heute` 
-                      : "Keine kostenlosen Transformationen mehr"}
-                  </Badge>
-                </div>
-              )}
-            </div>
+            
+            <PlatformSelector
+              value={selectedPlatforms}
+              onChange={setSelectedPlatforms}
+            />
 
-            {/* Progress bar - only visible when generating */}
-            {isLoading && (
-              <div className="space-y-2">
-                <Progress value={generationProgress} className="h-2" />
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>
-                    {currentPlatformGenerating && `Erstelle ${currentPlatformGenerating}-Posts...`}
-                  </span>
-                  <span>
-                    {completedPlatforms}/{totalPlatforms} Plattformen
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <Button
-              onClick={handleRemix}
-              disabled={isLoading || !inputText || selectedPlatforms.length === 0}
-              size="lg"
-              className="w-full text-lg h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+            <DSButton
+              variant="primary"
+              onClick={generatePosts}
+              disabled={isLoading || !inputText.trim() || selectedPlatforms.length === 0}
+              className="w-full"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  {generationProgress > 0 
-                    ? `${Math.round(generationProgress)}% - ${currentPlatformGenerating}`
-                    : "Initialisiere..."}
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generiere {currentPlatformGenerating ? PLATFORM_LABEL[currentPlatformGenerating] : ''} Posts...
                 </>
               ) : (
-                <>✨ Transformieren</>
+                "Posts transformieren"
               )}
-            </Button>
+            </DSButton>
+
+            {isLoading && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm text-slate-600">
+                  <span>Fortschritt</span>
+                  <span>{Math.round(generationProgress)}%</span>
+                </div>
+                <Progress value={generationProgress} className="w-full" />
+              </div>
+            )}
           </CardContent>
         </Card>
-        
-  {/* Extra spacing for mobile to prevent content being covered by bottom drawer + safe area */}
-  <div className="md:hidden" style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }} aria-hidden="true" />
-        {(["linkedin", "x", "instagram"] as Platform[]).map((platform) => {
-          const items = postsByPlatform[platform] || [];
-          if (items.length === 0) return null;
-          return (
-            <Card key={platform} className="shadow-xl border-0 bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>{PLATFORM_LABEL[platform]} – {items.length} Beiträge</CardTitle>
-                <CardDescription>Plattformspezifische Vorschau und Bearbeitung</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-6">
-                  {items.map((post, index) => (
-                    <Card key={index} className="border-muted/50 hover:shadow-lg transition-all duration-200 hover:border-primary/20">
-                      <CardContent className="p-6">
-                        {editing?.platform === platform && editing?.index === index ? (
-                          <div className="space-y-4">
-                            <Textarea
-                              value={editedContent}
-                              onChange={(e) => setEditedContent(e.target.value)}
-                              className="min-h-[8rem]"
-                            />
-                            <div className="flex justify-end gap-2">
-                              <DSButton variant="ghost" size="sm" onClick={handleCancelEdit}>
-                                Abbrechen
-                              </DSButton>
-                              <SaveButton size="sm" onClick={handleSaveEdit} />
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-foreground whitespace-pre-wrap leading-relaxed mb-4">{post}</p>
-                            <div className="flex justify-between items-center pt-4 border-t border-muted/30">
-                              <Badge variant="outline" className="text-xs flex items-center gap-1.5">
-                                {platform === "instagram" && <InstagramLogo size={12} />}
-                                {PLATFORM_LABEL[platform]} · Post #{index + 1}
-                              </Badge>
-                              <div className="flex gap-2">
-                                <EditButton
-                                  size="sm"
-                                  onClick={() => handleStartEdit(platform, index, post)}
-                                  text=""
-                                  title="Beitrag bearbeiten"
-                                />
-                                <SaveButton size="sm" onClick={() => handleSavePost(post, platform === 'newsletter' ? 'linkedin' : platform)} text="" title="Beitrag speichern" />
-                                {platform === "linkedin" && (
-                                  <LinkedInShareButton
-                                    size="sm"
-                                    text=""
-                                    onClick={async () => {
-                                      try {
-                                        const accessToken = import.meta.env.VITE_LINKEDIN_ACCESS_TOKEN;
-                                        const authorUrn = import.meta.env.VITE_LINKEDIN_AUTHOR_URN;
-                                        if (accessToken && authorUrn) {
-                                          const result = await createLinkedInDraftPost(post, { accessToken, authorUrn });
-                                          window.open(result.draftUrl, "_blank");
-                                          toast({ title: "LinkedIn Draft erstellt! 🚀", description: "Der Draft wurde erfolgreich erstellt." });
-                                        } else {
-                                          const linkedinUrl = createLinkedInShareUrl(post);
-                                          window.open(linkedinUrl, "_blank");
-                                        }
-                                      } catch (error) {
-                                        console.error("LinkedIn Draft Error:", error);
-                                        if (error instanceof LinkedInAPIError) {
-                                          toast({ title: "LinkedIn API Fehler", description: error.message, variant: "destructive" });
-                                        } else {
-                                          const linkedinUrl = createLinkedInShareUrl(post);
-                                          window.open(linkedinUrl, "_blank");
-                                        }
-                                      }
-                                    }}
-                                    title="Auf LinkedIn teilen"
-                                  />
-                                )}
-                                {platform === "x" && (
-                                  <XShareButton
-                                    size="sm"
-                                    text=""
-                                    tweetContent={post}
-                                    title="Auf X teilen"
-                                  />
-                                )}
-                                {platform === "instagram" && (
-                                  <InstagramShareButton
-                                    size="sm"
-                                    text=""
-                                    postContent={post}
-                                    title="Auf Instagram teilen"
-                                  />
-                                )}
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-        </div>
+
+        {/* Results Section with Skeleton Loaders */}
+        {isLoading && selectedPlatforms.length > 0 && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {selectedPlatforms.map((platform) => (
+              <PostSkeleton key={platform} platform={platform} />
+            ))}
+          </div>
+        )}
+
+        {/* Results Section */}
+        {!isLoading && posts.length > 0 && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {posts.map((post, index) => (
+              <Card key={index} className="relative">
+                <CardHeader className="flex flex-row items-center gap-3 pb-3">
+                  <Badge variant="outline" className="flex items-center gap-2">
+                    {post.platform === "instagram" && <InstagramLogo className="h-4 w-4" />}
+                    {PLATFORM_LABEL[post.platform]}
+                  </Badge>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {post.content}
+                  </div>
+                  <div className="flex gap-2">
+                    <SaveButton
+                      onClick={() => handleSave(post.content, post.platform)}
+                      className="flex-1"
+                    />
+                    {post.platform === "linkedin" && (
+                      <LinkedInShareButton
+                        onClick={() => {
+                          const shareText = encodeURIComponent(post.content);
+                          window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${shareText}`, '_blank');
+                        }}
+                      />
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {showAuth && (
+          <Dialog open={showAuth} onOpenChange={setShowAuth}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Anmeldung erforderlich</DialogTitle>
+              </DialogHeader>
+              <Auth />
+            </DialogContent>
+          </Dialog>
+        )}
+
+        <PaywallModal 
+          open={showPaywall} 
+          onOpenChange={setShowPaywall}
+        />
       </div>
-      
-      <SavedPosts
-        onCollapse={setIsSidebarCollapsed}
-        refreshKey={refreshKey}
-        isAuthenticated={!!userEmail}
-        onLoginClick={() => setLoginOpen(true)}
-        initialExpanded={searchParams.get('expand') === 'saved'}
-      />
-      
-      <PaywallModal 
-        open={showPaywall} 
-        onOpenChange={setShowPaywall} 
-      />
     </div>
   );
 }
