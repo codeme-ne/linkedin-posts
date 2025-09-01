@@ -9,7 +9,7 @@ export function CTASection() {
       
       <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
         <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-3 sm:mb-4 md:mb-6">
-          Bereit, deine Newsletter-Reichweite zu{" "}
+          Bereit, deine Social-Media-Reichweite zu{" "}
           <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             vervielfachen
           </span>
@@ -62,7 +62,7 @@ export function CTASection() {
         
         <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700">
           <p className="text-sm text-muted-foreground mb-4">
-            Schon über <span className="font-semibold text-foreground">500+ Content Creator</span> nutzen Social Transformer
+            Schon über <span className="font-semibold text-foreground">100+ Content Creator</span> nutzen Social Transformer
           </p>
           <div className="flex justify-center items-center gap-2">
             {[...Array(5)].map((_, i) => (

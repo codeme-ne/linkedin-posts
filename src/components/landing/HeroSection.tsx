@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTypewriter } from "@/hooks/useTypewriter";
 
@@ -19,9 +18,6 @@ export function HeroSection({ isVisible, onSignup }: HeroSectionProps) {
 
   return (
     <div className={`space-y-6 md:space-y-8 transition-all duration-700 delay-100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-      <Badge variant="outline" className="px-3 py-1 text-sm font-medium rounded-full border-primary/30 bg-primary/5 text-primary animate-pulse">
-        Powered by Claude AI
-      </Badge>
       <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight">
         <span className="text-foreground">Mach aus jedem Newsletter einen</span>
         <br />
@@ -33,7 +29,6 @@ export function HeroSection({ isVisible, onSignup }: HeroSectionProps) {
       <p className="text-base sm:text-lg md:text-xl leading-relaxed text-muted-foreground max-w-2xl">
         <span className="font-semibold">15 Minuten sparen pro Post.</span> Kopiere deinen Newsletter rein oder gib eine URL ein, 
         erhalte perfekt formatierte Social-Media-Beiträge raus. 
-        <span className="text-primary font-medium"> Prompts optimiert mit Anthropic Console.</span>
       </p>
       <div className="flex flex-col sm:flex-row gap-4 pt-4 md:pt-8">
         <Button 

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Auth } from "@/components/common/Auth";
 import { getSession, onAuthStateChange } from "@/api/supabase";
+import { HeaderBar } from "@/components/landing/HeaderBar";
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -33,16 +34,7 @@ export default function SignUp() {
 
       <div className="relative z-10 container mx-auto px-4 py-8 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="flex justify-between items-center py-6">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary/90 text-white p-2 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 7L9 19l-5.5-5.5" />
-              </svg>
-            </div>
-            <h2 className="font-bold text-2xl tracking-tight">Social Transformer</h2>
-          </div>
-        </header>
+        <HeaderBar isVisible={!checking} onSignup={() => {}} />
 
         {/* Main content */}
         <main className="flex-grow flex flex-col items-center justify-center py-12">

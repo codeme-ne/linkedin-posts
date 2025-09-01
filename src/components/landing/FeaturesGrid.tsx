@@ -39,7 +39,7 @@ export function FeaturesGrid({ isVisible, variant = "desktop" }: FeaturesGridPro
           </div>
           <h3 className="text-lg font-semibold leading-snug mb-3">Premium-Scraping</h3>
           <p className="text-sm leading-normal text-muted-foreground">
-            Auch JavaScript-Websites. 20x/Monat.
+            Unbegrenzt. Sicher und zuverlässig.
           </p>
         </CardContent>
       </Card>
@@ -63,7 +63,7 @@ export function FeaturesGrid({ isVisible, variant = "desktop" }: FeaturesGridPro
           </div>
           <h3 className="text-lg font-semibold leading-snug mb-3">Posts speichern</h3>
           <p className="text-sm leading-normal text-muted-foreground">
-            Seitenleiste. Später verwenden.
+            Editieren. Später verwenden.
           </p>
         </CardContent>
       </Card>

@@ -50,7 +50,7 @@ export function PricingSection() {
           <ul className="space-y-4 mb-8 text-foreground">
             <li className="flex items-center">
               <Check className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
-              <span>10 Social Media Posts pro Monat</span>
+              <span>2 Posts pro Tag</span>
             </li>
             <li className="flex items-center">
               <Check className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
