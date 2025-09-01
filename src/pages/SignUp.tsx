@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Auth } from "@/components/common/Auth";
 import { getSession, onAuthStateChange } from "@/api/supabase";
-import { HeaderBar } from "@/components/landing/HeaderBar";
+import { HeaderBarSignUp } from "@/components/landing/HeaderBarSignUp";
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ export default function SignUp() {
 
       <div className="relative z-10 container mx-auto px-4 py-8 flex flex-col min-h-screen">
         {/* Header */}
-        <HeaderBar isVisible={!checking} onSignup={() => {}} />
+        <HeaderBarSignUp isVisible={!checking} onBack={() => navigate("/")} />
 
         {/* Main content */}
         <main className="flex-grow flex flex-col items-center justify-center py-12">
