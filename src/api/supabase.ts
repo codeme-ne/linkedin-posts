@@ -61,10 +61,13 @@ export const updateSavedPost = async (id: number, content: string) => {
 
 // Auth helpers
 export const signInWithEmail = (email: string) => {
-  // Verwende die richtige URL basierend auf der Umgebung
-  const redirectUrl = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5173'
-    : 'https://linkedin-posts-ashen.vercel.app';
+  // Dynamische URL basierend auf der aktuellen Umgebung mit /app Pfad
+  // Nutze window.location.origin als primäre Quelle, VITE_APP_URL als Fallback
+  const baseUrl = typeof window !== 'undefined' 
+    ? window.location.origin 
+    : import.meta.env.VITE_APP_URL || 'http://localhost:5173';
+  
+  const redirectUrl = `${baseUrl}/app`;
     
   return supabase.auth.signInWithOtp({ 
     email, 
