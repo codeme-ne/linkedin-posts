@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Landing from '@/pages/Landing'
 import Generator from '@/pages/Generator'
+import NewsletterGenerator from '@/pages/NewsletterGenerator'
 import SignUp from '@/pages/SignUp'
 import Settings from '@/pages/Settings'
 import Privacy from '@/pages/Privacy'
@@ -23,6 +24,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Generator />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/newsletter"
+          element={
+            <ProtectedRoute>
+              <NewsletterGenerator />
             </ProtectedRoute>
           }
         />

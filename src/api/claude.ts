@@ -32,6 +32,38 @@ Best Practices (sichtbar im Text, wenn sinnvoll):
 
 Blog/Newsletter-Inhalt:
 `;
+const newsletterFromTopicPrompt = `
+Du bist ein erfahrener Newsletter-Experte und Content-Creator im deutschen Markt.
+Deine Aufgabe: Erstelle einen professionellen, ansprechenden Newsletter basierend auf dem gegebenen Thema.
+
+Erzeuge einen Newsletter mit drei Komponenten:
+1. SUBJECT: Eine packende Betreffzeile (30-50 Zeichen)
+2. PREVIEW: Ein kurzer Vorschautext (80-120 Zeichen) 
+3. CONTENT: Der vollständige Newsletter-Inhalt
+
+Format-Anforderungen:
+- Beginne mit "SUBJECT:" gefolgt von der Betreffzeile
+- Dann "PREVIEW:" gefolgt vom Vorschautext
+- Dann "CONTENT:" gefolgt vom Newsletter-Inhalt
+- Verwende einen klaren, professionellen Ton
+- Strukturiere den Content mit Überschriften, Absätzen und Listen
+- Füge eine klare Call-to-Action am Ende hinzu
+
+Newsletter-Länge basierend auf Parameter:
+- Kurz: 300-500 Wörter
+- Mittel: 500-800 Wörter  
+- Lang: 800-1200 Wörter
+
+Voice Tone anpassen basierend auf Parameter:
+- Professional: Formal, sachlich, fachkundig
+- Casual: Locker, freundlich, nahbar
+- Informative: Faktenorientiert, lehrreich, detailliert
+- Persuasive: Überzeugend, motivierend, handlungsorientiert
+- Friendly: Warm, einladend, persönlich
+- Authoritative: Selbstsicher, kompetent, führend
+
+Thema und Parameter:
+`;
 
 export async function linkedInPostsFromNewsletter(content: string) {
   try {
@@ -67,6 +99,47 @@ export async function linkedInPostsFromNewsletter(content: string) {
     throw new Error('Failed to remix content');
   }
 } 
+
+export async function newsletterFromTopic(
+  topic: string, 
+  voiceTone: string = 'professional', 
+  length: string = 'medium'
+): Promise<{ subject: string; preview: string; content: string }> {
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 4096,
+      temperature: 0.7,
+      messages: [{
+        role: 'user',
+        content: `${newsletterFromTopicPrompt}
+Thema: ${topic}
+Voice Tone: ${voiceTone}
+Länge: ${length}`
+      }]
+    });
+    
+    const text = (response.content[0] as { text: string }).text;
+    
+    // Parse the response to extract subject, preview, and content
+    const subjectMatch = text.match(/SUBJECT:\s*(.+?)(?=\n|$)/i);
+    const previewMatch = text.match(/PREVIEW:\s*(.+?)(?=\n|$)/i);
+    const contentMatch = text.match(/CONTENT:\s*([\s\S]+?)$/i);
+    
+    if (!subjectMatch || !previewMatch || !contentMatch) {
+      throw new Error('Unvollständige Newsletter-Generierung');
+    }
+    
+    return {
+      subject: subjectMatch[1].trim(),
+      preview: previewMatch[1].trim(),
+      content: contentMatch[1].trim()
+    };
+  } catch (error) {
+    console.error('Newsletter generation error:', error);
+    throw new Error('Newsletter konnte nicht erstellt werden');
+  }
+}
 
 // === Instagram generation ===
 const instagramFromBlogPrompt_de = `

@@ -5,7 +5,8 @@ import {
   Save, 
   Edit3, 
   Send,
-  Zap
+  Zap,
+  Mail
 } from "lucide-react";
 
 type FeaturesGridProps = {
@@ -88,6 +89,18 @@ export function FeaturesGrid({ isVisible, variant = "desktop" }: FeaturesGridPro
           <h3 className="text-lg font-semibold leading-snug mb-3">Direct-Posting</h3>
           <p className="text-sm leading-normal text-muted-foreground">
             Direkt auf LinkedIn, X & Co. posten.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <CardContent className="pt-6 pb-6">
+          <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-4">
+            <Mail className="h-5 w-5 text-primary" />
+          </div>
+          <h3 className="text-lg font-semibold leading-snug mb-3">Newsletter erstellen</h3>
+          <p className="text-sm leading-normal text-muted-foreground">
+            Von Thema zu professionellem Newsletter.
           </p>
         </CardContent>
       </Card>

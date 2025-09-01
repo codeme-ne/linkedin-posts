@@ -47,6 +47,7 @@ export default function Generator() {
     linkedin: [],
     x: [],
     instagram: [],
+    newsletter: [],
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
@@ -98,7 +99,7 @@ export default function Generator() {
     setTotalPlatforms(selectedPlatforms.length);
     
     try {
-      const next: Record<Platform, string[]> = { linkedin: [], x: [], instagram: [] };
+      const next: Record<Platform, string[]> = { linkedin: [], x: [], instagram: [], newsletter: [] };
       const progressStep = 100 / selectedPlatforms.length;
       
       // Process each platform sequentially with progress updates
@@ -489,7 +490,7 @@ export default function Generator() {
                                   text=""
                                   title="Beitrag bearbeiten"
                                 />
-                                <SaveButton size="sm" onClick={() => handleSavePost(post, platform)} text="" title="Beitrag speichern" />
+                                <SaveButton size="sm" onClick={() => handleSavePost(post, platform === 'newsletter' ? 'linkedin' : platform)} text="" title="Beitrag speichern" />
                                 {platform === "linkedin" && (
                                   <LinkedInShareButton
                                     size="sm"

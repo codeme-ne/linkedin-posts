@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useTypewriter } from "@/hooks/useTypewriter";
+import { Link } from "react-router-dom";
+import { Mail, Share2 } from "lucide-react";
 
 type HeroSectionProps = {
   isVisible: boolean;
@@ -36,8 +38,19 @@ export function HeroSection({ isVisible, onSignup }: HeroSectionProps) {
           className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-105 transition-all duration-300 px-6 py-5 text-sm sm:text-base" 
           onClick={onSignup}
         >
-          Kostenlos testen →
+          <Share2 className="mr-2 h-4 w-4" />
+          Social Posts generieren →
         </Button>
+        <Link to="/newsletter">
+          <Button 
+            size="lg" 
+            variant="outline"
+            className="w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 px-6 py-5 text-sm sm:text-base border-2"
+          >
+            <Mail className="mr-2 h-4 w-4" />
+            Newsletter schreiben
+          </Button>
+        </Link>
       </div>
     </div>
   );

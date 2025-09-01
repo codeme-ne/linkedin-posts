@@ -10,10 +10,10 @@ export interface SavedPost {
   content: string
   created_at: string
   user_id?: string | null
-  platform?: 'linkedin' | 'x' | 'instagram'
+  platform?: 'linkedin' | 'x' | 'instagram' | 'newsletter'
 }
 
-export const savePost = async (content: string, platform: 'linkedin' | 'x' | 'instagram' = 'linkedin') => {
+export const savePost = async (content: string, platform: 'linkedin' | 'x' | 'instagram' | 'newsletter' = 'linkedin') => {
   console.log('Saving post to Supabase:', { content, platform })
   
   // Insert with implicit user_id via DEFAULT auth.uid()
