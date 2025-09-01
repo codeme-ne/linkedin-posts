@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Settings as SettingsIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -63,6 +64,11 @@ export default function Generator() {
   const [sourceUrl, setSourceUrl] = useState("");
   const [usePremiumExtraction, setUsePremiumExtraction] = useState(false);
   const [extractionUsage, setExtractionUsage] = useState<{ used: number; limit: number; remaining: number } | null>(null);
+  // Progress tracking states
+  const [generationProgress, setGenerationProgress] = useState(0); // 0-100
+  const [currentPlatformGenerating, setCurrentPlatformGenerating] = useState<string>("");
+  const [totalPlatforms, setTotalPlatforms] = useState(0);
+  const [completedPlatforms, setCompletedPlatforms] = useState(0);
 
   useEffect(() => {
     getSession().then(({ data }) => {
@@ -84,22 +90,44 @@ export default function Generator() {
       return;
     }
     
+    // Initialize progress tracking
     setIsLoading(true);
+    setGenerationProgress(0);
+    setCompletedPlatforms(0);
+    setCurrentPlatformGenerating("");
+    setTotalPlatforms(selectedPlatforms.length);
+    
     try {
-      const baseLinkedInPosts = await linkedInPostsFromNewsletter(inputText);
       const next: Record<Platform, string[]> = { linkedin: [], x: [], instagram: [] };
-      if (selectedPlatforms.includes("linkedin")) next.linkedin = baseLinkedInPosts;
-      if (selectedPlatforms.includes("x")) {
-        // Nutze den exakten X-Prompt über Claude
-        next.x = await xTweetsFromBlog(inputText);
+      const progressStep = 100 / selectedPlatforms.length;
+      
+      // Process each platform sequentially with progress updates
+      for (let i = 0; i < selectedPlatforms.length; i++) {
+        const platform = selectedPlatforms[i];
+        setCurrentPlatformGenerating(PLATFORM_LABEL[platform]);
+        
+        if (platform === "linkedin") {
+          next.linkedin = await linkedInPostsFromNewsletter(inputText);
+        } else if (platform === "x") {
+          // Nutze den exakten X-Prompt über Claude
+          next.x = await xTweetsFromBlog(inputText);
+        } else if (platform === "instagram") {
+          // Nutze den speziellen Instagram-Prompt
+          next.instagram = await instagramPostsFromBlog(inputText);
+        }
+        
+        // Update progress
+        const newCompleted = i + 1;
+        setCompletedPlatforms(newCompleted);
+        setGenerationProgress(newCompleted * progressStep);
       }
-      if (selectedPlatforms.includes("instagram")) {
-        // Nutze den speziellen Instagram-Prompt
-        next.instagram = await instagramPostsFromBlog(inputText);
-      }
+      
       setPostsByPlatform(next);
       const names = selectedPlatforms.join(", ");
       toast({ title: "Beiträge erstellt!", description: `Generiert für: ${names}` });
+      
+      // Reset progress states
+      setCurrentPlatformGenerating("");
       
       // Increment usage after successful transformation
       incrementUsage();
@@ -110,6 +138,10 @@ export default function Generator() {
         description: "LinkedIn-Beiträge konnten nicht erstellt werden.",
         variant: "destructive",
       });
+      // Reset progress states on error
+      setGenerationProgress(0);
+      setCompletedPlatforms(0);
+      setCurrentPlatformGenerating("");
     } finally {
       setIsLoading(false);
     }
@@ -377,6 +409,21 @@ export default function Generator() {
               )}
             </div>
 
+            {/* Progress bar - only visible when generating */}
+            {isLoading && (
+              <div className="space-y-2">
+                <Progress value={generationProgress} className="h-2" />
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>
+                    {currentPlatformGenerating && `Erstelle ${currentPlatformGenerating}-Posts...`}
+                  </span>
+                  <span>
+                    {completedPlatforms}/{totalPlatforms} Plattformen
+                  </span>
+                </div>
+              </div>
+            )}
+
             <Button
               onClick={handleRemix}
               disabled={isLoading || !inputText || selectedPlatforms.length === 0}
@@ -386,7 +433,9 @@ export default function Generator() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Beiträge werden erstellt...
+                  {generationProgress > 0 
+                    ? `${Math.round(generationProgress)}% - ${currentPlatformGenerating}`
+                    : "Initialisiere..."}
                 </>
               ) : (
                 <>✨ Transformieren</>
