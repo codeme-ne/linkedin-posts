@@ -21,12 +21,11 @@ export default function Imprint() {
         
         <div className="prose prose-slate dark:prose-invert max-w-none space-y-6">
           <section>
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Angaben gemäß § 5 TMG</h2>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Angaben gemäß § 5 DDG (Digitale-Dienste-Gesetz)</h2>
             <p className="mb-4">
-              Social Transformer<br />
-              [Firmenname / Ihr Name]<br />
-              [Straße und Hausnummer]<br />
-              [PLZ Ort]<br />
+              Lukas Zangerl<br />
+              Stapper Weg 214<br />
+              41199 Mönchengladbach<br />
               Deutschland
             </p>
           </section>
@@ -34,63 +33,19 @@ export default function Imprint() {
           <section>
             <h2 className="text-2xl font-semibold mt-8 mb-4">Kontakt</h2>
             <p className="mb-4">
-              Telefon: [Telefonnummer]<br />
-              E-Mail: support@socialtransformer.de<br />
+              Telefon: +49 151 26718443<br />
+              E-Mail: lukas@zangerlcoachingdynamics.com<br />
               Website: www.socialtransformer.de
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Vertreten durch</h2>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Verantwortlich für den Inhalt nach § 18 MStV</h2>
             <p className="mb-4">
-              [Vor- und Nachname des Geschäftsführers/Inhabers]
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Registereintrag</h2>
-            <p className="mb-4">
-              Eintragung im Handelsregister.<br />
-              Registergericht: [Amtsgericht]<br />
-              Registernummer: [HRB-Nummer]
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Umsatzsteuer-ID</h2>
-            <p className="mb-4">
-              Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:<br />
-              [DE + Nummer]
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Berufsbezeichnung und berufsrechtliche Regelungen</h2>
-            <p className="mb-4">
-              Berufsbezeichnung: [falls zutreffend]<br />
-              Zuständige Kammer: [falls zutreffend]<br />
-              Verliehen in: Deutschland
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
-            <p className="mb-4">
-              [Vor- und Nachname]<br />
-              [Straße und Hausnummer]<br />
-              [PLZ Ort]<br />
+              Lukas Zangerl<br />
+              Stapper Weg 214<br />
+              41199 Mönchengladbach<br />
               Deutschland
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mt-8 mb-4">EU-Streitschlichtung</h2>
-            <p className="mb-4">
-              Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:<br />
-              <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                https://ec.europa.eu/consumers/odr/
-              </a><br />
-              Unsere E-Mail-Adresse finden Sie oben im Impressum.
             </p>
           </section>
 
@@ -107,17 +62,30 @@ export default function Imprint() {
             
             <h3 className="text-xl font-semibold mt-6 mb-3">Haftung für Inhalte</h3>
             <p className="mb-4">
-              Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den 
-              allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht 
+              Als Diensteanbieter sind wir gemäß § 7 Abs.1 DDG für eigene Inhalte auf diesen Seiten nach den 
+              allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 DDG sind wir als Diensteanbieter jedoch nicht 
               verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen 
               zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
+            </p>
+            <p className="mb-4">
+              Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen 
+              Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung ist jedoch erst ab dem Zeitpunkt 
+              der Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden von entsprechenden 
+              Rechtsverletzungen werden wir diese Inhalte umgehend entfernen.
             </p>
 
             <h3 className="text-xl font-semibold mt-6 mb-3">Haftung für Links</h3>
             <p className="mb-4">
               Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. 
               Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten 
-              Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.
+              Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich. Die verlinkten Seiten 
+              wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft. Rechtswidrige Inhalte waren 
+              zum Zeitpunkt der Verlinkung nicht erkennbar.
+            </p>
+            <p className="mb-4">
+              Eine permanente inhaltliche Kontrolle der verlinkten Seiten ist jedoch ohne konkrete Anhaltspunkte 
+              einer Rechtsverletzung nicht zumutbar. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige 
+              Links umgehend entfernen.
             </p>
           </section>
 
@@ -126,13 +94,20 @@ export default function Imprint() {
             <p className="mb-4">
               Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen 
               Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der 
-              Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
+              Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers. 
+              Downloads und Kopien dieser Seite sind nur für den privaten, nicht kommerziellen Gebrauch gestattet.
+            </p>
+            <p className="mb-4">
+              Soweit die Inhalte auf dieser Seite nicht vom Betreiber erstellt wurden, werden die Urheberrechte 
+              Dritter beachtet. Insbesondere werden Inhalte Dritter als solche gekennzeichnet. Sollten Sie trotzdem 
+              auf eine Urheberrechtsverletzung aufmerksam werden, bitten wir um einen entsprechenden Hinweis. 
+              Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Inhalte umgehend entfernen.
             </p>
           </section>
 
           <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700">
             <p className="text-sm text-muted-foreground">
-              Stand: Januar 2025
+              Stand: September 2025
             </p>
           </div>
         </div>
