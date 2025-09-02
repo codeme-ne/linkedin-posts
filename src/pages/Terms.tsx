@@ -21,15 +21,34 @@ export default function Terms() {
         
         <div className="prose prose-slate dark:prose-invert max-w-none space-y-6">
           <section>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Anbieter</h2>
+            <p className="mb-4">
+              Social Transformer<br />
+              Lukas Zangerl<br />
+              Stapper Weg 214<br />
+              41199 Mönchengladbach<br />
+              Deutschland
+            </p>
+            <p className="mb-4">
+              E-Mail: lukas@zangerlcoachingdynamics.com<br />
+              Telefon: +49 151 26718443<br />
+              Website: social-transformer.com
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-2xl font-semibold mt-8 mb-4">§ 1 Geltungsbereich</h2>
             <p className="mb-4">
               (1) Diese Allgemeinen Geschäftsbedingungen (nachfolgend "AGB") gelten für alle Verträge zwischen 
-              Social Transformer (nachfolgend "Anbieter") und dem Kunden über die Nutzung der Social Transformer 
+              Lukas Zangerl, handelnd unter "Social Transformer" (nachfolgend "Anbieter") und dem Kunden über die Nutzung der Social Transformer 
               Plattform und zugehörigen Dienstleistungen.
             </p>
             <p className="mb-4">
               (2) Abweichende, entgegenstehende oder ergänzende AGB des Kunden werden nur dann und insoweit 
               Vertragsbestandteil, als der Anbieter ihrer Geltung ausdrücklich zugestimmt hat.
+            </p>
+            <p className="mb-4">
+              (3) Diese AGB gelten in ihrer zum Zeitpunkt der Bestellung gültigen Fassung.
             </p>
           </section>
 
@@ -37,11 +56,15 @@ export default function Terms() {
             <h2 className="text-2xl font-semibold mt-8 mb-4">§ 2 Vertragsgegenstand</h2>
             <p className="mb-4">
               (1) Der Anbieter stellt dem Kunden eine webbasierte Software-as-a-Service (SaaS) Lösung zur 
-              Verfügung, die es ermöglicht, Newsletter und Blog-Inhalte in Social Media Posts für verschiedene 
-              Plattformen umzuwandeln.
+              Verfügung, die es ermöglicht, Newsletter und Blog-Inhalte mit Hilfe von Künstlicher Intelligenz (Claude AI) 
+              in Social Media Posts für verschiedene Plattformen (LinkedIn, X/Twitter, Instagram) umzuwandeln.
             </p>
             <p className="mb-4">
-              (2) Der genaue Funktionsumfang ergibt sich aus der aktuellen Leistungsbeschreibung auf der Website.
+              (2) Die Plattform bietet sowohl kostenlose Basis-Funktionen als auch Premium-Features für zahlende Nutzer, 
+              einschließlich erweiterte Content-Extraktion mittels Firecrawl-API.
+            </p>
+            <p className="mb-4">
+              (3) Der genaue Funktionsumfang ergibt sich aus der aktuellen Leistungsbeschreibung auf der Website.
             </p>
           </section>
 
@@ -143,7 +166,63 @@ export default function Terms() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mt-8 mb-4">§ 10 Vertragslaufzeit und Kündigung</h2>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">§ 10 KI-generierte Inhalte und Verantwortlichkeiten</h2>
+            <p className="mb-4">
+              (1) Die Plattform nutzt Künstliche Intelligenz (Claude AI von Anthropic) zur Generierung von Social Media Inhalten.
+            </p>
+            <p className="mb-4">
+              (2) Der Kunde ist verpflichtet, alle generierten Inhalte vor Veröffentlichung zu prüfen und trägt die 
+              Verantwortung für die Richtigkeit, Rechtmäßigkeit und Angemessenheit der veröffentlichten Inhalte.
+            </p>
+            <p className="mb-4">
+              (3) Der Anbieter übernimmt keine Haftung für die Qualität, Richtigkeit oder rechtliche Unbedenklichkeit 
+              der KI-generierten Inhalte.
+            </p>
+            <p className="mb-4">
+              (4) Der Kunde verpflichtet sich, keine rechtswidrigen, beleidigenden, diskriminierenden oder 
+              urheberrechtsverletzenden Inhalte über die Plattform zu generieren oder zu verbreiten.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">§ 11 Premium-Features und Nutzungslimits</h2>
+            <p className="mb-4">
+              (1) Zahlende Kunden erhalten Zugang zu Premium-Features, einschließlich erweiterte Content-Extraktion 
+              mittels Firecrawl-API.
+            </p>
+            <p className="mb-4">
+              (2) Die Premium-Content-Extraktion ist auf 20 Anfragen pro Monat und Nutzer begrenzt. 
+              Das Kontingent wird monatlich zurückgesetzt.
+            </p>
+            <p className="mb-4">
+              (3) Bei Überschreitung der Limits werden automatisch die kostenlosen Basis-Features verwendet.
+            </p>
+            <p className="mb-4">
+              (4) Der Anbieter behält sich vor, Nutzungslimits anzupassen, um die Serviceverfügbarkeit 
+              für alle Nutzer zu gewährleisten.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">§ 12 Meldeverfahren und Content-Moderation</h2>
+            <p className="mb-4">
+              (1) Nutzer können rechtswidrige oder gegen diese AGB verstoßende Inhalte über die bereitgestellten 
+              Kontaktmöglichkeiten melden.
+            </p>
+            <p className="mb-4">
+              (2) Meldungen werden unverzüglich geprüft. Bei begründeten Meldungen werden entsprechende Inhalte 
+              entfernt und der betroffene Nutzer informiert.
+            </p>
+            <p className="mb-4">
+              (3) Bei schwerwiegenden oder wiederholten Verstößen kann der Zugang zur Plattform gesperrt werden.
+            </p>
+            <p className="mb-4">
+              (4) Gegen Moderationsentscheidungen kann innerhalb von 14 Tagen Widerspruch eingelegt werden.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">§ 13 Vertragslaufzeit und Kündigung</h2>
             <p className="mb-4">
               (1) Der Vertrag läuft auf unbestimmte Zeit.
             </p>
@@ -160,7 +239,7 @@ export default function Terms() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mt-8 mb-4">§ 11 Widerrufsrecht</h2>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">§ 14 Widerrufsrecht</h2>
             <p className="mb-4">
               (1) Verbrauchern steht ein Widerrufsrecht nach Maßgabe der gesetzlichen Bestimmungen zu.
             </p>
@@ -174,37 +253,54 @@ export default function Terms() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mt-8 mb-4">§ 12 Änderungen der AGB</h2>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">§ 15 Änderungen der AGB</h2>
             <p className="mb-4">
-              (1) Der Anbieter behält sich vor, diese AGB jederzeit zu ändern.
+              (1) Der Anbieter behält sich vor, diese AGB zu ändern, wenn dies zur Anpassung an 
+              geänderte Rechtslage oder technische Gegebenheiten erforderlich ist.
             </p>
             <p className="mb-4">
-              (2) Änderungen werden dem Kunden mindestens 30 Tage vor Inkrafttreten per E-Mail mitgeteilt.
+              (2) Wesentliche Änderungen werden dem Kunden mindestens 30 Tage vor Inkrafttreten 
+              in klarer und verständlicher Form per E-Mail mitgeteilt.
             </p>
             <p className="mb-4">
-              (3) Widerspricht der Kunde den Änderungen nicht innerhalb von 30 Tagen, gelten diese als akzeptiert.
+              (3) Widerspricht der Kunde den Änderungen nicht innerhalb von 30 Tagen nach Zugang 
+              der Mitteilung, gelten diese als akzeptiert. Der Kunde wird in der Mitteilung auf 
+              diese Folge hingewiesen.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mt-8 mb-4">§ 13 Schlussbestimmungen</h2>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">§ 16 Barrierefreiheit</h2>
+            <p className="mb-4">
+              (1) Der Anbieter ist bestrebt, die Plattform barrierearm zu gestalten und kontinuierlich 
+              zu verbessern.
+            </p>
+            <p className="mb-4">
+              (2) Bei Problemen mit der Barrierefreiheit können sich Nutzer über die angegebenen 
+              Kontaktdaten an den Anbieter wenden.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">§ 17 Schlussbestimmungen</h2>
             <p className="mb-4">
               (1) Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts.
             </p>
             <p className="mb-4">
               (2) Gerichtsstand für alle Streitigkeiten aus diesem Vertrag ist, soweit gesetzlich zulässig, 
-              der Sitz des Anbieters.
+              Mönchengladbach.
             </p>
             <p className="mb-4">
               (3) Sollten einzelne Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen 
-              unberührt.
+              unberührt. Die unwirksame Bestimmung ist durch eine wirksame zu ersetzen, die dem wirtschaftlichen 
+              Zweck der unwirksamen Bestimmung am nächsten kommt.
             </p>
           </section>
 
           <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700">
             <p className="text-sm text-muted-foreground">
-              Stand: Januar 2025<br />
-              Version 1.0
+              Stand: September 2025<br />
+              Version 2.0 - DDG-konform
             </p>
           </div>
         </div>
