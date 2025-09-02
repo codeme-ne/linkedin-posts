@@ -32,7 +32,7 @@ export function CTASection() {
           <Button 
             size="lg"
             variant="outline"
-            className="w-full sm:w-auto font-semibold hover:scale-105 transition-all duration-300 px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base md:text-lg"
+            className="w-full sm:w-auto border-primary/30 hover:border-primary/60 transition-all duration-300 font-semibold px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base md:text-lg"
             onClick={() => window.open('https://buy.stripe.com/9B628qejY6rtfPi8Fl0x200', '_blank')}
           >
             Direkt Lifetime sichern

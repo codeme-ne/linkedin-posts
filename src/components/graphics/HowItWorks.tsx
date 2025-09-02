@@ -1,28 +1,32 @@
 import React from 'react';
 import HowItWorksGraphic from './HowItWorksGraphic';
-import { Badge } from '@/components/ui/badge';
 
 const HowItWorks: React.FC = () => {
   const steps = [
     {
       number: 1,
-      title: "Newsletter oder URL einfügen",
-      description: "Kopiere deinen Newsletter oder gib eine URL ein - unsere Premium-Extraktion mit Firecrawl & Jina holt den Content"
+      title: "URL einfügen",
+      description: "Füge eine URL ein oder kopiere deinen Text direkt ins Eingabefeld"
     },
     {
       number: 2,
-      title: "Plattform wählen",
-      description: "LinkedIn, X oder Instagram - jede Plattform bekommt ihr optimiertes Format"
+      title: "Content extrahiert",
+      description: "Automatische Erkennung und Extraktion deines Inhalts"
     },
     {
       number: 3,
-      title: "KI generiert Posts",
-      description: "Claude AI mit Anthropic Console-optimierten Prompts erstellt virale Posts in Sekunden"
+      title: "Plattform wählen",
+      description: "LinkedIn, X oder Instagram - optimiert für jede Plattform"
     },
     {
       number: 4,
-      title: "Direct-Posting oder Kopieren",
-      description: "Poste direkt zu LinkedIn, X & Instagram oder kopiere zum manuellen Teilen - spare 15 Minuten pro Newsletter"
+      title: "Posts generieren & anpassen",
+      description: "Claude AI erstellt mehrere Posts - bearbeite und speichere deine Favoriten"
+    },
+    {
+      number: 5,
+      title: "Direkt posten",
+      description: "Mit einem Klick auf allen Plattformen veröffentlichen"
     }
   ];
 
@@ -31,9 +35,6 @@ const HowItWorks: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900" />
       <div className="relative z-10 max-w-6xl mx-auto px-4">
         <div className="text-center mb-12 md:mb-16">
-          <Badge variant="outline" className="px-3 py-1 text-sm font-medium rounded-full border-primary/30 bg-primary/5 text-primary mb-4 md:mb-6">
-            Workflow
-          </Badge>
           <h2 className="text-3xl md:text-5xl font-bold leading-tight tracking-tight mb-4 md:mb-6">
             So einfach geht's
           </h2>
@@ -45,7 +46,7 @@ const HowItWorks: React.FC = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center">
           {/* Mobile: Graphic first, Desktop: Steps first */}
-          <div className="order-2 lg:order-1 space-y-6 md:space-y-8">
+          <div className="order-2 lg:order-1 space-y-5 md:space-y-6">
             {steps.map((step) => (
               <div key={step.number} className="flex gap-4 md:gap-6 group">
                 <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-primary to-accent text-white rounded-full flex items-center justify-center font-bold text-sm md:text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">

@@ -30,10 +30,10 @@ export function HeroSection({ isVisible, onSignup }: HeroSectionProps) {
         <span className="font-semibold">15 Minuten sparen pro Post.</span> Kopiere deinen Newsletter rein oder gib eine URL ein, 
         erhalte perfekt formatierte Social-Media-Beiträge raus. 
       </p>
-      <div className="flex flex-col sm:flex-row gap-4 pt-4 md:pt-8">
+      <div className="flex flex-col sm:flex-row gap-4 pt-2 md:pt-4">
         <Button 
           size="lg" 
-          className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-105 transition-all duration-300 px-6 py-5 text-sm sm:text-base" 
+          className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-105 transition-all duration-300 px-8 py-6 text-base sm:text-lg" 
           onClick={onSignup}
         >
           Kostenlos testen →

@@ -53,12 +53,22 @@ export default function Landing() {
       <HeroSection isVisible={isVisible} onSignup={() => navigate("/signup")} />
             </div>
 
-            {/* Right column: Placeholder for Video/GIF */}
+            {/* Right column: Demo Video */}
             <div className="flex flex-col justify-start">
               <div className={`self-start mt-6 lg:mt-0 transition-all duration-700 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} order-first lg:order-none`}>
-                {/* TODO: Video/GIF hier einfügen */}
-                <div className="w-full h-[400px] bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl flex items-center justify-center">
-                  <p className="text-muted-foreground">Video/GIF Platzhalter</p>
+                {/* Demo Video with GIF-like behavior */}
+                <div className="w-full rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-primary/5 to-accent/5">
+                  <video 
+                    className="w-full h-auto"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
+                  >
+                    <source src="https://pw-bunny.b-cdn.net/Linkedin-Posts-Landing/First%20SaSS.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
                 </div>
               </div>
             </div>

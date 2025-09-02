@@ -60,16 +60,56 @@ export const updateSavedPost = async (id: number, content: string) => {
 } 
 
 // Auth helpers
+const getRedirectUrl = () => {
+  // Prefer explicit site URL from env for reliable email redirects
+  const envSiteUrl = (import.meta.env.VITE_SITE_URL || import.meta.env.VITE_APP_URL) as string | undefined
+  if (envSiteUrl && envSiteUrl.length > 0) return envSiteUrl.replace(/\/$/, '')
+
+  // Fallback to current origin (useful in local dev)
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin
+  }
+  // Last resort: production URL (ensure this matches Supabase Allowed Redirect URLs)
+  return 'https://linkedin-posts-ashen.vercel.app'
+}
+
+// Magic Link (OTP) Login
 export const signInWithEmail = (email: string) => {
-  // Verwende die richtige URL basierend auf der Umgebung
-  const redirectUrl = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5173'
-    : 'https://linkedin-posts-ashen.vercel.app';
-    
   return supabase.auth.signInWithOtp({ 
     email, 
-    options: { emailRedirectTo: redirectUrl } 
+    options: { emailRedirectTo: getRedirectUrl() } 
   });
+}
+
+// Password-based Sign Up
+export const signUpWithPassword = (email: string, password: string) => {
+  return supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: getRedirectUrl()
+    }
+  });
+}
+
+// Password-based Sign In
+export const signInWithPassword = (email: string, password: string) => {
+  return supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+}
+
+// Password Reset
+export const resetPasswordForEmail = (email: string) => {
+  return supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${getRedirectUrl()}/reset-password`
+  });
+}
+
+// Update Password (after reset)
+export const updatePassword = (newPassword: string) => {
+  return supabase.auth.updateUser({ password: newPassword });
 }
 
 export const signOut = () => supabase.auth.signOut()
