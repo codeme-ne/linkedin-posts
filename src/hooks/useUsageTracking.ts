@@ -36,6 +36,11 @@ export function useUsageTracking() {
     return currentUsage < TOTAL_LIMIT;
   }, [subscription, currentUsage]);
 
+  const canExtract = useCallback(() => {
+    if (subscription?.is_active) return true;
+    return currentUsage < TOTAL_LIMIT;
+  }, [subscription, currentUsage]);
+
   const incrementUsage = useCallback(async () => {
     if (subscription?.is_active) return;
     
@@ -62,6 +67,32 @@ export function useUsageTracking() {
     }
   }, [subscription]);
 
+  const incrementExtractionUsage = useCallback(async () => {
+    if (subscription?.is_active) return;
+    
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user?.id) return;
+
+      const { error } = await supabase
+        .from('generation_usage')
+        .insert([{ 
+          user_id: session.session.user.id,
+          generated_at: new Date().toISOString()
+        }]);
+
+      if (error) {
+        console.error('Error incrementing extraction usage:', error);
+        return;
+      }
+
+      // Update local state
+      setCurrentUsage(prev => prev + 1);
+    } catch (error) {
+      console.error('Error in incrementExtractionUsage:', error);
+    }
+  }, [subscription]);
+
   // Load initial usage on mount and when subscription changes
   useEffect(() => {
     const loadUsage = async () => {
@@ -76,7 +107,9 @@ export function useUsageTracking() {
 
   return {
     canTransform,
+    canExtract,
     incrementUsage,
+    incrementExtractionUsage,
     isPro: subscription?.is_active || false,
     loading
   };

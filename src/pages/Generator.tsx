@@ -58,7 +58,7 @@ export default function Generator() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(["linkedin"]);
   const [showPaywall, setShowPaywall] = useState(false);
-  const { canTransform, incrementUsage, isPro } = useUsageTracking();
+  const { canTransform, canExtract, incrementUsage, incrementExtractionUsage, isPro } = useUsageTracking();
   // Track sidebar collapsed state to adjust content padding
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sourceUrl, setSourceUrl] = useState("");
@@ -156,6 +156,12 @@ export default function Generator() {
       return;
     }
     
+    // Check usage limit for standard extraction (non-premium)
+    if (!usePremiumExtraction && !canExtract()) {
+      setShowPaywall(true);
+      return;
+    }
+    
     setIsExtracting(true);
     try {
       let result;
@@ -205,6 +211,9 @@ export default function Generator() {
         // Standard extraction with Jina
         result = await extractFromUrl(sourceUrl);
         toast({ title: "Inhalt importiert", description: result.title || sourceUrl });
+        
+        // Increment usage after successful standard extraction
+        incrementExtractionUsage();
       }
       
       const prefill = [result.title, result.content]
@@ -360,8 +369,8 @@ export default function Generator() {
               </div>
               
               {/* Premium extraction toggle - visible to all, but gated for free users */}
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 cursor-pointer">
+              <div className="flex items-center text-sm">
+                <label className="flex items-center gap-2 cursor-pointer" title="Bessere Qualität • JavaScript-Support">
                   <input
                     type="checkbox"
                     checked={usePremiumExtraction}
@@ -385,9 +394,6 @@ export default function Generator() {
                     )}
                   </span>
                 </label>
-                <span className="text-xs text-muted-foreground">
-                  Bessere Qualität • JavaScript-Support
-                </span>
               </div>
             </div>
             <Textarea
