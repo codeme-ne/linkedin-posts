@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 
 export const config = {
   runtime: 'edge',
@@ -15,6 +16,16 @@ const PRODUCT_CONFIG: Record<string, { interval: 'lifetime' | 'monthly' | 'yearl
   // These IDs need to be updated with actual Stripe product IDs
   'prod_lifetime': { interval: 'lifetime', name: 'Lifetime Deal' },
   'prod_monthly': { interval: 'monthly', name: 'Monthly Pro' }
+};
+
+// Minimal shape we read from Stripe session/payment objects
+type PaymentData = {
+  customer?: string | null;
+  payment_intent?: string | null;
+  subscription?: string | null;
+  current_period_start?: number | null;
+  current_period_end?: number | null;
+  id?: string;
 };
 
 // Verify webhook signature from Stripe using Web Crypto API
@@ -100,8 +111,7 @@ function detectSubscriptionType(session: any): {
 // Main function: Activate user subscription
 async function activateUserSubscription(
   userId: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  paymentData: any,
+  paymentData: PaymentData,
   subscriptionType: ReturnType<typeof detectSubscriptionType>
 ) {
   const { data: existing } = await supabase
@@ -152,7 +162,7 @@ async function activateUserSubscription(
 // Main function: Create pending subscription
 async function createPendingSubscription(
   email: string,
-  paymentData: any,
+  paymentData: PaymentData,
   subscriptionType: ReturnType<typeof detectSubscriptionType>
 ) {
   // First check if pending subscription already exists
@@ -240,7 +250,9 @@ export default async function handler(req: Request) {
       // MAIN EVENT: Checkout completed
       case 'checkout.session.completed': {
         const session = event.data.object;
-        const email = session.customer_email;
+        // Fallback: some setups don't populate customer_email; use customer_details.email
+        const email: string | null | undefined =
+          session.customer_email ?? session.customer_details?.email ?? null;
         const subscriptionType = detectSubscriptionType(session);
 
         console.log('💳 Payment received:', {
@@ -267,7 +279,10 @@ export default async function handler(req: Request) {
           // Search by email
           const { data: userData } = await supabase.auth.admin.listUsers();
           if (userData?.users) {
-            user = userData.users.find(u => u.email === email) || null;
+            const found = userData.users.find((u: User) => u.email === email) || null;
+            if (found) {
+              user = { id: found.id, email: found.email ?? undefined };
+            }
           }
         }
 
