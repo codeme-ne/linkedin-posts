@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useRef, ButtonHTMLAttributes, ReactNode } from "react";
 import { getSession } from "@/api/supabase";
-import { supabase } from "@/api/supabase";
+import { supabase, getSupabaseClient } from "@/api/supabase";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -33,18 +33,31 @@ export function UpgradeButton({
   const { subscription, loading } = useSubscription();
   const subscriptionStatus = subscription?.status;
 
-  const handleClick = () => {
-    const paymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK;
-    if (paymentLink) {
-      window.open(paymentLink, '_blank');
-      // Re-check subscription after a delay
-      setTimeout(() => {
-        checkSubscription();
-      }, 5000);
-    } else {
+  const handleClick = async () => {
+    const baseLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK;
+    if (!baseLink) {
       console.error('Stripe payment link not configured');
       toast.error('Zahlungslink nicht konfiguriert');
+      return;
     }
+
+    // Enrich payment link with user context (helps webhook link user quickly)
+    const url = new URL(baseLink);
+    try {
+      const sb = getSupabaseClient();
+      const { data: { user } } = await sb.auth.getUser();
+      if (user?.id) url.searchParams.set('client_reference_id', user.id);
+      if (user?.email) url.searchParams.set('prefilled_email', user.email);
+    } catch {
+      // Non-blocking if auth is not available here
+    }
+
+    window.open(url.toString(), '_blank');
+    // Re-check subscription after a delay
+    setTimeout(() => {
+      checkSubscription();
+    }, 5000);
+
     if (onClick) {
       const syntheticEvent = {} as React.MouseEvent<HTMLButtonElement>;
       onClick(syntheticEvent);

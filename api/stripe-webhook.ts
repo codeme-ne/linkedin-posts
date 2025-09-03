@@ -386,22 +386,48 @@ export default async function handler(req: Request) {
         const interval: 'lifetime' | 'monthly' | 'yearly' =
           price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
 
-        await supabase
-          .from('subscriptions')
-          .update({
-            stripe_subscription_id: subscription.id,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            status: subscription.status,
-            cancel_at_period_end: !!subscription.cancel_at_period_end,
-            interval,
-            amount: price?.unit_amount ?? null,
-            currency: price?.currency ?? 'eur',
-            stripe_price_id: price?.id ?? null,
-            stripe_product_id: (price?.product as string) ?? null,
-            updated_at: new Date().toISOString()
-          })
-          .eq('stripe_subscription_id', subscription.id);
+        // Handle API version where current_period_* may be under the item
+        const periodStartSec: number | null =
+          (subscription.current_period_start as number | undefined) ??
+          (item?.current_period_start as number | undefined) ??
+          null;
+        const periodEndSec: number | null =
+          (subscription.current_period_end as number | undefined) ??
+          (item?.current_period_end as number | undefined) ??
+          null;
+
+        const currentPeriodStartIso = periodStartSec
+          ? new Date(periodStartSec * 1000).toISOString()
+          : null;
+        const currentPeriodEndIso = periodEndSec
+          ? new Date(periodEndSec * 1000).toISOString()
+          : null;
+
+        {
+          const { data: updated, error } = await supabase
+            .from('subscriptions')
+            .update({
+              stripe_subscription_id: subscription.id,
+              current_period_start: currentPeriodStartIso,
+              current_period_end: currentPeriodEndIso,
+              status: subscription.status,
+              cancel_at_period_end: !!subscription.cancel_at_period_end,
+              interval,
+              amount: price?.unit_amount ?? null,
+              currency: price?.currency ?? 'eur',
+              stripe_price_id: price?.id ?? null,
+              stripe_product_id: (price?.product as string) ?? null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('stripe_subscription_id', subscription.id)
+            .select('id');
+          if (error) throw error;
+          if (!updated || updated.length === 0) {
+            console.warn('No subscription row found to update for subscription.created', {
+              stripe_subscription_id: subscription.id
+            });
+          }
+        }
         break;
       }
 
@@ -415,21 +441,46 @@ export default async function handler(req: Request) {
         const interval: 'lifetime' | 'monthly' | 'yearly' =
           price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
 
-        await supabase
-          .from('subscriptions')
-          .update({
-            status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            cancel_at_period_end: subscription.cancel_at_period_end,
-            interval,
-            amount: price?.unit_amount ?? null,
-            currency: price?.currency ?? 'eur',
-            stripe_price_id: price?.id ?? null,
-            stripe_product_id: (price?.product as string) ?? null,
-            updated_at: new Date().toISOString()
-          })
-          .eq('stripe_subscription_id', subscription.id);
+        const periodStartSec: number | null =
+          (subscription.current_period_start as number | undefined) ??
+          (item?.current_period_start as number | undefined) ??
+          null;
+        const periodEndSec: number | null =
+          (subscription.current_period_end as number | undefined) ??
+          (item?.current_period_end as number | undefined) ??
+          null;
+
+        const currentPeriodStartIso = periodStartSec
+          ? new Date(periodStartSec * 1000).toISOString()
+          : null;
+        const currentPeriodEndIso = periodEndSec
+          ? new Date(periodEndSec * 1000).toISOString()
+          : null;
+
+        {
+          const { data: updated, error } = await supabase
+            .from('subscriptions')
+            .update({
+              status: subscription.status,
+              current_period_start: currentPeriodStartIso,
+              current_period_end: currentPeriodEndIso,
+              cancel_at_period_end: subscription.cancel_at_period_end,
+              interval,
+              amount: price?.unit_amount ?? null,
+              currency: price?.currency ?? 'eur',
+              stripe_price_id: price?.id ?? null,
+              stripe_product_id: (price?.product as string) ?? null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('stripe_subscription_id', subscription.id)
+            .select('id');
+          if (error) throw error;
+          if (!updated || updated.length === 0) {
+            console.warn('No subscription row found to update for subscription.updated', {
+              stripe_subscription_id: subscription.id
+            });
+          }
+        }
         break;
       }
 

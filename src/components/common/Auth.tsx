@@ -20,56 +20,26 @@ export function Auth() {
   const [authMode, setAuthMode] = useState<AuthMode>('login')
   const { toast } = useToast()
 
-  // Check for pending subscription after successful registration
-  const checkPendingSubscription = async (userEmail: string, userId: string) => {
+  // Safely reconcile pending subscription on the server (service role)
+  // Instead of writing from the client (RLS-safe and avoids duplication)
+  const checkPendingSubscription = async (_userEmail: string, _userId: string) => {
     try {
-      // Check if pending subscription exists
-      const { data: pending, error } = await supabase
-        .from('pending_subscriptions')
-        .select('*')
-        .eq('email', userEmail)
-        .eq('status', 'pending')
-        .single()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
 
-      if (pending && !error) {
-        console.log('🎉 Found pending subscription, activating...')
-
-        // Activate subscription
-        const { error: activationError } = await supabase
-          .from('subscriptions')
-          .insert({
-            user_id: userId,
-            stripe_customer_id: pending.stripe_customer_id,
-            stripe_payment_intent_id: pending.stripe_payment_intent_id,
-            stripe_subscription_id: pending.stripe_subscription_id,
-            status: 'active',
-            interval: pending.interval,
-            amount: pending.amount,
-            currency: pending.currency,
-            payment_provider: 'stripe'
-          })
-
-        if (!activationError) {
-          // Mark pending as activated
-          await supabase
-            .from('pending_subscriptions')
-            .update({
-              status: 'activated',
-              activated_at: new Date().toISOString()
-            })
-            .eq('id', pending.id)
-
-          // Show success message
-          toast({
-            title: '🎉 Ihr Pro-Abo wurde aktiviert!',
-            description: pending.interval === 'lifetime' 
-              ? 'Sie haben lebenslangen Zugang zu allen Pro-Features.' 
-              : 'Sie haben jetzt Zugang zu allen Pro-Features.',
-          })
-        }
+      const resp = await fetch('/api/reconcile-subscription', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const json = await resp.json().catch(() => ({})) as { activated?: number }
+      if (json?.activated) {
+        toast({
+          title: '🎉 Ihr Pro-Abo wurde aktiviert!',
+          description: 'Sie haben jetzt Zugang zu allen Pro-Features.',
+        })
       }
     } catch (err) {
-      console.error('Error checking pending subscription:', err)
+      console.error('Error reconciling pending subscription:', err)
     }
   }
 
