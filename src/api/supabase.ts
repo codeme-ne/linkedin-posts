@@ -80,7 +80,7 @@ const getRedirectUrl = () => {
     return window.location.origin
   }
   // Last resort: production URL (ensure this matches Supabase Allowed Redirect URLs)
-  return 'https://linkedin-posts-ashen.vercel.app'
+  return 'https://tranformer.social'
 }
 
 // Magic Link (OTP) Login

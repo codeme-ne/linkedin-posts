@@ -15,8 +15,22 @@ export default function SignUp() {
       if (data.session) navigate("/app", { replace: true });
       else setChecking(false);
     });
-    const { data: sub } = onAuthStateChange((_event, session) => {
-      if (session) navigate("/app", { replace: true });
+    const { data: sub } = onAuthStateChange(async (_event, session) => {
+      if (session) {
+        // Reconcile any pending subscriptions for this user's email
+        try {
+          await fetch('/api/reconcile-subscription', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`
+            }
+          })
+        } catch (e) {
+          // non-blocking
+          console.warn('Reconcile failed (non-blocking):', e)
+        }
+        navigate("/app", { replace: true });
+      }
     });
     return () => sub?.subscription?.unsubscribe?.();
   }, [navigate]);
