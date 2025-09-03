@@ -4,6 +4,9 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
+import { getSupabaseClient } from '@/api/supabase'
+
+const supabase = getSupabaseClient()
 
 type AuthMode = 'login' | 'register' | 'magic-link'
 
@@ -16,6 +19,59 @@ export function Auth() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const [authMode, setAuthMode] = useState<AuthMode>('login')
   const { toast } = useToast()
+
+  // Check for pending subscription after successful registration
+  const checkPendingSubscription = async (userEmail: string, userId: string) => {
+    try {
+      // Check if pending subscription exists
+      const { data: pending, error } = await supabase
+        .from('pending_subscriptions')
+        .select('*')
+        .eq('email', userEmail)
+        .eq('status', 'pending')
+        .single()
+
+      if (pending && !error) {
+        console.log('🎉 Found pending subscription, activating...')
+
+        // Activate subscription
+        const { error: activationError } = await supabase
+          .from('subscriptions')
+          .insert({
+            user_id: userId,
+            stripe_customer_id: pending.stripe_customer_id,
+            stripe_payment_intent_id: pending.stripe_payment_intent_id,
+            stripe_subscription_id: pending.stripe_subscription_id,
+            status: 'active',
+            interval: pending.interval,
+            amount: pending.amount,
+            currency: pending.currency,
+            payment_provider: 'stripe'
+          })
+
+        if (!activationError) {
+          // Mark pending as activated
+          await supabase
+            .from('pending_subscriptions')
+            .update({
+              status: 'activated',
+              activated_at: new Date().toISOString()
+            })
+            .eq('id', pending.id)
+
+          // Show success message
+          toast({
+            title: '🎉 Ihr Pro-Abo wurde aktiviert!',
+            description: pending.interval === 'lifetime' 
+              ? 'Sie haben lebenslangen Zugang zu allen Pro-Features.' 
+              : 'Sie haben jetzt Zugang zu allen Pro-Features.',
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Error checking pending subscription:', err)
+    }
+  }
 
   const handlePasswordAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -73,6 +129,11 @@ export function Auth() {
             title: 'Registrierung erfolgreich!',
             description: 'Du wirst automatisch weitergeleitet...'
           })
+          
+          // Check for pending subscription
+          if (data.user) {
+            await checkPendingSubscription(email, data.user.id)
+          }
         }
       } else {
         const { error, data } = await signInWithPassword(email, password)
@@ -99,6 +160,11 @@ export function Auth() {
             title: 'Erfolgreich angemeldet!',
             description: 'Du wirst weitergeleitet...'
           })
+          
+          // Check for pending subscription on login too
+          if (data.user) {
+            await checkPendingSubscription(data.user.email || email, data.user.id)
+          }
         }
       }
     } catch (err) {

@@ -10,6 +10,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Stripe Product IDs (from Stripe Dashboard) - to be configured
+const PRODUCT_CONFIG: Record<string, { interval: 'lifetime' | 'monthly' | 'yearly'; name: string }> = {
+  // These IDs need to be updated with actual Stripe product IDs
+  'prod_lifetime': { interval: 'lifetime', name: 'Lifetime Deal' },
+  'prod_monthly': { interval: 'monthly', name: 'Monthly Pro' }
+};
+
 // Verify webhook signature from Stripe using Web Crypto API
 async function verifyStripeSignature(
   body: string,
@@ -54,6 +61,148 @@ async function verifyStripeSignature(
   return signatures.some(sig => sig === expectedSignature);
 }
 
+// Helper function: Detect subscription type from Stripe data
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function detectSubscriptionType(session: any): {
+  interval: 'lifetime' | 'monthly' | 'yearly';
+  amount: number;
+  currency: string;
+  priceId?: string;
+  productId?: string;
+} {
+  // Extract from line_items
+  const lineItem = session.line_items?.data?.[0];
+  const price = lineItem?.price;
+
+  // Check product ID
+  const productId = price?.product || session.subscription?.items?.data?.[0]?.price?.product;
+  const productConfig = productId ? PRODUCT_CONFIG[productId] : null;
+
+  // Determine interval
+  let interval: 'lifetime' | 'monthly' | 'yearly' = 'lifetime';
+  if (productConfig) {
+    interval = productConfig.interval;
+  } else if (price?.recurring) {
+    interval = price.recurring.interval === 'month' ? 'monthly' : 'yearly';
+  } else if (!session.subscription) {
+    interval = 'lifetime';
+  }
+
+  return {
+    interval,
+    amount: session.amount_total || price?.unit_amount || 0,
+    currency: session.currency || 'eur',
+    priceId: price?.id,
+    productId: productId
+  };
+}
+
+// Main function: Activate user subscription
+async function activateUserSubscription(
+  userId: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  paymentData: any,
+  subscriptionType: ReturnType<typeof detectSubscriptionType>
+) {
+  const { data: existing } = await supabase
+    .from('subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .single();
+
+  const subscriptionData = {
+    user_id: userId,
+    stripe_customer_id: paymentData.customer,
+    stripe_payment_intent_id: paymentData.payment_intent,
+    stripe_subscription_id: paymentData.subscription,
+    status: 'active',
+    interval: subscriptionType.interval,
+    amount: subscriptionType.amount,
+    currency: subscriptionType.currency,
+    stripe_price_id: subscriptionType.priceId,
+    stripe_product_id: subscriptionType.productId,
+    payment_provider: 'stripe',
+    updated_at: new Date().toISOString(),
+    // For monthly subscriptions, add period dates
+    ...(paymentData.subscription && subscriptionType.interval === 'monthly' ? {
+      current_period_start: paymentData.current_period_start ? 
+        new Date(paymentData.current_period_start * 1000).toISOString() : null,
+      current_period_end: paymentData.current_period_end ? 
+        new Date(paymentData.current_period_end * 1000).toISOString() : null,
+    } : {})
+  };
+
+  if (existing) {
+    // Update existing
+    return await supabase
+      .from('subscriptions')
+      .update(subscriptionData)
+      .eq('user_id', userId);
+  } else {
+    // Insert new
+    return await supabase
+      .from('subscriptions')
+      .insert({
+        ...subscriptionData,
+        created_at: new Date().toISOString()
+      });
+  }
+}
+
+// Main function: Create pending subscription
+async function createPendingSubscription(
+  email: string,
+  paymentData: any,
+  subscriptionType: ReturnType<typeof detectSubscriptionType>
+) {
+  // First check if pending subscription already exists
+  const { data: existing } = await supabase
+    .from('pending_subscriptions')
+    .select('id')
+    .eq('email', email)
+    .eq('status', 'pending')
+    .single();
+
+  if (existing) {
+    // Update existing pending subscription
+    return await supabase
+      .from('pending_subscriptions')
+      .update({
+        stripe_customer_id: paymentData.customer,
+        stripe_payment_intent_id: paymentData.payment_intent,
+        stripe_subscription_id: paymentData.subscription,
+        stripe_session_id: paymentData.id,
+        interval: subscriptionType.interval,
+        amount: subscriptionType.amount,
+        currency: subscriptionType.currency,
+        metadata: {
+          stripe_price_id: subscriptionType.priceId,
+          stripe_product_id: subscriptionType.productId
+        },
+        created_at: new Date().toISOString()
+      })
+      .eq('id', existing.id);
+  }
+
+  return await supabase
+    .from('pending_subscriptions')
+    .insert({
+      email,
+      stripe_customer_id: paymentData.customer,
+      stripe_payment_intent_id: paymentData.payment_intent,
+      stripe_subscription_id: paymentData.subscription,
+      stripe_session_id: paymentData.id,
+      interval: subscriptionType.interval,
+      amount: subscriptionType.amount,
+      currency: subscriptionType.currency,
+      status: 'pending',
+      metadata: {
+        stripe_price_id: subscriptionType.priceId,
+        stripe_product_id: subscriptionType.productId
+      }
+    });
+}
+
 export default async function handler(req: Request) {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 });
@@ -84,168 +233,178 @@ export default async function handler(req: Request) {
 
     // Parse the webhook payload
     const event = JSON.parse(body);
-    console.log('Stripe Event:', event.type);
+    console.log('📨 Stripe Event:', event.type);
 
     // Handle different event types
     switch (event.type) {
-      case 'payment_intent.succeeded': {
-        // Payment successful - activate subscription
-        const paymentIntent = event.data.object;
-        const userEmail = paymentIntent.receipt_email || paymentIntent.charges?.data?.[0]?.billing_details?.email;
-        const userId = paymentIntent.metadata?.user_id || paymentIntent.client_reference_id;
-        
-        console.log('Processing payment for:', { userEmail, userId });
-
-        // Try to find user by ID first, then by email
-        let user: { id: string; email?: string } | null = null;
-        
-        if (userId) {
-          // Get user by ID
-          const { data: userData, error } = await supabase.auth.admin.getUserById(userId);
-          if (!error && userData?.user) {
-            user = { id: userData.user.id, email: userData.user.email };
-          }
-        }
-        
-        if (!user && userEmail) {
-          // Fall back to email lookup
-          const { data: userData, error } = await supabase.auth.admin.listUsers();
-          if (!error && userData?.users) {
-            user = userData.users.find(u => u.email === userEmail) || null;
-          }
-        }
-        
-        if (user) {
-          console.log('Found user:', user.id);
-          
-          // Create or update subscription record
-          // First check if subscription exists
-          const { data: existingSub } = await supabase
-            .from('subscriptions')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-          let error;
-          if (existingSub) {
-            // Update existing subscription
-            const { error: updateError } = await supabase
-              .from('subscriptions')
-              .update({
-                stripe_customer_id: paymentIntent.customer || null,
-                stripe_payment_intent_id: paymentIntent.id,
-                status: 'active',
-                updated_at: new Date().toISOString()
-              })
-              .eq('user_id', user.id);
-            error = updateError;
-          } else {
-            // Create new subscription
-            const { error: insertError } = await supabase
-              .from('subscriptions')
-              .insert({
-                user_id: user.id,
-                stripe_customer_id: paymentIntent.customer || null,
-                stripe_payment_intent_id: paymentIntent.id,
-                payment_provider: 'stripe',
-                status: 'active',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              });
-            error = insertError;
-          }
-
-          if (error) {
-            console.error('Error updating subscription:', error);
-            return new Response('Database error', { status: 500 });
-          }
-
-          console.log('Subscription activated for user:', user.id);
-        } else {
-          console.log('User not found for payment_intent event - likely handled by checkout.session.completed');
-          // Return 200 to acknowledge receipt - checkout.session.completed will handle the subscription
-        }
-        break;
-      }
-
+      // MAIN EVENT: Checkout completed
       case 'checkout.session.completed': {
-        // Alternative event for Stripe Checkout
         const session = event.data.object;
-        const userEmail = session.customer_email;
-        const userId = session.client_reference_id;
-        
-        console.log('Checkout completed for:', { userEmail, userId });
+        const email = session.customer_email;
+        const subscriptionType = detectSubscriptionType(session);
 
-        // Similar logic as payment_intent.succeeded
+        console.log('💳 Payment received:', {
+          email,
+          type: subscriptionType.interval,
+          amount: subscriptionType.amount / 100, // Convert cents to euros
+          currency: subscriptionType.currency
+        });
+
+        // 1. Try to find user
         let user: { id: string; email?: string } | null = null;
         
-        if (userId) {
-          const { data: userData, error } = await supabase.auth.admin.getUserById(userId);
-          if (!error && userData?.user) {
+        if (session.client_reference_id) {
+          // User ID was provided
+          const { data: userData } = await supabase.auth.admin.getUserById(
+            session.client_reference_id
+          );
+          if (userData?.user) {
             user = { id: userData.user.id, email: userData.user.email };
           }
         }
-        
-        if (!user && userEmail) {
-          const { data: userData, error } = await supabase.auth.admin.listUsers();
-          if (!error && userData?.users) {
-            user = userData.users.find(u => u.email === userEmail) || null;
+
+        if (!user && email) {
+          // Search by email
+          const { data: userData } = await supabase.auth.admin.listUsers();
+          if (userData?.users) {
+            user = userData.users.find(u => u.email === email) || null;
           }
         }
-        
-        if (user) {
-          console.log('Found user:', user.id);
-          
-          // First check if subscription exists
-          const { data: existingSub } = await supabase
-            .from('subscriptions')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
 
-          let error;
-          if (existingSub) {
-            // Update existing subscription
-            const { error: updateError } = await supabase
-              .from('subscriptions')
-              .update({
-                stripe_customer_id: session.customer || null,
-                stripe_payment_intent_id: session.payment_intent || null,
-                status: 'active',
-                updated_at: new Date().toISOString()
-              })
-              .eq('user_id', user.id);
-            error = updateError;
-          } else {
-            // Create new subscription
-            const { error: insertError } = await supabase
-              .from('subscriptions')
-              .insert({
-                user_id: user.id,
-                stripe_customer_id: session.customer || null,
-                stripe_payment_intent_id: session.payment_intent || null,
-                payment_provider: 'stripe',
-                status: 'active',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              });
-            error = insertError;
-          }
+        if (user) {
+          // User exists → Activate subscription
+          console.log('✅ Activating subscription for user:', user.id);
+          const { error } = await activateUserSubscription(
+            user.id,
+            session,
+            subscriptionType
+          );
 
           if (error) {
-            console.error('Error updating subscription:', error);
-            return new Response('Database error', { status: 500 });
+            console.error('❌ Activation error:', error);
+            throw error;
           }
+        } else if (email) {
+          // User doesn't exist → Create pending subscription
+          console.log('⏳ Creating pending subscription for:', email);
+          const { error } = await createPendingSubscription(
+            email,
+            session,
+            subscriptionType
+          );
 
-          console.log('Subscription activated for user:', user.id);
+          if (error) {
+            console.error('❌ Pending creation error:', error);
+            throw error;
+          }
         }
         break;
       }
 
-      case 'customer.subscription.created':
+      // MONTHLY: Subscription created
+      case 'customer.subscription.created': {
+        const subscription = event.data.object;
+        console.log('📅 Monthly subscription created:', subscription.id);
+
+        // Update subscription with period data if we have a user
+        if (subscription.metadata?.user_id) {
+          await supabase
+            .from('subscriptions')
+            .update({
+              stripe_subscription_id: subscription.id,
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              status: subscription.status,
+              cancel_at_period_end: false
+            })
+            .eq('user_id', subscription.metadata.user_id);
+        }
+        break;
+      }
+
+      // MONTHLY: Subscription updated (renewals, changes)
       case 'customer.subscription.updated': {
-        // For future subscription-based pricing
-        console.log('Subscription event received but not processed (lifetime deal only)');
+        const subscription = event.data.object;
+        console.log('📝 Subscription updated:', subscription.id);
+
+        await supabase
+          .from('subscriptions')
+          .update({
+            status: subscription.status,
+            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            updated_at: new Date().toISOString()
+          })
+          .eq('stripe_subscription_id', subscription.id);
+        break;
+      }
+
+      // MONTHLY: Payment succeeded (renewal)
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object;
+        
+        // Skip first payment (handled by checkout.session.completed)
+        if (invoice.billing_reason === 'subscription_create') {
+          break;
+        }
+
+        if (invoice.subscription) {
+          console.log('💰 Monthly payment succeeded for subscription:', invoice.subscription);
+
+          await supabase
+            .from('subscriptions')
+            .update({
+              status: 'active',
+              updated_at: new Date().toISOString()
+            })
+            .eq('stripe_subscription_id', invoice.subscription);
+        }
+        break;
+      }
+
+      // MONTHLY: Payment failed
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object;
+        if (invoice.subscription) {
+          console.log('⚠️ Monthly payment failed for subscription:', invoice.subscription);
+
+          await supabase
+            .from('subscriptions')
+            .update({
+              status: 'past_due',
+              updated_at: new Date().toISOString()
+            })
+            .eq('stripe_subscription_id', invoice.subscription);
+        }
+        break;
+      }
+
+      // MONTHLY: Subscription canceled
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object;
+        console.log('🚫 Subscription canceled:', subscription.id);
+
+        await supabase
+          .from('subscriptions')
+          .update({
+            status: 'canceled',
+            cancel_at_period_end: true,
+            canceled_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('stripe_subscription_id', subscription.id);
+        break;
+      }
+
+      // Legacy payment intent handler (kept for backward compatibility)
+      case 'payment_intent.succeeded': {
+        const paymentIntent = event.data.object;
+        
+        // Only process if not already handled by checkout.session.completed
+        if (paymentIntent.metadata?.processed_by_checkout !== 'true') {
+          console.log('Legacy payment_intent.succeeded event (keeping for compatibility)');
+        }
         break;
       }
 
@@ -253,9 +412,21 @@ export default async function handler(req: Request) {
         console.log(`Unhandled event type: ${event.type}`);
     }
 
-    return new Response('Webhook processed', { status: 200 });
+    return new Response('OK', { status: 200 });
+
   } catch (error) {
-    console.error('Webhook error:', error);
-    return new Response('Webhook processing failed', { status: 500 });
+    console.error('❌ Webhook Error:', error);
+    
+    // Log critical errors for monitoring
+    if (error instanceof Error) {
+      console.error('CRITICAL: Webhook processing failed', {
+        error: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Return 500 to trigger Stripe retry
+    return new Response('Internal Server Error', { status: 500 });
   }
 }

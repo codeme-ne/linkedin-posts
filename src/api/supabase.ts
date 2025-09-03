@@ -5,6 +5,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+// Export function to get the supabase client
+export const getSupabaseClient = () => supabase
+
 export interface SavedPost {
   id: number
   content: string
