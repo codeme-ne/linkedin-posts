@@ -111,7 +111,7 @@ export function FAQSection() {
             href="mailto:support@social-transformer.com" 
             className="text-primary hover:text-accent transition-colors duration-200 font-medium"
           >
-            support@social-transformer.com
+            lukas[at]zangerlcoachingdynamics.com
           </a>
         </p>
       </div>

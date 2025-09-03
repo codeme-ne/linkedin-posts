@@ -25,9 +25,9 @@ export function FeaturesGrid({ isVisible, variant = "desktop" }: FeaturesGridPro
           <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-4">
             <Link2 className="h-5 w-5 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold leading-snug mb-3">Paste & Go</h3>
+          <h3 className="text-lg font-semibold leading-snug mb-3">Blitzschnell starten</h3>
           <p className="text-sm leading-normal text-muted-foreground">
-            URL oder Text einfügen. Fertig.
+            Einfach einfügen und sofort loslegen. Keine Einrichtung nötig.
           </p>
         </CardContent>
       </Card>
@@ -37,9 +37,9 @@ export function FeaturesGrid({ isVisible, variant = "desktop" }: FeaturesGridPro
           <div className="rounded-full bg-gradient-to-br from-primary/10 to-accent/10 w-10 h-10 flex items-center justify-center mb-4">
             <Zap className="h-5 w-5 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold leading-snug mb-3">Premium-Scraping</h3>
+          <h3 className="text-lg font-semibold leading-snug mb-3">Unbegrenzte Power</h3>
           <p className="text-sm leading-normal text-muted-foreground">
-            Unbegrenzt. Sicher und zuverlässig.
+            Keine Limits. Extrahiere so viel Content wie du willst.
           </p>
         </CardContent>
       </Card>
@@ -49,9 +49,9 @@ export function FeaturesGrid({ isVisible, variant = "desktop" }: FeaturesGridPro
           <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-4">
             <Share2 className="h-5 w-5 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold leading-snug mb-3">3 Plattformen</h3>
+          <h3 className="text-lg font-semibold leading-snug mb-3">Maximale Reichweite</h3>
           <p className="text-sm leading-normal text-muted-foreground">
-            LinkedIn, X, Instagram. Ein Klick.
+            Erreiche alle deine Zielgruppen auf einmal. Dreifache Sichtbarkeit.
           </p>
         </CardContent>
       </Card>
@@ -61,9 +61,9 @@ export function FeaturesGrid({ isVisible, variant = "desktop" }: FeaturesGridPro
           <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-4">
             <Save className="h-5 w-5 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold leading-snug mb-3">Posts speichern</h3>
+          <h3 className="text-lg font-semibold leading-snug mb-3">Content-Bibliothek</h3>
           <p className="text-sm leading-normal text-muted-foreground">
-            Editieren. Später verwenden.
+            Baue dir einen Vorrat auf. Nie wieder ohne Content.
           </p>
         </CardContent>
       </Card>
@@ -73,9 +73,9 @@ export function FeaturesGrid({ isVisible, variant = "desktop" }: FeaturesGridPro
           <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-4">
             <Edit3 className="h-5 w-5 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold leading-snug mb-3">Post-Editor</h3>
+          <h3 className="text-lg font-semibold leading-snug mb-3">Perfekte Kontrolle</h3>
           <p className="text-sm leading-normal text-muted-foreground">
-            Manuell anpassen. Perfektionieren.
+            Deine Marke, dein Stil. Jeder Post passt zu dir.
           </p>
         </CardContent>
       </Card>
@@ -85,9 +85,9 @@ export function FeaturesGrid({ isVisible, variant = "desktop" }: FeaturesGridPro
           <div className="rounded-full bg-gradient-to-br from-primary/10 to-accent/10 w-10 h-10 flex items-center justify-center mb-4">
             <Send className="h-5 w-5 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold leading-snug mb-3">Direct-Posting</h3>
+          <h3 className="text-lg font-semibold leading-snug mb-3">Sofort live</h3>
           <p className="text-sm leading-normal text-muted-foreground">
-            Direkt auf LinkedIn, X & Co. posten.
+            Ein Klick und dein Content ist überall online.
           </p>
         </CardContent>
       </Card>

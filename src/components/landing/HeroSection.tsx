@@ -19,7 +19,7 @@ export function HeroSection({ isVisible, onSignup }: HeroSectionProps) {
   return (
     <div className={`space-y-6 md:space-y-8 transition-all duration-700 delay-100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
       <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight">
-        <span className="text-foreground">Mach aus jedem Newsletter einen</span>
+        <span className="text-foreground">Mach aus jedem Text einen</span>
         <br />
         <span className={`${phrases[currentIndex].color} transition-colors duration-300`}>
           {displayText}
@@ -27,8 +27,8 @@ export function HeroSection({ isVisible, onSignup }: HeroSectionProps) {
         </span>
       </h1>
       <p className="text-base sm:text-lg md:text-xl leading-relaxed text-muted-foreground max-w-2xl">
-        <span className="font-semibold">15 Minuten sparen pro Post.</span> Kopiere deinen Newsletter rein oder gib eine URL ein, 
-        erhalte perfekt formatierte Social-Media-Beiträge raus. 
+        <span className="font-semibold">Spare 15 Minuten pro Post.</span> Füge beliebigen Text oder eine URL ein und 
+        erhalte sofort perfekt formatierte Social-Media-Beiträge für alle Plattformen. 
       </p>
       <div className="flex flex-col sm:flex-row gap-4 pt-2 md:pt-4">
         <Button 

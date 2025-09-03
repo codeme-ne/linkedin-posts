@@ -17,7 +17,7 @@ export function CTASection() {
         </h2>
         
         <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 md:mb-10 max-w-2xl mx-auto">
-          Während andere noch kopieren und anpassen, transformierst du bereits deinen nächsten Newsletter in viralen Social-Media-Content.
+          Während andere noch stundenlang kopieren und anpassen, transformierst du bereits jeden beliebigen Text in viralen Social-Media-Content.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6 sm:mb-8">
