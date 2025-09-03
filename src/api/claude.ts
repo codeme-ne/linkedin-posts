@@ -6,7 +6,7 @@ const CLAUDE_API_KEY = 'not-needed' // Dummy-Wert, wird von Edge Function übers
 const anthropic = new Anthropic({
   apiKey: CLAUDE_API_KEY,
   dangerouslyAllowBrowser: true,
-  baseURL: 'https://linkedin-posts-ashen.vercel.app/api/claude' // Produktions-URL für Edge Function
+  baseURL: '/api/claude' // Relative URL - nutzt automatisch die aktuelle Domain
 });
 
 const linkedInFromNewsletterPrompt = `
