@@ -87,7 +87,16 @@ export default function Generator() {
   useEffect(() => {
     const welcome = searchParams.get('welcome');
     if (welcome === '1') {
-      toast({ title: 'Willkommen! 🎉', description: 'Dein Account ist aktiviert. Viel Spaß beim Remixen!' });
+      const KEY = 'st_welcome_toast_shown';
+      const alreadyShown = typeof window !== 'undefined' && window.localStorage.getItem(KEY) === '1';
+      if (!alreadyShown) {
+        toast({ title: 'Willkommen! 🎉', description: 'Dein Account ist aktiviert. Viel Spaß beim Remixen!' });
+        try {
+          window.localStorage.setItem(KEY, '1');
+  } catch {
+          // ignore storage errors (private mode etc.)
+        }
+      }
       // Clean query param without adding a new history entry
       searchParams.delete('welcome');
       setSearchParams(searchParams, { replace: true });
