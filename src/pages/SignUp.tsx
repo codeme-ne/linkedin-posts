@@ -15,7 +15,7 @@ export default function SignUp() {
       if (data.session) navigate("/app", { replace: true });
       else setChecking(false);
     });
-    const { data: sub } = onAuthStateChange(async (_event, session) => {
+  const { data: sub } = onAuthStateChange(async (_event, session) => {
       if (session) {
         // Reconcile any pending subscriptions for this user's email
         try {
@@ -29,7 +29,8 @@ export default function SignUp() {
           // non-blocking
           console.warn('Reconcile failed (non-blocking):', e)
         }
-        navigate("/app", { replace: true });
+    // Navigate with welcome flag for first-login feedback
+    navigate("/app?welcome=1", { replace: true });
       }
     });
     return () => sub?.subscription?.unsubscribe?.();

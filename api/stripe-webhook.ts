@@ -18,6 +18,49 @@ const PRODUCT_CONFIG: Record<string, { interval: 'lifetime' | 'monthly' | 'yearl
   'prod_monthly': { interval: 'monthly', name: 'Monthly Pro' }
 };
 
+// Optional: send purchase confirmation email via Resend (free tier available)
+async function sendPurchaseEmail(to: string, details: {
+  amount: number;
+  currency: string;
+  interval: 'lifetime' | 'monthly' | 'yearly';
+}) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return; // gracefully skip if not configured
+
+  const subject = details.interval === 'lifetime'
+    ? 'Dein Lifetime-Kauf – Social Transformer'
+    : 'Dein Abo – Social Transformer';
+
+  const euros = (details.amount / 100).toFixed(2);
+  const html = `
+    <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height:1.6; color:#0f172a">
+      <h2 style="margin:0 0 8px">Danke für deinen Kauf! 🎉</h2>
+      <p>Deine Zahlung ist eingegangen.</p>
+      <ul>
+        <li><strong>Plan:</strong> ${details.interval}</li>
+        <li><strong>Betrag:</strong> ${euros} ${details.currency.toUpperCase()}</li>
+      </ul>
+      <p>Du kannst sofort loslegen:</p>
+      <p><a href="https://tranformer.social/app" style="color:#2563eb">https://tranformer.social/app</a></p>
+      <p style="margin-top:16px; font-size:12px; color:#475569">Diese E-Mail wurde automatisch versendet.</p>
+    </div>
+  `;
+
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: 'Social Transformer <no-reply@tranformer.social>',
+      to,
+      subject,
+      html
+    })
+  });
+}
+
 // Minimal shape we read from Stripe session/payment objects
 type PaymentData = {
   customer?: string | null;
@@ -299,6 +342,13 @@ export default async function handler(req: Request) {
             console.error('❌ Activation error:', error);
             throw error;
           }
+          if (email) {
+            await sendPurchaseEmail(email, {
+              amount: subscriptionType.amount,
+              currency: subscriptionType.currency,
+              interval: subscriptionType.interval
+            });
+          }
         } else if (email) {
           // User doesn't exist → Create pending subscription
           console.log('⏳ Creating pending subscription for:', email);
@@ -312,6 +362,12 @@ export default async function handler(req: Request) {
             console.error('❌ Pending creation error:', error);
             throw error;
           }
+          // Send confirmation even if user registers später – sie haben bezahlt
+          await sendPurchaseEmail(email, {
+            amount: subscriptionType.amount,
+            currency: subscriptionType.currency,
+            interval: subscriptionType.interval
+          });
         }
         break;
       }

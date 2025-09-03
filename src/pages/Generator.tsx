@@ -41,7 +41,7 @@ import { PaywallModal } from "@/components/common/PaywallModal";
 import { extractFromUrl } from "@/api/extract";
 
 export default function Generator() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [inputText, setInputText] = useState("");
   const [postsByPlatform, setPostsByPlatform] = useState<Record<Platform, string[]>>({
     linkedin: [],
@@ -81,6 +81,18 @@ export default function Generator() {
     return () => {
       sub?.subscription?.unsubscribe?.();
     };
+  }, []);
+
+  // Show welcome toast once when redirected after signup confirmation
+  useEffect(() => {
+    const welcome = searchParams.get('welcome');
+    if (welcome === '1') {
+      toast({ title: 'Willkommen! 🎉', description: 'Dein Account ist aktiviert. Viel Spaß beim Remixen!' });
+      // Clean query param without adding a new history entry
+      searchParams.delete('welcome');
+      setSearchParams(searchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRemix = async () => {
