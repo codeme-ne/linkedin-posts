@@ -9,6 +9,7 @@ import { FeaturesGrid } from "@/components/landing/FeaturesGrid";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { FooterBar } from "@/components/landing/FooterBar";
 import { CTASection } from "@/components/landing/CTASection";
+import { FAQSection } from "@/components/landing/FAQSection";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -93,6 +94,9 @@ export default function Landing() {
 
       {/* CTA Section - new section before footer */}
       <CTASection />
+
+      {/* FAQ Section - new section before footer */}
+      <FAQSection />
 
       {/* Footer Section - außerhalb des Containers für vollen Hintergrund */}
       <FooterBar />
