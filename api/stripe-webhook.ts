@@ -140,6 +140,10 @@ function detectSubscriptionType(session: any): {
     interval = price.recurring.interval === 'month' ? 'monthly' : 'yearly';
   } else if (!session.subscription) {
     interval = 'lifetime';
+  } else if (session.mode === 'subscription') {
+    // Fallback: when Checkout doesn't expand line_items/prices, but we're in subscription mode
+    // and you only offer monthly, default to monthly (safe for current setup).
+    interval = 'monthly';
   }
 
   return {
@@ -376,20 +380,28 @@ export default async function handler(req: Request) {
       case 'customer.subscription.created': {
         const subscription = event.data.object;
         console.log('📅 Monthly subscription created:', subscription.id);
+        // Always update by subscription id; no dependency on metadata
+        const item = subscription.items?.data?.[0];
+        const price = item?.price;
+        const interval: 'lifetime' | 'monthly' | 'yearly' =
+          price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
 
-        // Update subscription with period data if we have a user
-        if (subscription.metadata?.user_id) {
-          await supabase
-            .from('subscriptions')
-            .update({
-              stripe_subscription_id: subscription.id,
-              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-              status: subscription.status,
-              cancel_at_period_end: false
-            })
-            .eq('user_id', subscription.metadata.user_id);
-        }
+        await supabase
+          .from('subscriptions')
+          .update({
+            stripe_subscription_id: subscription.id,
+            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            status: subscription.status,
+            cancel_at_period_end: !!subscription.cancel_at_period_end,
+            interval,
+            amount: price?.unit_amount ?? null,
+            currency: price?.currency ?? 'eur',
+            stripe_price_id: price?.id ?? null,
+            stripe_product_id: (price?.product as string) ?? null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('stripe_subscription_id', subscription.id);
         break;
       }
 
@@ -398,6 +410,11 @@ export default async function handler(req: Request) {
         const subscription = event.data.object;
         console.log('📝 Subscription updated:', subscription.id);
 
+        const item = subscription.items?.data?.[0];
+        const price = item?.price;
+        const interval: 'lifetime' | 'monthly' | 'yearly' =
+          price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
+
         await supabase
           .from('subscriptions')
           .update({
@@ -405,6 +422,11 @@ export default async function handler(req: Request) {
             current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
             cancel_at_period_end: subscription.cancel_at_period_end,
+            interval,
+            amount: price?.unit_amount ?? null,
+            currency: price?.currency ?? 'eur',
+            stripe_price_id: price?.id ?? null,
+            stripe_product_id: (price?.product as string) ?? null,
             updated_at: new Date().toISOString()
           })
           .eq('stripe_subscription_id', subscription.id);
