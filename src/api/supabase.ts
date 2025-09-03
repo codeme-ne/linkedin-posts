@@ -13,6 +13,13 @@ export interface SavedPost {
   platform?: 'linkedin' | 'x' | 'instagram'
 }
 
+export interface GenerationUsage {
+  id: string
+  user_id: string
+  generated_at: string
+  created_at: string
+}
+
 export const savePost = async (content: string, platform: 'linkedin' | 'x' | 'instagram' = 'linkedin') => {
   console.log('Saving post to Supabase:', { content, platform })
   

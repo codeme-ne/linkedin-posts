@@ -1,48 +1,83 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useSubscription } from '@/components/common/UpgradeButton';
+import { supabase } from '@/api/supabase';
 
-const STORAGE_KEY = 'usage';
-const DAILY_LIMIT = 2;
+const TOTAL_LIMIT = 7;
 
 export function useUsageTracking() {
   const { subscription } = useSubscription();
-  
-  const getTodayUsage = (): number => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return 0;
-    
-    const { date, count } = JSON.parse(stored);
-    const today = new Date().toDateString();
-    
-    return date === today ? count : 0;
-  };
+  const [currentUsage, setCurrentUsage] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  const getUserUsage = useCallback(async (): Promise<number> => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user?.id) return 0;
+
+      const { count, error } = await supabase
+        .from('generation_usage')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', session.session.user.id);
+
+      if (error) {
+        console.error('Error fetching generation usage:', error);
+        return 0;
+      }
+
+      return count || 0;
+    } catch (error) {
+      console.error('Error in getUserUsage:', error);
+      return 0;
+    }
+  }, []);
 
   const canTransform = useCallback(() => {
     if (subscription?.is_active) return true;
-    return getTodayUsage() < DAILY_LIMIT;
-  }, [subscription]);
+    return currentUsage < TOTAL_LIMIT;
+  }, [subscription, currentUsage]);
 
-  const incrementUsage = useCallback(() => {
+  const incrementUsage = useCallback(async () => {
     if (subscription?.is_active) return;
     
-    const today = new Date().toDateString();
-    const currentCount = getTodayUsage();
-    
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      date: today,
-      count: currentCount + 1
-    }));
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user?.id) return;
+
+      const { error } = await supabase
+        .from('generation_usage')
+        .insert([{ 
+          user_id: session.session.user.id,
+          generated_at: new Date().toISOString()
+        }]);
+
+      if (error) {
+        console.error('Error incrementing generation usage:', error);
+        return;
+      }
+
+      // Update local state
+      setCurrentUsage(prev => prev + 1);
+    } catch (error) {
+      console.error('Error in incrementUsage:', error);
+    }
   }, [subscription]);
 
-  const getRemainingCount = useCallback(() => {
-    if (subscription?.is_active) return -1;
-    return DAILY_LIMIT - getTodayUsage();
-  }, [subscription]);
+  // Load initial usage on mount and when subscription changes
+  useEffect(() => {
+    const loadUsage = async () => {
+      setLoading(true);
+      const usage = await getUserUsage();
+      setCurrentUsage(usage);
+      setLoading(false);
+    };
+
+    loadUsage();
+  }, [getUserUsage, subscription]);
 
   return {
     canTransform,
     incrementUsage,
-    getRemainingCount,
-    isPro: subscription?.is_active || false
+    isPro: subscription?.is_active || false,
+    loading
   };
 }

@@ -58,7 +58,7 @@ export default function Generator() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(["linkedin"]);
   const [showPaywall, setShowPaywall] = useState(false);
-  const { canTransform, incrementUsage, getRemainingCount, isPro } = useUsageTracking();
+  const { canTransform, incrementUsage, isPro } = useUsageTracking();
   // Track sidebar collapsed state to adjust content padding
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sourceUrl, setSourceUrl] = useState("");
@@ -398,15 +398,6 @@ export default function Generator() {
             />
             <div className="space-y-2">
               <PlatformSelector value={selectedPlatforms} onChange={setSelectedPlatforms} />
-              {!isPro && (
-                <div className="flex justify-center">
-                  <Badge variant="outline" className="px-3 py-1">
-                    {getRemainingCount() > 0 
-                      ? `${getRemainingCount()} kostenlose Transformationen heute` 
-                      : "Keine kostenlosen Transformationen mehr"}
-                  </Badge>
-                </div>
-              )}
             </div>
 
             {/* Progress bar - only visible when generating */}

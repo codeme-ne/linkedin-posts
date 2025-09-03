@@ -23,7 +23,7 @@ import {
 
 export default function Settings() {
   const { subscription, loading } = useSubscription();
-  const { getRemainingCount, isPro } = useUsageTracking();
+  const { isPro } = useUsageTracking();
   const [email, setEmail] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { toast } = useToast();
@@ -155,15 +155,6 @@ export default function Settings() {
                     <span className="font-medium">{planLabel}</span>
                   </div>
                 </div>
-                
-                {!isPro && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Verfügbar heute:</span>
-                      <span className="font-bold text-lg">{Math.max(0, getRemainingCount())}</span>
-                    </div>
-                  </>
-                )}
                 
                 <div className="pt-2">
                   {!isPro ? (
