@@ -6,7 +6,7 @@ const CLAUDE_API_KEY = 'not-needed' // Dummy-Wert, wird von Edge Function übers
 const anthropic = new Anthropic({
   apiKey: CLAUDE_API_KEY,
   dangerouslyAllowBrowser: true,
-  baseURL: '/api/claude' // Relative URL - nutzt automatisch die aktuelle Domain
+  baseURL: `${window.location.origin}/api/claude` // Absolute URL - nutzt die aktuelle Domain
 });
 
 const linkedInFromNewsletterPrompt = `
