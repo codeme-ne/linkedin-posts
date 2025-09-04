@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, Zap, RefreshCw } from 'lucide-react';
 import { getExtractionUsage, type ExtractUsageInfo } from '@/api/extract-premium';
-import { useSubscription } from '@/components/common/UpgradeButton';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export function ExtractUsageDisplay() {
   const [usage, setUsage] = useState<ExtractUsageInfo | null>(null);

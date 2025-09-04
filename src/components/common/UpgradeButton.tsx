@@ -1,16 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState, useRef, useCallback, ButtonHTMLAttributes, ReactNode } from "react";
-import { getSession } from "@/api/supabase";
-import { supabase, getSupabaseClient } from "@/api/supabase";
+import { ButtonHTMLAttributes, ReactNode, useState } from "react";
+import { getSupabaseClient } from "@/api/supabase";
 import { cn } from "@/lib/utils";
-import { Check, Loader2, Sparkles } from "lucide-react";
+import { Check, Loader2, Sparkles, ExternalLink, CreditCard } from "lucide-react";
 import { toast } from "sonner";
-
-interface SubscriptionStatus {
-  status: 'free' | 'active' | 'cancelled';
-  is_active: boolean;
-}
+import { useSubscription } from "@/hooks/useSubscription";
+import { getDefaultStripePlan } from "@/config/app.config";
 
 interface UpgradeButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children?: ReactNode;
@@ -30,45 +26,92 @@ export function UpgradeButton({
   onClick,
   ...props
 }: UpgradeButtonProps) {
-  const { subscription, loading } = useSubscription();
-  const subscriptionStatus = subscription?.status;
+  const { loading, isActive, refreshSubscription } = useSubscription();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
-  const handleClick = async () => {
-    const baseLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK;
+  const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    const defaultPlan = getDefaultStripePlan();
+    const baseLink = defaultPlan?.paymentLink;
     if (!baseLink) {
       toast.error('Zahlungslink nicht konfiguriert');
       return;
     }
 
-    // Enrich payment link with user context (helps webhook link user quickly)
-    const url = new URL(baseLink);
+    setIsRedirecting(true);
+    toast.loading('Zahlungsseite wird geöffnet...', { 
+      id: 'payment-redirect',
+      duration: 3000 
+    });
+
     try {
+      // Enrich payment link with user context (helps webhook link user quickly)
+      const url = new URL(baseLink);
       const sb = getSupabaseClient();
       const { data: { user } } = await sb.auth.getUser();
+      
       if (user?.id) url.searchParams.set('client_reference_id', user.id);
       if (user?.email) url.searchParams.set('prefilled_email', user.email);
-    } catch {
-      // Non-blocking if auth is not available here
+
+      // Open payment page
+      const paymentWindow = window.open(url.toString(), '_blank');
+      
+      if (!paymentWindow) {
+        toast.error('Popup wurde blockiert. Bitte erlaube Popups und versuche es erneut.');
+        setIsRedirecting(false);
+        return;
+      }
+
+      toast.success('Zahlungsseite geöffnet! Schließe diese Registerkarte nach der Zahlung.', {
+        id: 'payment-redirect',
+        duration: 5000
+      });
+
+      // Focus the payment window
+      paymentWindow.focus();
+
+      // Start checking for completed payment after a delay
+      setTimeout(() => {
+        const checkPayment = () => {
+          refreshSubscription();
+          toast.loading('Prüfe Zahlungsstatus...', { 
+            id: 'payment-check',
+            duration: 2000 
+          });
+        };
+
+        // Check after 5 seconds, then every 10 seconds for up to 2 minutes
+        setTimeout(checkPayment, 5000);
+        
+        const intervalId = setInterval(() => {
+          if (paymentWindow.closed) {
+            clearInterval(intervalId);
+            checkPayment();
+            toast.dismiss('payment-check');
+          }
+        }, 2000);
+
+        // Clean up after 2 minutes
+        setTimeout(() => {
+          clearInterval(intervalId);
+          toast.dismiss('payment-check');
+        }, 120000);
+      }, 1000);
+
+    } catch (error) {
+      console.error('Payment redirect error:', error);
+      toast.error('Fehler beim Öffnen der Zahlungsseite', { id: 'payment-redirect' });
+    } finally {
+      // Reset loading state after a short delay
+      setTimeout(() => setIsRedirecting(false), 2000);
     }
 
-    window.open(url.toString(), '_blank');
-    // Re-check subscription after a delay
-    setTimeout(() => {
-      checkSubscription();
-    }, 5000);
-
+    // Call original onClick if provided
     if (onClick) {
-      const syntheticEvent = {} as React.MouseEvent<HTMLButtonElement>;
-      onClick(syntheticEvent);
+      onClick(e);
     }
   };
-
-  const checkSubscription = useCallback(() => {
-    // Invalidate cache to force refresh
-    subscriptionCache = null;
-    // Re-fetch subscription status instead of page reload
-    checkStatus();
-  }, [checkStatus]);
 
   // Show loading state
   if (loading) {
@@ -80,129 +123,71 @@ export function UpgradeButton({
         disabled
         {...props}
       >
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        Lade Abo-Status...
       </Button>
     );
   }
 
-  // User has active subscription - show children or default content
-  if (subscriptionStatus === 'active') {
-    return children ? (
-      <>{children}</>
-    ) : (
+  // Show redirecting state
+  if (isRedirecting) {
+    return (
       <Button 
-        variant="outline" 
+        variant={variant} 
         size={size} 
-        className={cn('relative', className)}
+        className={cn('relative bg-primary/80', className)}
         disabled
         {...props}
       >
-        <Check className="h-4 w-4 mr-2" />
-        Pro aktiv
+        <ExternalLink className="w-4 h-4 mr-2 animate-pulse" />
+        Öffne Zahlungsseite...
       </Button>
     );
   }
 
-  // User needs to upgrade
+  // If user already has active subscription, show success state
+  if (isActive) {
+    return (
+      <Button 
+        variant="outline"
+        size={size} 
+        className={cn('relative border-green-200 bg-green-50 text-green-700 hover:bg-green-100', className)}
+        disabled
+        {...props}
+      >
+        <Check className="w-4 h-4 mr-2" />
+        {children || 'Pro Aktiv'}
+        {showBadge && (
+          <Badge className="ml-2 bg-green-600 text-white">
+            ✓
+          </Badge>
+        )}
+      </Button>
+    );
+  }
+
+  // Default upgrade button
   return (
-    <Button
+    <Button 
       variant={variant}
-      size={size}
-      className={cn('relative', className)}
+      size={size} 
+      className={cn('relative group overflow-hidden', className)}
       onClick={handleClick}
+      disabled={isRedirecting}
       {...props}
     >
-      {showBadge && (
-        <Badge className="absolute -top-2 -right-2 px-1.5 py-0.5 text-xs">
-          {feature}
-        </Badge>
-      )}
-      <Sparkles className="h-4 w-4 mr-2" />
-      Beta Lifetime Deal - nur 99€
+      <div className="flex items-center gap-2">
+        <Sparkles className="w-4 h-4 transition-transform group-hover:scale-110" />
+        <span>{children || `Upgrade zu ${feature}`}</span>
+        {showBadge && (
+          <Badge className="bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 shadow-sm">
+            {feature}
+          </Badge>
+        )}
+      </div>
+      
+      {/* Enhanced hover effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     </Button>
   );
-}
-
-// Cache for subscription status to avoid redundant queries
-let subscriptionCache: { data: SubscriptionStatus | null; timestamp: number } | null = null;
-const CACHE_DURATION = 60000; // 1 minute cache
-
-// Hook to use in other components
-export function useSubscription() {
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    // Check cache first
-    if (subscriptionCache && Date.now() - subscriptionCache.timestamp < CACHE_DURATION) {
-      setSubscription(subscriptionCache.data);
-      setLoading(false);
-      return;
-    }
-
-    // Set timeout fallback
-    timeoutRef.current = setTimeout(() => {
-      setSubscription({ status: 'free', is_active: false });
-      setLoading(false);
-    }, 10000);
-
-    checkStatus();
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  const checkStatus = useCallback(async () => {
-    try {
-      const { data: { session } } = await getSession();
-      
-      if (!session?.user) {
-        const freeStatus = { status: 'free' as const, is_active: false };
-        setSubscription(freeStatus);
-        subscriptionCache = { data: freeStatus, timestamp: Date.now() };
-        setLoading(false);
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-        return;
-      }
-      
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select('status')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        const freeStatus = { status: 'free' as const, is_active: false };
-        setSubscription(freeStatus);
-        subscriptionCache = { data: freeStatus, timestamp: Date.now() };
-      } else if (data && data.status === 'active') {
-        const activeStatus = { status: 'active' as const, is_active: true };
-        setSubscription(activeStatus);
-        subscriptionCache = { data: activeStatus, timestamp: Date.now() };
-      } else {
-        const freeStatus = { status: 'free' as const, is_active: false };
-        setSubscription(freeStatus);
-        subscriptionCache = { data: freeStatus, timestamp: Date.now() };
-      }
-    } catch (error) {
-      const freeStatus = { status: 'free' as const, is_active: false };
-      setSubscription(freeStatus);
-      subscriptionCache = { data: freeStatus, timestamp: Date.now() };
-    } finally {
-      setLoading(false);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    }
-  }, []);
-
-  return { subscription, loading };
 }

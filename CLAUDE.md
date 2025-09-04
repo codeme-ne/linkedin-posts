@@ -94,11 +94,18 @@ Create `.env` from `.env.example` with:
 
 ### Project Structure
 - `/api/` - Vercel Edge Functions (Claude proxy, webhooks, extraction)
-- `/src/api/` - Client-side API integrations
+- `/src/api/` - Client-side API integrations  
 - `/src/components/` - React components
 - `/src/design-system/` - Custom design tokens and action buttons
 - `/src/pages/` - Route components (Landing, Generator, SignUp)
-- `/src/config/` - Platform configurations
+- `/src/config/` - **Central configuration system (Ship Fast pattern)**
+  - `app.config.ts` - Main app configuration with Stripe plans, features, and settings
+  - `env.config.ts` - Type-safe environment variable management
+  - `platforms.ts` - Platform definitions (LinkedIn, X, Instagram)
+  - `index.ts` - Centralized exports for all configuration
+- `/src/libs/` - **Infrastructure libraries (Ship Fast pattern)**
+  - `stripe.ts` - Server-side Stripe utilities with error handling
+  - `api-client.ts` - Enhanced API client with German UI and auth integration
 - **Path Alias**: `@/` → `/src/`
 
 ## Content Generation Flow
@@ -118,12 +125,17 @@ Create `.env` from `.env.example` with:
 ## Important Conventions
 
 1. **German UI Text**: Interface text is in German (e.g., "Speichern", "Bearbeiten", "Löschen")
-2. **Platform Types**: Use the `Platform` type from `/src/config/platforms.ts`
-3. **Button Components**: Always use design system buttons from `/src/design-system/components/ActionButtons/`
-4. **Error Handling**: Use toast notifications for user feedback
-5. **Auth Flow**: All `/app` routes require authentication via ProtectedRoute component
-6. **API Security**: Never expose API keys client-side; use Edge Function proxy pattern
-7. **Post Format Parsing**: 
+2. **Central Configuration**: Always use functions from `/src/config/app.config.ts` for:
+   - Stripe plans: `getStripePlan()`, `getDefaultStripePlan()`
+   - Feature flags: `isFeatureEnabled()`
+   - Environment: `validateEnvironment()`, `getEnvironmentConfig()`
+   - Pricing: `formatPrice()`, `getPaymentLink()`
+3. **Platform Types**: Use the `Platform` type from `/src/config/platforms.ts`
+4. **Button Components**: Always use design system buttons from `/src/design-system/components/ActionButtons/`
+5. **Error Handling**: Use toast notifications for user feedback
+6. **Auth Flow**: All `/app` routes require authentication via ProtectedRoute component
+7. **API Security**: Never expose API keys client-side; use Edge Function proxy pattern
+8. **Post Format Parsing**: 
    - LinkedIn: Posts prefixed with `LINKEDIN:` 
    - X: Tweets extracted from XML tags `<tweet1>` through `<tweet5>`
    - Instagram: Adapted from LinkedIn posts with hashtags

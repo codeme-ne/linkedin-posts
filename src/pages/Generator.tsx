@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { savePost, signOut } from "@/api/supabase";
 import { SavedPosts } from "@/components/common/SavedPosts";
+import { AccountButton } from "@/components/common/AccountButton";
 import {
   createLinkedInDraftPost,
   createLinkedInShareUrl,
@@ -125,21 +126,8 @@ export default function Generator() {
           </div>
           
           <div className="flex items-center gap-4">
-            {/* Mobile Settings button */}
-            <Link to="/settings" className="md:hidden">
-              <Button variant="ghost" size="sm" aria-label="Einstellungen">
-                <SettingsIcon className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Link to="/settings" className="hidden md:block">
-              <Button variant="ghost" size="sm">Einstellungen</Button>
-            </Link>
             {userEmail ? (
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" size="sm" onClick={() => signOut()}>
-                  Logout
-                </Button>
-              </div>
+              <AccountButton />
             ) : (
               <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
                 <DialogTrigger asChild>

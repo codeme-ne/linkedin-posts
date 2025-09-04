@@ -301,9 +301,11 @@ export default async function handler(req: Request) {
         const email: string | null | undefined =
           session.customer_email ?? session.customer_details?.email ?? null;
         const subscriptionType = detectSubscriptionType(session);
+        const customerId: string | null = session.customer || null;
 
         console.log('💳 Payment received:', {
           email,
+          customerId,
           type: subscriptionType.interval,
           amount: subscriptionType.amount / 100, // Convert cents to euros
           currency: subscriptionType.currency
@@ -344,14 +346,36 @@ export default async function handler(req: Request) {
 
           if (error) {
             console.error('❌ Activation error:', error);
+            // Enhanced error logging for monitoring
+            console.error('CRITICAL: Subscription activation failed', {
+              userId: user.id,
+              sessionId: session.id,
+              customerId: customerId,
+              error: error.message,
+              timestamp: new Date().toISOString()
+            });
             throw error;
           }
+
+          // Update customer ID in subscription if available
+          if (customerId) {
+            await supabase
+              .from('subscriptions')
+              .update({ stripe_customer_id: customerId })
+              .eq('user_id', user.id);
+          }
+
           if (email) {
-            await sendPurchaseEmail(email, {
-              amount: subscriptionType.amount,
-              currency: subscriptionType.currency,
-              interval: subscriptionType.interval
-            });
+            try {
+              await sendPurchaseEmail(email, {
+                amount: subscriptionType.amount,
+                currency: subscriptionType.currency,
+                interval: subscriptionType.interval
+              });
+            } catch (emailError) {
+              // Don't fail the webhook if email fails
+              console.error('⚠️ Email send failed:', emailError);
+            }
           }
         } else if (email) {
           // User doesn't exist → Create pending subscription
@@ -364,13 +388,34 @@ export default async function handler(req: Request) {
 
           if (error) {
             console.error('❌ Pending creation error:', error);
+            // Enhanced error logging for monitoring
+            console.error('CRITICAL: Pending subscription creation failed', {
+              email: email,
+              sessionId: session.id,
+              customerId: customerId,
+              error: error.message,
+              timestamp: new Date().toISOString()
+            });
             throw error;
           }
           // Send confirmation even if user registers später – sie haben bezahlt
-          await sendPurchaseEmail(email, {
-            amount: subscriptionType.amount,
-            currency: subscriptionType.currency,
-            interval: subscriptionType.interval
+          try {
+            await sendPurchaseEmail(email, {
+              amount: subscriptionType.amount,
+              currency: subscriptionType.currency,
+              interval: subscriptionType.interval
+            });
+          } catch (emailError) {
+            // Don't fail the webhook if email fails
+            console.error('⚠️ Email send failed:', emailError);
+          }
+        } else {
+          // No email and no user found
+          console.error('❌ No email or user found for session:', session.id);
+          console.error('CRITICAL: Unable to process payment - no user identification', {
+            sessionId: session.id,
+            customerId: customerId,
+            timestamp: new Date().toISOString()
           });
         }
         break;
@@ -541,6 +586,53 @@ export default async function handler(req: Request) {
         break;
       }
 
+      // Handle customer updates (useful for portal changes)
+      case 'customer.updated': {
+        const customer = event.data.object;
+        console.log('👤 Customer updated:', customer.id);
+        
+        // Update customer info if needed (email, name, etc.)
+        try {
+          const { error } = await supabase
+            .from('subscriptions')
+            .update({
+              updated_at: new Date().toISOString()
+            })
+            .eq('stripe_customer_id', customer.id);
+            
+          if (error) {
+            console.warn('Failed to update customer record:', error);
+          }
+        } catch (error) {
+          console.error('Error updating customer:', error);
+        }
+        break;
+      }
+
+      // Handle payment method changes
+      case 'customer.source.updated':
+      case 'payment_method.attached': {
+        const obj = event.data.object;
+        console.log(`💳 Payment method event: ${event.type}`, obj.id);
+        break;
+      }
+
+      // Handle disputes and chargebacks
+      case 'charge.dispute.created': {
+        const dispute = event.data.object;
+        console.error('⚠️ Dispute created:', dispute.id);
+        
+        // Log critical dispute information for manual review
+        console.error('CRITICAL: Payment dispute created', {
+          disputeId: dispute.id,
+          chargeId: dispute.charge,
+          amount: dispute.amount,
+          reason: dispute.reason,
+          timestamp: new Date().toISOString()
+        });
+        break;
+      }
+
       // Legacy payment intent handler (kept for backward compatibility)
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object;
@@ -554,6 +646,17 @@ export default async function handler(req: Request) {
 
       default:
         console.log(`Unhandled event type: ${event.type}`);
+        
+        // Log unhandled events for monitoring (might be new Stripe events)
+        if (event.type.startsWith('invoice.') || 
+            event.type.startsWith('subscription.') || 
+            event.type.startsWith('customer.')) {
+          console.warn('MONITORING: Unhandled Stripe event', {
+            type: event.type,
+            id: event.id,
+            timestamp: new Date().toISOString()
+          });
+        }
     }
 
     return new Response('OK', { status: 200 });

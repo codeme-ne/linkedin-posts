@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Lock, Check } from "lucide-react";
+import { getDefaultStripePlan, formatPrice } from "@/config/app.config";
 
 interface PaywallModalProps {
   open: boolean;
@@ -13,10 +14,11 @@ interface PaywallModalProps {
 }
 
 export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
+  const defaultPlan = getDefaultStripePlan();
+  
   const handleUpgrade = () => {
-    const paymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK;
-    if (paymentLink) {
-      window.open(paymentLink, '_blank');
+    if (defaultPlan?.paymentLink) {
+      window.open(defaultPlan.paymentLink, '_blank');
     }
   };
 
@@ -31,9 +33,9 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
         <div className="text-center space-y-4">
           <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg">
             <Lock className="w-12 h-12 mx-auto mb-3 text-purple-600 dark:text-purple-400" />
-            <p className="font-semibold">Beta Lifetime Deal - nur 99€</p>
+            <p className="font-semibold">{defaultPlan?.badge || 'Beta Lifetime Deal'} - nur {formatPrice(defaultPlan?.price || 99)}</p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Einmalig zahlen, für immer nutzen
+              {defaultPlan?.description || 'Einmalig zahlen, für immer nutzen'}
             </p>
           </div>
           
@@ -42,26 +44,18 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
               Mit Pro erhalten Sie:
             </p>
             <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-              <li className="flex items-center">
-                <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                <span>Unbegrenzte Posts generieren</span>
-              </li>
-              <li className="flex items-center">
-                <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                <span>Posts speichern & verwalten</span>
-              </li>
-              <li className="flex items-center">
-                <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                <span>Direct-Posting zu Social Media</span>
-              </li>
-              <li className="flex items-center">
-                <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                <span>Premium URL-Extraktion</span>
-              </li>
-              <li className="flex items-center">
-                <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                <span>Alle zukünftigen Features</span>
-              </li>
+              {(defaultPlan?.features || [
+                'Unbegrenzte Posts generieren',
+                'Posts speichern & verwalten', 
+                'Direct-Posting zu Social Media',
+                'Premium URL-Extraktion',
+                'Alle zukünftigen Features'
+              ]).map((feature, index) => (
+                <li key={index} className="flex items-center">
+                  <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                  <span>{feature}</span>
+                </li>
+              ))}
             </ul>
           </div>
 

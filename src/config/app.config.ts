@@ -1,0 +1,345 @@
+/**
+ * Central App Configuration for Social Transformer
+ * Based on Ship Fast patterns, adapted for German SaaS with Supabase
+ */
+
+export interface StripePlan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  currency: 'EUR' | 'USD';
+  interval: 'lifetime' | 'monthly' | 'yearly';
+  paymentLink: string;
+  features: string[];
+  popular?: boolean;
+  badge?: string;
+}
+
+export interface AppFeature {
+  name: string;
+  description: string;
+  enabled: boolean;
+  requiresAuth?: boolean;
+  requiresSubscription?: boolean;
+}
+
+export interface AppConfig {
+  // App metadata
+  appName: string;
+  appDescription: string;
+  domainName: string;
+  companyName: string;
+  
+  // URLs
+  urls: {
+    app: string;
+    landing: string;
+    signup: string;
+    settings: string;
+    generator: string;
+  };
+  
+  // Stripe configuration
+  stripe: {
+    plans: StripePlan[];
+    defaultPlan: string;
+    features: {
+      free: string[];
+      premium: string[];
+    };
+  };
+  
+  // Feature flags
+  features: {
+    linkedinPosting: AppFeature;
+    premiumExtraction: AppFeature;
+    postSaving: AppFeature;
+    multiPlatform: AppFeature;
+    directPosting: AppFeature;
+  };
+  
+  // Email configuration
+  resend?: {
+    fromNoReply: string;
+    fromAdmin: string;
+  };
+  
+  // Theme and branding
+  theme: {
+    primaryColor: string;
+    accentColor: string;
+    brandColors: {
+      gradient: string;
+      hover: string;
+    };
+  };
+  
+  // Auth configuration
+  auth: {
+    loginUrl: string;
+    callbackUrl: string;
+    redirectAfterAuth: string;
+  };
+  
+  // Limits and quotas
+  limits: {
+    freeExtractions: number;
+    premiumExtractions: number;
+    maxPostLength: {
+      linkedin: number;
+      x: number;
+      instagram: number;
+    };
+  };
+  
+  // Environment-specific settings
+  env: {
+    isDevelopment: boolean;
+    isProduction: boolean;
+    baseUrl: string;
+  };
+}
+
+/**
+ * Main application configuration
+ * German-first SaaS for social media content transformation
+ */
+const config: AppConfig = {
+  appName: "Social Transformer",
+  appDescription: "KI-gestützte Social Media Content-Erstellung für LinkedIn, X und Instagram",
+  domainName: import.meta.env.VITE_DOMAIN_NAME || "transformer.social",
+  companyName: "Social Transformer",
+  
+  urls: {
+    app: "/app",
+    landing: "/",
+    signup: "/signup", 
+    settings: "/settings",
+    generator: "/app",
+  },
+  
+  stripe: {
+    plans: [
+      {
+        id: "monthly",
+        name: "Monthly",
+        description: "Flexibles Monatsabo",
+        price: 29,
+        currency: "EUR",
+        interval: "monthly",
+        paymentLink: import.meta.env.VITE_STRIPE_PAYMENT_LINK_MONTHLY || "",
+        features: [
+          "Unbegrenzte Posts",
+          "Alle Plattformen (LinkedIn, X, Instagram)",
+          "Premium URL-Extraktion (JavaScript-Support)",
+          "Posts speichern & verwalten",
+          "Direct-Posting zu Social Media"
+        ]
+      },
+      {
+        id: "lifetime",
+        name: "Pro - Lifetime",
+        description: "Einmalig zahlen, für immer nutzen", 
+        price: 99,
+        currency: "EUR",
+        interval: "lifetime",
+        paymentLink: import.meta.env.VITE_STRIPE_PAYMENT_LINK_LIFETIME || 
+                     import.meta.env.VITE_STRIPE_PAYMENT_LINK || "",
+        features: [
+          "Unbegrenzte Posts",
+          "Alle Plattformen (LinkedIn, X, Instagram)", 
+          "Premium URL-Extraktion (JavaScript-Support)",
+          "Posts speichern & verwalten",
+          "Direct-Posting zu Social Media",
+          "Alle zukünftigen Features inklusive"
+        ],
+        popular: true,
+        badge: "BETA LIFETIME DEAL"
+      }
+    ],
+    defaultPlan: "lifetime",
+    features: {
+      free: [
+        "Standard URL-Extraktion",
+        "Basis Content-Generation",
+        "3 Plattformen"
+      ],
+      premium: [
+        "Premium URL-Extraktion mit JavaScript-Support",
+        "Unbegrenzte Content-Generation",
+        "Posts speichern & verwalten", 
+        "Direct-Posting zu Social Media",
+        "Priority Support"
+      ]
+    }
+  },
+  
+  features: {
+    linkedinPosting: {
+      name: "LinkedIn Direct Posting",
+      description: "Direkt zu LinkedIn posten",
+      enabled: !!import.meta.env.VITE_LINKEDIN_ACCESS_TOKEN,
+      requiresAuth: true,
+      requiresSubscription: true
+    },
+    premiumExtraction: {
+      name: "Premium Content-Extraktion",
+      description: "JavaScript-Rendering und PDF-Support",
+      enabled: true,
+      requiresAuth: true,
+      requiresSubscription: true
+    },
+    postSaving: {
+      name: "Posts speichern",
+      description: "Generierte Posts speichern und verwalten",
+      enabled: true,
+      requiresAuth: true
+    },
+    multiPlatform: {
+      name: "Multi-Platform Support",
+      description: "LinkedIn, X und Instagram Support",
+      enabled: true,
+      requiresAuth: true
+    },
+    directPosting: {
+      name: "Direct Social Media Posting",
+      description: "Direkt zu sozialen Netzwerken posten",
+      enabled: true,
+      requiresAuth: true,
+      requiresSubscription: true
+    }
+  },
+  
+  resend: {
+    fromNoReply: "Social Transformer <noreply@transformer.social>",
+    fromAdmin: "Social Transformer Team <team@transformer.social>"
+  },
+  
+  theme: {
+    primaryColor: "hsl(var(--primary))",
+    accentColor: "hsl(var(--accent))", 
+    brandColors: {
+      gradient: "from-primary to-accent",
+      hover: "from-primary/90 to-accent/90"
+    }
+  },
+  
+  auth: {
+    loginUrl: "/signup",
+    callbackUrl: "/app",
+    redirectAfterAuth: "/app"
+  },
+  
+  limits: {
+    freeExtractions: 3,
+    premiumExtractions: 20,
+    maxPostLength: {
+      linkedin: 3000,
+      x: 280,
+      instagram: 2200
+    }
+  },
+  
+  env: {
+    isDevelopment: import.meta.env.DEV,
+    isProduction: import.meta.env.PROD,
+    baseUrl: import.meta.env.VITE_BASE_URL || 
+             (import.meta.env.DEV ? "http://localhost:5173" : "https://transformer.social")
+  }
+};
+
+/**
+ * Get a specific Stripe plan by ID
+ */
+export function getStripePlan(planId: string): StripePlan | undefined {
+  return config.stripe.plans.find(plan => plan.id === planId);
+}
+
+/**
+ * Get the default/recommended Stripe plan
+ */
+export function getDefaultStripePlan(): StripePlan {
+  return getStripePlan(config.stripe.defaultPlan) || config.stripe.plans[0];
+}
+
+/**
+ * Check if a feature is enabled
+ */
+export function isFeatureEnabled(featureName: keyof AppConfig['features']): boolean {
+  return config.features[featureName]?.enabled || false;
+}
+
+/**
+ * Get payment link for a plan
+ */
+export function getPaymentLink(planId: string): string {
+  const plan = getStripePlan(planId);
+  return plan?.paymentLink || "";
+}
+
+/**
+ * Format price with German locale
+ */
+export function formatPrice(amount: number, currency: string = 'EUR'): string {
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: currency,
+  }).format(amount);
+}
+
+/**
+ * Validate required environment variables
+ */
+export function validateEnvironment(): { isValid: boolean; missing: string[] } {
+  const requiredVars = [
+    'VITE_SUPABASE_URL',
+    'VITE_SUPABASE_ANON_KEY'
+  ];
+  
+  const missing = requiredVars.filter(varName => !import.meta.env[varName]);
+  
+  return {
+    isValid: missing.length === 0,
+    missing
+  };
+}
+
+/**
+ * Get environment-specific configuration
+ */
+export function getEnvironmentConfig() {
+  return {
+    supabase: {
+      url: import.meta.env.VITE_SUPABASE_URL,
+      anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY
+    },
+    claude: {
+      apiKey: import.meta.env.VITE_CLAUDE_API_KEY
+    },
+    stripe: {
+      paymentLinks: {
+        lifetime: import.meta.env.VITE_STRIPE_PAYMENT_LINK_LIFETIME,
+        monthly: import.meta.env.VITE_STRIPE_PAYMENT_LINK_MONTHLY,
+        legacy: import.meta.env.VITE_STRIPE_PAYMENT_LINK
+      }
+    },
+    linkedin: {
+      accessToken: import.meta.env.VITE_LINKEDIN_ACCESS_TOKEN,
+      authorUrn: import.meta.env.VITE_LINKEDIN_AUTHOR_URN
+    },
+    tracking: {
+      opikApiKey: import.meta.env.VITE_OPIK_API_KEY
+    }
+  };
+}
+
+// Validate environment on module load in development
+if (config.env.isDevelopment) {
+  const validation = validateEnvironment();
+  if (!validation.isValid) {
+    console.warn('Missing required environment variables:', validation.missing);
+  }
+}
+
+export default config;

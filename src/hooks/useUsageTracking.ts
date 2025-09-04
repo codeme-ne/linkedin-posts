@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
-import { useSubscription } from '@/components/common/UpgradeButton';
+import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/api/supabase';
 
 const TOTAL_LIMIT = 7;

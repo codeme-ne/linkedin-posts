@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useSubscription, UpgradeButton } from "@/components/common/UpgradeButton";
+import { useSubscription } from "@/hooks/useSubscription";
+import { UpgradeButton } from "@/components/common/UpgradeButton";
 import { getSession, signOut } from "@/api/supabase";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ import {
 } from "lucide-react";
 
 export default function Settings() {
-  const { subscription, loading } = useSubscription();
+  const { subscription, loading, openCustomerPortal } = useSubscription();
   const { isPro } = useUsageTracking();
   const [email, setEmail] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -150,6 +151,44 @@ export default function Settings() {
                     <span className="font-medium">{planLabel}</span>
                   </div>
                 </div>
+
+                {/* Show subscription details for Pro users */}
+                {subscription && isPro && (
+                  <div className="space-y-2 p-3 bg-muted/30 rounded-lg border border-border/30">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Plan:</span>
+                      <span className="font-medium">
+                        {subscription.interval === 'lifetime' ? 'Lifetime Deal' : `Pro ${subscription.interval}`}
+                      </span>
+                    </div>
+                    {subscription.amount && subscription.currency && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Preis:</span>
+                        <span className="font-medium">
+                          {new Intl.NumberFormat('de-DE', {
+                            style: 'currency',
+                            currency: subscription.currency.toUpperCase()
+                          }).format(subscription.amount / 100)}
+                          {subscription.interval !== 'lifetime' && ` / ${subscription.interval === 'monthly' ? 'Monat' : 'Jahr'}`}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Status:</span>
+                      <span className={cn(
+                        "font-medium",
+                        subscription.status === 'active' && "text-green-600",
+                        subscription.status === 'trial' && "text-blue-600",
+                        subscription.status === 'past_due' && "text-red-600"
+                      )}>
+                        {subscription.status === 'active' && 'Aktiv'}
+                        {subscription.status === 'trial' && 'Testversion'}
+                        {subscription.status === 'past_due' && 'Überfällig'}
+                        {subscription.status === 'canceled' && 'Gekündigt'}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="pt-2">
                   {!isPro ? (
@@ -162,13 +201,22 @@ export default function Settings() {
                   )}
                 </div>
 
-                {billingPortalUrl && isPro && (
+                {/* Customer Portal Button - Enhanced with better UX */}
+                {subscription && isPro && (
                   <Button 
                     variant="secondary" 
-                    onClick={() => window.open(billingPortalUrl, "_blank")}
-                    className="w-full text-sm"
+                    onClick={async () => {
+                      toast.loading('Öffne Customer Portal...', { duration: 2000 });
+                      try {
+                        await openCustomerPortal();
+                      } catch (error) {
+                        toast.error('Fehler beim Öffnen des Customer Portals');
+                      }
+                    }}
+                    className="w-full text-sm gap-2"
                   >
-                    Rechnungen verwalten
+                    <CreditCard className="h-4 w-4" />
+                    Abo & Rechnungen verwalten
                   </Button>
                 )}
               </div>
