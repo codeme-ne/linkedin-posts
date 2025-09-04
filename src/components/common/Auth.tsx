@@ -35,7 +35,7 @@ export function Auth() {
         toast.success('🎉 Ihr Pro-Abo wurde aktiviert! - Sie haben jetzt Zugang zu allen Pro-Features.')
       }
     } catch (err) {
-      console.error('Error reconciling pending subscription:', err)
+      // Silent failure for subscription reconciliation
     }
   }
 
@@ -95,7 +95,6 @@ export function Auth() {
             throw error
           }
         } else if (data?.session) {
-          console.log('Login successful:', data)
           toast.success('Erfolgreich angemeldet! - Du wirst weitergeleitet...')
           
           // Check for pending subscription on login too
@@ -105,7 +104,6 @@ export function Auth() {
         }
       }
     } catch (err) {
-      console.error('Auth error:', err)
       toast.error(`${authMode === 'register' ? 'Registrierung fehlgeschlagen' : 'Login fehlgeschlagen'} - ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setLoading(false)

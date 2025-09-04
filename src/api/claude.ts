@@ -63,7 +63,6 @@ export async function linkedInPostsFromNewsletter(content: string) {
 
    return parsed.slice(0, 3);
   } catch (error) {
-    console.error('Error:', error);
     throw new Error('Failed to remix content');
   }
 } 
@@ -328,7 +327,6 @@ export async function xTweetsFromBlog(content: string) {
     // Return up to 5 tweets
     return finalTweets.slice(0, 5);
   } catch (error) {
-    console.error('X generation error:', error);
     throw new Error('Failed to generate X tweets');
   }
 }
@@ -382,7 +380,6 @@ export async function instagramPostsFromBlog(content: string) {
 
     return finalPosts;
   } catch (error) {
-    console.error('Instagram generation error:', error);
     throw new Error('Failed to generate Instagram posts');
   }
 }

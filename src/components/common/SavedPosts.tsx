@@ -50,7 +50,7 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
       const posts = await getSavedPosts()
       setSavedPosts(posts)
     } catch (error) {
-      console.error('Failed to load saved posts:', error)
+      // Silent failure - user will see empty state
     }
   }
 
@@ -59,7 +59,7 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
       await deleteSavedPost(id)
       setSavedPosts(posts => posts.filter(p => p.id !== id))
     } catch (error) {
-      console.error('Failed to delete post:', error)
+      // Error will be handled by UI - show unchanged state
     }
   }
 
@@ -71,7 +71,7 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
       ))
       setEditingPost(null)
     } catch (error) {
-      console.error('Failed to update post:', error)
+      // Error handling - editing state remains active
     }
   }
 

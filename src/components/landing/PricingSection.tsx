@@ -8,8 +8,6 @@ export function PricingSection() {
     const paymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK_MONTHLY;
     if (paymentLink) {
       window.open(paymentLink, '_blank');
-    } else {
-      console.error('Stripe monthly payment link not configured');
     }
   };
 
@@ -17,8 +15,6 @@ export function PricingSection() {
     const paymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK_LIFETIME || import.meta.env.VITE_STRIPE_PAYMENT_LINK;
     if (paymentLink) {
       window.open(paymentLink, '_blank');
-    } else {
-      console.error('Stripe lifetime payment link not configured');
     }
   };
 

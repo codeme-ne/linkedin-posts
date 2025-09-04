@@ -24,8 +24,6 @@ export interface GenerationUsage {
 }
 
 export const savePost = async (content: string, platform: 'linkedin' | 'x' | 'instagram' = 'linkedin') => {
-  console.log('Saving post to Supabase:', { content, platform })
-  
   // Insert with implicit user_id via DEFAULT auth.uid()
   const { data, error } = await supabase
     .from('saved_posts')
@@ -33,11 +31,9 @@ export const savePost = async (content: string, platform: 'linkedin' | 'x' | 'in
     .select()
   
   if (error) {
-    console.error('Supabase save error:', error)
     throw new Error(`Supabase error: ${error.message}`)
   }
   
-  console.log('Post saved successfully:', data)
   return data[0]
 }
 

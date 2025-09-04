@@ -86,7 +86,6 @@ export const useContentGeneration = () => {
           // Increment usage for each successful platform
           incrementUsage()
         } catch (platformError) {
-          console.error(`Error generating ${platform} posts:`, platformError)
           toast.error(`Fehler bei ${platformName}: ${platformError instanceof Error ? platformError.message : String(platformError)}`)
         }
       }
@@ -98,7 +97,6 @@ export const useContentGeneration = () => {
       
       return true
     } catch (error) {
-      console.error("Generation error:", error)
       toast.error("Fehler beim Erstellen - LinkedIn-Beiträge konnten nicht erstellt werden.")
       return false
     } finally {

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState, useRef, ButtonHTMLAttributes, ReactNode } from "react";
+import { useEffect, useState, useRef, useCallback, ButtonHTMLAttributes, ReactNode } from "react";
 import { getSession } from "@/api/supabase";
 import { supabase, getSupabaseClient } from "@/api/supabase";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,6 @@ export function UpgradeButton({
   const handleClick = async () => {
     const baseLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK;
     if (!baseLink) {
-      console.error('Stripe payment link not configured');
       toast.error('Zahlungslink nicht konfiguriert');
       return;
     }
@@ -64,10 +63,12 @@ export function UpgradeButton({
     }
   };
 
-  const checkSubscription = () => {
-    // This will trigger a re-render when the subscription status changes
-    window.location.reload();
-  };
+  const checkSubscription = useCallback(() => {
+    // Invalidate cache to force refresh
+    subscriptionCache = null;
+    // Re-fetch subscription status instead of page reload
+    checkStatus();
+  }, [checkStatus]);
 
   // Show loading state
   if (loading) {
@@ -140,12 +141,11 @@ export function useSubscription() {
       return;
     }
 
-    // Set timeout fallback - increased to 10 seconds
+    // Set timeout fallback
     timeoutRef.current = setTimeout(() => {
-      console.warn('Subscription check timed out after 10s, defaulting to free');
       setSubscription({ status: 'free', is_active: false });
       setLoading(false);
-    }, 10000); // 10 second timeout
+    }, 10000);
 
     checkStatus();
 
@@ -156,29 +156,20 @@ export function useSubscription() {
     };
   }, []);
 
-  const checkStatus = async () => {
+  const checkStatus = useCallback(async () => {
     try {
-      console.log('[Subscription Check] Starting...');
-      const startTime = Date.now();
-      
       const { data: { session } } = await getSession();
-      console.log('[Subscription Check] Session fetched in', Date.now() - startTime, 'ms');
       
       if (!session?.user) {
-        console.log('[Subscription Check] No session found, defaulting to free');
         const freeStatus = { status: 'free' as const, is_active: false };
         setSubscription(freeStatus);
         subscriptionCache = { data: freeStatus, timestamp: Date.now() };
         setLoading(false);
-        // Clear timeout since we're done
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);
         }
         return;
       }
-
-      console.log('[Subscription Check] User ID:', session.user.id);
-      const queryStart = Date.now();
       
       const { data, error } = await supabase
         .from('subscriptions')
@@ -188,42 +179,30 @@ export function useSubscription() {
         .limit(1)
         .maybeSingle();
 
-      console.log('[Subscription Check] Query completed in', Date.now() - queryStart, 'ms');
-      console.log('[Subscription Check] Result:', data, 'Error:', error);
-
       if (error) {
-        console.error('[Subscription Check] Error fetching subscription:', error);
-        // Default to free on error
         const freeStatus = { status: 'free' as const, is_active: false };
         setSubscription(freeStatus);
         subscriptionCache = { data: freeStatus, timestamp: Date.now() };
       } else if (data && data.status === 'active') {
-        console.log('[Subscription Check] Active subscription found');
         const activeStatus = { status: 'active' as const, is_active: true };
         setSubscription(activeStatus);
         subscriptionCache = { data: activeStatus, timestamp: Date.now() };
       } else {
-        console.log('[Subscription Check] No active subscription, defaulting to free');
         const freeStatus = { status: 'free' as const, is_active: false };
         setSubscription(freeStatus);
         subscriptionCache = { data: freeStatus, timestamp: Date.now() };
       }
-      
-      console.log('[Subscription Check] Total time:', Date.now() - startTime, 'ms');
     } catch (error) {
-      console.error('[Subscription Check] Unexpected error:', error);
       const freeStatus = { status: 'free' as const, is_active: false };
       setSubscription(freeStatus);
       subscriptionCache = { data: freeStatus, timestamp: Date.now() };
     } finally {
       setLoading(false);
-      // Clear timeout since we're done
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
-        console.log('[Subscription Check] Timeout cleared');
       }
     }
-  };
+  }, []);
 
   return { subscription, loading };
 }

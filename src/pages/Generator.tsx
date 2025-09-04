@@ -64,10 +64,7 @@ export default function Generator() {
       return;
     }
     
-    const success = await generateContent(inputText, selectedPlatforms);
-    if (!success) {
-      console.log("Generation failed");
-    }
+    await generateContent(inputText, selectedPlatforms);
   };
 
   const handleExtract = async () => {
@@ -105,7 +102,6 @@ export default function Generator() {
       setRefreshKey((prev) => prev + 1);
       toast.success("Erfolgreich gespeichert - Du findest den Beitrag in der Seitenleiste \"Gespeicherte Beiträge\".");
     } catch (error) {
-      console.error("Save post error:", error);
       toast.error(`Speichern fehlgeschlagen - Fehler beim Speichern: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
@@ -340,7 +336,6 @@ export default function Generator() {
                                           window.open(linkedinUrl, "_blank");
                                         }
                                       } catch (error) {
-                                        console.error("LinkedIn Draft Error:", error);
                                         if (error instanceof LinkedInAPIError) {
                                           toast.error(`LinkedIn API Fehler - ${error.message}`);
                                         } else {

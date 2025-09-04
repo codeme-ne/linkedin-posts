@@ -73,7 +73,6 @@ export const useUrlExtraction = () => {
       
       return result
     } catch (e) {
-      console.error("Extract error", e)
       toast.error(`Import fehlgeschlagen - ${e instanceof Error ? e.message : String(e)}`)
       return null
     } finally {

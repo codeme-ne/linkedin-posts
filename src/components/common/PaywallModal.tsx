@@ -17,8 +17,6 @@ export function PaywallModal({ open, onOpenChange }: PaywallModalProps) {
     const paymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK;
     if (paymentLink) {
       window.open(paymentLink, '_blank');
-    } else {
-      console.error('Stripe payment link not configured');
     }
   };
 

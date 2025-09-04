@@ -20,13 +20,11 @@ export function useUsageTracking() {
         .eq('user_id', session.session.user.id);
 
       if (error) {
-        console.error('Error fetching generation usage:', error);
         return 0;
       }
 
       return count || 0;
     } catch (error) {
-      console.error('Error in getUserUsage:', error);
       return 0;
     }
   }, []);
@@ -56,40 +54,13 @@ export function useUsageTracking() {
         }]);
 
       if (error) {
-        console.error('Error incrementing generation usage:', error);
         return;
       }
 
       // Update local state
       setCurrentUsage(prev => prev + 1);
     } catch (error) {
-      console.error('Error in incrementUsage:', error);
-    }
-  }, [subscription]);
-
-  const incrementExtractionUsage = useCallback(async () => {
-    if (subscription?.is_active) return;
-    
-    try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user?.id) return;
-
-      const { error } = await supabase
-        .from('generation_usage')
-        .insert([{ 
-          user_id: session.session.user.id,
-          generated_at: new Date().toISOString()
-        }]);
-
-      if (error) {
-        console.error('Error incrementing extraction usage:', error);
-        return;
-      }
-
-      // Update local state
-      setCurrentUsage(prev => prev + 1);
-    } catch (error) {
-      console.error('Error in incrementExtractionUsage:', error);
+      // Silent failure for usage tracking
     }
   }, [subscription]);
 
@@ -109,7 +80,8 @@ export function useUsageTracking() {
     canTransform,
     canExtract,
     incrementUsage,
-    incrementExtractionUsage,
+    // Keep incrementExtractionUsage as alias for backward compatibility
+    incrementExtractionUsage: incrementUsage,
     isPro: subscription?.is_active || false,
     loading
   };
