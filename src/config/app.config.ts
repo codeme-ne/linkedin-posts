@@ -10,7 +10,9 @@ export interface StripePlan {
   price: number;
   currency: 'EUR' | 'USD';
   interval: 'lifetime' | 'monthly' | 'yearly';
-  paymentLink: string;
+  // ShipFast pattern: priceId for Checkout Sessions + fallback paymentLink
+  priceId: string;
+  paymentLink?: string; // Fallback for existing components
   features: string[];
   popular?: boolean;
   badge?: string;
@@ -128,7 +130,11 @@ const config: AppConfig = {
         price: 29,
         currency: "EUR",
         interval: "monthly",
-        paymentLink: import.meta.env.VITE_STRIPE_PAYMENT_LINK_MONTHLY || "",
+        // ShipFast pattern: priceId for dynamic checkout sessions
+        priceId: import.meta.env.DEV 
+          ? "price_1QVhCaGswqzOWBWTAu9e4Hrw" // Development price ID
+          : "price_1QVhCaGswqzOWBWTAu9e4Hrw", // Production price ID - update when available
+        paymentLink: import.meta.env.VITE_STRIPE_PAYMENT_LINK_MONTHLY || "", // Fallback
         features: [
           "Unbegrenzte Posts",
           "Alle Plattformen (LinkedIn, X, Instagram)",
@@ -144,8 +150,12 @@ const config: AppConfig = {
         price: 99,
         currency: "EUR",
         interval: "lifetime",
+        // ShipFast pattern: priceId for dynamic checkout sessions
+        priceId: import.meta.env.DEV 
+          ? "price_1QVhC7GswqzOWBWTnuNP9wWp" // Development price ID
+          : "price_1QVhC7GswqzOWBWTnuNP9wWp", // Production price ID - update when available
         paymentLink: import.meta.env.VITE_STRIPE_PAYMENT_LINK_LIFETIME || 
-                     import.meta.env.VITE_STRIPE_PAYMENT_LINK || "",
+                     import.meta.env.VITE_STRIPE_PAYMENT_LINK || "", // Fallback
         features: [
           "Unbegrenzte Posts",
           "Alle Plattformen (LinkedIn, X, Instagram)", 
@@ -271,11 +281,19 @@ export function isFeatureEnabled(featureName: keyof AppConfig['features']): bool
 }
 
 /**
- * Get payment link for a plan
+ * Get payment link for a plan (fallback method)
  */
 export function getPaymentLink(planId: string): string {
   const plan = getStripePlan(planId);
   return plan?.paymentLink || "";
+}
+
+/**
+ * Get Stripe price ID for a plan (ShipFast pattern)
+ */
+export function getPriceId(planId: string): string {
+  const plan = getStripePlan(planId);
+  return plan?.priceId || "";
 }
 
 /**

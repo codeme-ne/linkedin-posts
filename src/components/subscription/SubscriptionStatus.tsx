@@ -16,8 +16,6 @@ export function SubscriptionStatus() {
     isLifetime,
     isTrial,
     isPastDue,
-    trialDaysLeft,
-    daysUntilRenewal,
     currentPeriodEnd,
     extractionLimit,
   } = useSubscription();
@@ -194,7 +192,7 @@ export function SubscriptionStatus() {
               <span className="font-medium">Testversion aktiv</span>
             </div>
             <p className="text-sm text-blue-700 mt-1">
-              Noch {trialDaysLeft} Tage kostenlos nutzen
+              Testversion läuft
             </p>
           </div>
         )}
@@ -221,7 +219,7 @@ export function SubscriptionStatus() {
             </div>
             <p className="text-sm text-gray-600">
               {currentPeriodEnd.toLocaleDateString('de-DE')} 
-              ({daysUntilRenewal} Tage)
+              ({Math.max(0, Math.ceil((currentPeriodEnd.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))} Tage)
             </p>
           </div>
         )}

@@ -1,27 +1,29 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../api/supabase';
+import { getSupabaseClient } from '../api/supabase';
 import { createCustomerPortal } from '../libs/api-client';
 import { toast } from 'sonner';
+
+const supabase = getSupabaseClient();
 
 export interface Subscription {
   id: string;
   user_id: string;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
-  stripe_payment_intent_id: string | null;
+  stripe_payment_intent_id?: string | null;
   status: 'trial' | 'active' | 'canceled' | 'past_due';
   is_active: boolean;
   interval: 'lifetime' | 'monthly' | 'yearly';
   amount: number | null;
   currency: string | null;
-  current_period_start: string | null;
+  current_period_start?: string | null;
   current_period_end: string | null;
-  trial_starts_at: string | null;
-  trial_ends_at: string | null;
-  created_at: string;
-  updated_at: string;
+  trial_starts_at?: string | null;
+  trial_ends_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
   extraction_limit: number;
-  extraction_reset_at: string | null;
+  extraction_reset_at?: string | null;
 }
 
 export function useSubscription() {
@@ -34,21 +36,22 @@ export function useSubscription() {
       setLoading(true);
       setError(null);
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
         setSubscription(null);
         return;
       }
 
+      // ShipFast pattern: Simple query focusing on active status
       const { data, error: fetchError } = await supabase
         .from('subscriptions')
-        .select('*')
-        .eq('user_id', session.user.id)
+        .select('id, user_id, stripe_customer_id, stripe_subscription_id, status, is_active, interval, amount, currency, current_period_end, extraction_limit')
+        .eq('user_id', user.id)
         .single();
 
       if (fetchError) {
         if (fetchError.code === 'PGRST116') {
-          // No subscription found
+          // No subscription found - user is not premium
           setSubscription(null);
         } else {
           throw fetchError;
@@ -57,7 +60,7 @@ export function useSubscription() {
         setSubscription(data);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler beim Laden des Abos';
+      const errorMessage = err instanceof Error ? err.message : 'Fehler beim Laden der Subscription';
       setError(errorMessage);
       console.error('Subscription fetch error:', err);
     } finally {
@@ -87,36 +90,24 @@ export function useSubscription() {
     }
   };
 
-  // Computed properties
-  const isActive = subscription?.is_active ?? false;
+  // ShipFast pattern: Simple hasAccess-style computed properties
+  const hasAccess = subscription?.is_active ?? false;
+  const isActive = hasAccess; // Alias for compatibility
+  const isPro = hasAccess; // Alias for compatibility
   const isLifetime = subscription?.interval === 'lifetime';
-  const isPro = isActive;
+  
+  // Simplified status checks
   const isTrial = subscription?.status === 'trial';
   const isPastDue = subscription?.status === 'past_due';
+  const isCanceled = subscription?.status === 'canceled';
 
-  // Trial status
-  const trialDaysLeft = subscription?.trial_ends_at 
-    ? Math.max(0, Math.ceil((new Date(subscription.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
-    : 0;
-
-  const hasTrialEnded = subscription?.trial_ends_at 
-    ? new Date(subscription.trial_ends_at) < new Date() 
-    : false;
-
-  // Billing period info for subscriptions
+  // Billing period info (simplified)
   const currentPeriodEnd = subscription?.current_period_end 
     ? new Date(subscription.current_period_end)
     : null;
 
-  const daysUntilRenewal = currentPeriodEnd 
-    ? Math.max(0, Math.ceil((currentPeriodEnd.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
-    : 0;
-
-  // Usage tracking
+  // Usage tracking (keep for premium features)
   const extractionLimit = subscription?.extraction_limit ?? 20;
-  const extractionResetAt = subscription?.extraction_reset_at 
-    ? new Date(subscription.extraction_reset_at)
-    : null;
 
   useEffect(() => {
     fetchSubscription();
@@ -145,24 +136,22 @@ export function useSubscription() {
     loading,
     error,
     
-    // Computed states
+    // ShipFast pattern: hasAccess as primary access control
+    hasAccess,
+    
+    // Computed states (aliases for compatibility)
     isActive,
     isPro,
     isLifetime,
     isTrial,
     isPastDue,
-    
-    // Trial info
-    trialDaysLeft,
-    hasTrialEnded,
+    isCanceled,
     
     // Billing info
     currentPeriodEnd,
-    daysUntilRenewal,
     
     // Usage info
     extractionLimit,
-    extractionResetAt,
     
     // Actions
     refreshSubscription,
