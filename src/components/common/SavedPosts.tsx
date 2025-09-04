@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, memo } from 'react'
 import { SavedPost, getSavedPosts, deleteSavedPost, updateSavedPost } from '@/api/supabase'
 import { SaveButton, EditButton, DeleteButton, LinkedInShareButton, XShareButton, InstagramShareButton } from '@/design-system/components/ActionButtons'
-import { Button } from '@/design-system/components/Button'
+import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -22,7 +22,7 @@ interface SavedPostsProps {
   initialExpanded?: boolean;
 }
 
-export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginClick, initialExpanded }: SavedPostsProps) {
+const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginClick, initialExpanded }: SavedPostsProps) {
   const [savedPosts, setSavedPosts] = useState<SavedPost[]>([])
   const [isCollapsed, setIsCollapsed] = useState(!initialExpanded)
   const [editingPost, setEditingPost] = useState<{ id: number, content: string } | null>(null)
@@ -102,7 +102,7 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
             <div className="p-4 rounded-lg border border-gray-200 bg-white text-center space-y-2">
               <p className="text-gray-700 text-sm">Bitte logge dich ein, um gespeicherte Beiträge zu sehen.</p>
               {onLoginClick && (
-                <Button onClick={onLoginClick} variant="primary" size="sm">Login</Button>
+                <Button onClick={onLoginClick} variant="default" size="sm">Login</Button>
               )}
             </div>
           ) : savedPosts.length === 0 ? (
@@ -240,7 +240,7 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
             <div className="p-4 rounded-lg border border-gray-200 bg-white text-center space-y-2">
               <p className="text-gray-700">Bitte logge dich ein, um gespeicherte Beiträge zu sehen.</p>
               {onLoginClick && (
-                <Button onClick={onLoginClick} variant="primary" size="sm">Login</Button>
+                <Button onClick={onLoginClick} variant="default" size="sm">Login</Button>
               )}
             </div>
           ) : savedPosts.length === 0 ? (
@@ -347,4 +347,6 @@ export function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginCli
       </div>
     </>
   )
-} 
+}
+
+export const SavedPosts = memo(SavedPostsComponent) 

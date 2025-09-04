@@ -1,6 +1,5 @@
 import React from 'react'
-import { Button } from '../Button'
-import { ButtonProps } from '../Button/Button.types'
+import { Button, ButtonProps } from '@/components/ui/button'
 import { XLogo } from '../Icons/XLogo'
 
 interface XShareButtonProps extends Omit<ButtonProps, 'variant' | 'leftIcon' | 'children'> {

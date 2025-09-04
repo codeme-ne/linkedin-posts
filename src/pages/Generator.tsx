@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import { linkedInPostsFromNewsletter, xTweetsFromBlog, instagramPostsFromBlog } from "@/api/claude";
-import { savePost } from "@/api/supabase";
+import { useState } from "react";
+import { savePost, signOut } from "@/api/supabase";
 import { SavedPosts } from "@/components/common/SavedPosts";
 import {
   createLinkedInDraftPost,
@@ -8,7 +7,6 @@ import {
   LinkedInAPIError,
 } from "@/api/linkedin";
 import { Button } from "@/components/ui/button";
-import { Button as DSButton } from "@/design-system/components/Button";
 import {
   SaveButton,
   EditButton,
@@ -26,145 +24,49 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2, Settings as SettingsIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Auth } from "@/components/common/Auth";
-import { getSession, onAuthStateChange, signOut } from "@/api/supabase";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { PlatformSelector } from "@/components/common/PlatformSelector";
 import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";
 import { InstagramLogo } from "@/design-system/components/Icons/InstagramLogo";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { PaywallModal } from "@/components/common/PaywallModal";
-import { extractFromUrl } from "@/api/extract";
+import { useAuth } from "@/hooks/useAuth";
+import { useContentGeneration } from "@/hooks/useContentGeneration";
+import { useUrlExtraction } from "@/hooks/useUrlExtraction";
+import { usePostEditing } from "@/hooks/usePostEditing";
 
 export default function Generator() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  // Local state
   const [inputText, setInputText] = useState("");
-  const [postsByPlatform, setPostsByPlatform] = useState<Record<Platform, string[]>>({
-    linkedin: [],
-    x: [],
-    instagram: [],
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [isExtracting, setIsExtracting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [editing, setEditing] = useState<{ platform: Platform; index: number } | null>(null);
-  const [editedContent, setEditedContent] = useState("");
-  const { toast } = useToast();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [loginOpen, setLoginOpen] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(["linkedin"]);
   const [showPaywall, setShowPaywall] = useState(false);
-  const { canTransform, canExtract, incrementUsage, incrementExtractionUsage, isPro } = useUsageTracking();
-  // Track sidebar collapsed state to adjust content padding
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sourceUrl, setSourceUrl] = useState("");
   const [usePremiumExtraction, setUsePremiumExtraction] = useState(false);
-  const [extractionUsage, setExtractionUsage] = useState<{ used: number; limit: number; remaining: number } | null>(null);
-  // Progress tracking states
-  const [generationProgress, setGenerationProgress] = useState(0); // 0-100
-  const [currentPlatformGenerating, setCurrentPlatformGenerating] = useState<string>("");
-  const [totalPlatforms, setTotalPlatforms] = useState(0);
-  const [completedPlatforms, setCompletedPlatforms] = useState(0);
 
-  useEffect(() => {
-    getSession().then(({ data }) => {
-      setUserEmail(data.session?.user.email ?? null);
-    });
-    const { data: sub } = onAuthStateChange((_event, session) => {
-      setUserEmail(session?.user.email ?? null);
-      if (session) setLoginOpen(false);
-    });
-    return () => {
-      sub?.subscription?.unsubscribe?.();
-    };
-  }, []);
+  // Custom hooks
+  const { userEmail, loginOpen, setLoginOpen, searchParams } = useAuth();
+  const { postsByPlatform, isLoading, generationProgress, generateContent, updatePost } = useContentGeneration();
+  const { isExtracting, extractionUsage, extractContent } = useUrlExtraction();
+  const { editing, editedContent, setEditedContent, startEdit, cancelEdit, isEditing } = usePostEditing();
+  const { canTransform, canExtract, isPro } = useUsageTracking();
 
-  // Show welcome toast once when redirected after signup confirmation
-  useEffect(() => {
-    const welcome = searchParams.get('welcome');
-    if (welcome === '1') {
-      const KEY = 'st_welcome_toast_shown';
-      const alreadyShown = typeof window !== 'undefined' && window.localStorage.getItem(KEY) === '1';
-      if (!alreadyShown) {
-        toast({ title: 'Willkommen! 🎉', description: 'Dein Account ist aktiviert. Viel Spaß beim Remixen!' });
-        try {
-          window.localStorage.setItem(KEY, '1');
-  } catch {
-          // ignore storage errors (private mode etc.)
-        }
-      }
-      // Clean query param without adding a new history entry
-      searchParams.delete('welcome');
-      setSearchParams(searchParams, { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  // Event handlers
   const handleRemix = async () => {
-    // Check usage limit
-    if (!canTransform()) {
+    if (!canTransform) {
       setShowPaywall(true);
       return;
     }
     
-    // Initialize progress tracking
-    setIsLoading(true);
-    setGenerationProgress(0);
-    setCompletedPlatforms(0);
-    setCurrentPlatformGenerating("");
-    setTotalPlatforms(selectedPlatforms.length);
-    
-    try {
-      const next: Record<Platform, string[]> = { linkedin: [], x: [], instagram: [] };
-      const progressStep = 100 / selectedPlatforms.length;
-      
-      // Process each platform sequentially with progress updates
-      for (let i = 0; i < selectedPlatforms.length; i++) {
-        const platform = selectedPlatforms[i];
-        setCurrentPlatformGenerating(PLATFORM_LABEL[platform]);
-        
-        if (platform === "linkedin") {
-          next.linkedin = await linkedInPostsFromNewsletter(inputText);
-        } else if (platform === "x") {
-          // Nutze den exakten X-Prompt über Claude
-          next.x = await xTweetsFromBlog(inputText);
-        } else if (platform === "instagram") {
-          // Nutze den speziellen Instagram-Prompt
-          next.instagram = await instagramPostsFromBlog(inputText);
-        }
-        
-        // Update progress
-        const newCompleted = i + 1;
-        setCompletedPlatforms(newCompleted);
-        setGenerationProgress(newCompleted * progressStep);
-      }
-      
-      setPostsByPlatform(next);
-      const names = selectedPlatforms.join(", ");
-      toast({ title: "Beiträge erstellt!", description: `Generiert für: ${names}` });
-      
-      // Reset progress states
-      setCurrentPlatformGenerating("");
-      
-      // Increment usage after successful transformation
-      incrementUsage();
-    } catch (error) {
-      console.error("Remix error:", error);
-      toast({
-        title: "Fehler beim Erstellen",
-        description: "LinkedIn-Beiträge konnten nicht erstellt werden.",
-        variant: "destructive",
-      });
-      // Reset progress states on error
-      setGenerationProgress(0);
-      setCompletedPlatforms(0);
-      setCurrentPlatformGenerating("");
-    } finally {
-      setIsLoading(false);
+    const success = await generateContent(inputText, selectedPlatforms);
+    if (!success) {
+      console.log("Generation failed");
     }
   };
 
@@ -178,128 +80,41 @@ export default function Generator() {
     }
     
     // Check usage limit for standard extraction (non-premium)
-    if (!usePremiumExtraction && !canExtract()) {
+    if (!usePremiumExtraction && !canExtract) {
       setShowPaywall(true);
       return;
     }
     
-    setIsExtracting(true);
-    try {
-      let result;
-      
-      if (usePremiumExtraction && isPro) {
-        // Premium extraction with Firecrawl
-        const { data: session } = await getSession();
-        if (!session) throw new Error("Keine aktive Session");
-        
-        const response = await fetch("/api/extract-premium", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${session?.session?.access_token}`,
-          },
-          body: JSON.stringify({ url: sourceUrl }),
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-          if (data.usage) {
-            setExtractionUsage(data.usage);
-          }
-          throw new Error(data.error || "Premium-Extraktion fehlgeschlagen");
-        }
-        
-        result = {
-          title: data.title,
-          content: data.markdown || data.content || "",
-        };
-        
-        // Update usage information
-        if (data.usage) {
-          setExtractionUsage(data.usage);
-          toast({ 
-            title: "Premium-Import erfolgreich ✨", 
-            description: `${data.usage.remaining} von ${data.usage.limit} Premium-Extraktionen übrig diesen Monat`
-          });
-        } else {
-          toast({ 
-            title: "Premium-Import erfolgreich ✨", 
-            description: data.title || "Inhalt wurde mit verbesserter Qualität importiert"
-          });
-        }
-      } else {
-        // Standard extraction with Jina
-        result = await extractFromUrl(sourceUrl);
-        toast({ title: "Inhalt importiert", description: result.title || sourceUrl });
-        
-        // Increment usage after successful standard extraction
-        incrementExtractionUsage();
-      }
-      
+    const result = await extractContent(sourceUrl, usePremiumExtraction);
+    if (result) {
       const prefill = [result.title, result.content]
         .filter(Boolean)
         .join("\n\n");
       setInputText(prefill);
-    } catch (e) {
-      console.error("Extract error", e);
-      toast({
-        title: "Import fehlgeschlagen",
-        description: e instanceof Error ? e.message : String(e),
-        variant: "destructive",
-      });
-    } finally {
-      setIsExtracting(false);
     }
   };
 
   const handleSavePost = async (content: string, platform: 'linkedin' | 'x' | 'instagram' = 'linkedin') => {
     if (!userEmail) {
       setLoginOpen(true);
-      toast({
-        title: "Login erforderlich",
-        description: "Bitte logge dich ein, um Beiträge zu speichern.",
-      });
+      toast.error("Login erforderlich - Bitte logge dich ein, um Beiträge zu speichern.");
       return;
     }
     try {
       await savePost(content, platform);
       setRefreshKey((prev) => prev + 1);
-      toast({
-  title: "Erfolgreich gespeichert",
-  description: "Du findest den Beitrag in der Seitenleiste \"Gespeicherte Beiträge\".",
-      });
+      toast.success("Erfolgreich gespeichert - Du findest den Beitrag in der Seitenleiste \"Gespeicherte Beiträge\".");
     } catch (error) {
       console.error("Save post error:", error);
-      toast({
-        title: "Speichern fehlgeschlagen",
-        description: `Fehler beim Speichern: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-        variant: "destructive",
-      });
+      toast.error(`Speichern fehlgeschlagen - Fehler beim Speichern: ${error instanceof Error ? error.message : String(error)}`);
     }
-  };
-
-  const handleStartEdit = (platform: Platform, index: number, content: string) => {
-    setEditing({ platform, index });
-    setEditedContent(content);
-  };
-
-  const handleCancelEdit = () => {
-    setEditing(null);
-    setEditedContent("");
   };
 
   const handleSaveEdit = () => {
     if (!editing) return;
     const { platform, index } = editing;
-    const updated = { ...postsByPlatform };
-    updated[platform] = [...updated[platform]];
-    updated[platform][index] = editedContent;
-    setPostsByPlatform(updated);
-    setEditing(null);
-    setEditedContent("");
+    updatePost(platform, index, editedContent);
+    cancelEdit();
   };
 
   return (
@@ -430,13 +245,13 @@ export default function Generator() {
             {/* Progress bar - only visible when generating */}
             {isLoading && (
               <div className="space-y-2">
-                <Progress value={generationProgress} className="h-2" />
+                <Progress value={generationProgress.progress} className="h-2" />
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>
-                    {currentPlatformGenerating && `Erstelle ${currentPlatformGenerating}-Posts...`}
+                    {generationProgress.currentPlatform && `Erstelle ${generationProgress.currentPlatform}-Posts...`}
                   </span>
                   <span>
-                    {completedPlatforms}/{totalPlatforms} Plattformen
+                    {generationProgress.completedPlatforms}/{generationProgress.totalPlatforms} Plattformen
                   </span>
                 </div>
               </div>
@@ -451,8 +266,8 @@ export default function Generator() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  {generationProgress > 0 
-                    ? `${Math.round(generationProgress)}% - ${currentPlatformGenerating}`
+                  {generationProgress.progress > 0 
+                    ? `${Math.round(generationProgress.progress)}% - ${generationProgress.currentPlatform}`
                     : "Initialisiere..."}
                 </>
               ) : (
@@ -478,7 +293,7 @@ export default function Generator() {
                   {items.map((post, index) => (
                     <Card key={index} className="border-muted/50 hover:shadow-lg transition-all duration-200 hover:border-primary/20">
                       <CardContent className="p-6">
-                        {editing?.platform === platform && editing?.index === index ? (
+                        {isEditing(platform, index) ? (
                           <div className="space-y-4">
                             <Textarea
                               value={editedContent}
@@ -486,9 +301,9 @@ export default function Generator() {
                               className="min-h-[8rem]"
                             />
                             <div className="flex justify-end gap-2">
-                              <DSButton variant="ghost" size="sm" onClick={handleCancelEdit}>
+                              <Button variant="ghost" size="sm" onClick={cancelEdit}>
                                 Abbrechen
-                              </DSButton>
+                              </Button>
                               <SaveButton size="sm" onClick={handleSaveEdit} />
                             </div>
                           </div>
@@ -503,7 +318,7 @@ export default function Generator() {
                               <div className="flex gap-2">
                                 <EditButton
                                   size="sm"
-                                  onClick={() => handleStartEdit(platform, index, post)}
+                                  onClick={() => startEdit(platform, index, post)}
                                   text=""
                                   title="Beitrag bearbeiten"
                                 />
@@ -519,7 +334,7 @@ export default function Generator() {
                                         if (accessToken && authorUrn) {
                                           const result = await createLinkedInDraftPost(post, { accessToken, authorUrn });
                                           window.open(result.draftUrl, "_blank");
-                                          toast({ title: "LinkedIn Draft erstellt! 🚀", description: "Der Draft wurde erfolgreich erstellt." });
+                                          toast.success("LinkedIn Draft erstellt! 🚀 - Der Draft wurde erfolgreich erstellt.");
                                         } else {
                                           const linkedinUrl = createLinkedInShareUrl(post);
                                           window.open(linkedinUrl, "_blank");
@@ -527,7 +342,7 @@ export default function Generator() {
                                       } catch (error) {
                                         console.error("LinkedIn Draft Error:", error);
                                         if (error instanceof LinkedInAPIError) {
-                                          toast({ title: "LinkedIn API Fehler", description: error.message, variant: "destructive" });
+                                          toast.error(`LinkedIn API Fehler - ${error.message}`);
                                         } else {
                                           const linkedinUrl = createLinkedInShareUrl(post);
                                           window.open(linkedinUrl, "_blank");

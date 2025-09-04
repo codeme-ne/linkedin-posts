@@ -290,7 +290,7 @@ export default async function handler(req: Request) {
 
     // Parse the webhook payload
     const event = JSON.parse(body);
-    console.log('📨 Stripe Event:', event.type);
+    console.log('📨 Stripe Event:', { id: event.id, type: event.type });
 
     // Handle different event types
     switch (event.type) {

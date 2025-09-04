@@ -1,41 +1,53 @@
 import { Routes, Route } from 'react-router-dom'
-import Landing from '@/pages/Landing'
-import Generator from '@/pages/Generator'
-import SignUp from '@/pages/SignUp'
-import Settings from '@/pages/Settings'
-import Privacy from '@/pages/Privacy'
-import Imprint from '@/pages/Imprint'
-import Terms from '@/pages/Terms'
+import { lazy, Suspense } from 'react'
+import { Toaster } from 'sonner'
 import ProtectedRoute from '@/components/common/ProtectedRoute'
-import { Toaster } from '@/components/ui/toaster'
+
+// Lazy load all pages for better performance
+const Landing = lazy(() => import('@/pages/Landing'))
+const Generator = lazy(() => import('@/pages/Generator'))
+const SignUp = lazy(() => import('@/pages/SignUp'))
+const Settings = lazy(() => import('@/pages/Settings'))
+const Privacy = lazy(() => import('@/pages/Privacy'))
+const Imprint = lazy(() => import('@/pages/Imprint'))
+const Terms = lazy(() => import('@/pages/Terms'))
+
+// Loading component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+)
 
 export default function App() {
   return (
     <>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/imprint" element={<Imprint />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route
-          path="/app"
-          element={
-            <ProtectedRoute>
-              <Generator />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Landing />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/imprint" element={<Imprint />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route
+            path="/app"
+            element={
+              <ProtectedRoute>
+                <Generator />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Landing />} />
+        </Routes>
+      </Suspense>
       <Toaster />
     </>
   )

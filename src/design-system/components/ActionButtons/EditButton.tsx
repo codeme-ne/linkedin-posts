@@ -1,7 +1,6 @@
 import React from 'react'
 import { Edit2 } from 'lucide-react'
-import { Button } from '../Button'
-import { ButtonProps } from '../Button/Button.types'
+import { Button, ButtonProps } from '@/components/ui/button'
 
 interface EditButtonProps extends Omit<ButtonProps, 'variant' | 'leftIcon' | 'children'> {
   text?: string

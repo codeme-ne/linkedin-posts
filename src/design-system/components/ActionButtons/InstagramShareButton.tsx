@@ -1,8 +1,7 @@
 import React from 'react'
-import { Button } from '../Button'
-import { ButtonProps } from '../Button/Button.types'
+import { Button, ButtonProps } from '@/components/ui/button'
 import { InstagramLogo } from '../Icons/InstagramLogo'
-import { useToast } from '../../../hooks/use-toast'
+import { toast } from 'sonner'
 
 interface InstagramShareButtonProps extends Omit<ButtonProps, 'variant' | 'leftIcon' | 'children'> {
   text?: string
@@ -15,7 +14,6 @@ export const InstagramShareButton: React.FC<InstagramShareButtonProps> = ({
   onClick,
   ...props
 }) => {
-  const { toast } = useToast()
   const handleInstagramShare = (e: React.MouseEvent<HTMLButtonElement>) => {
     // Strategy:
     // 1) Mobile: try native share (opens system sheet incl. Instagram)
@@ -31,10 +29,7 @@ export const InstagramShareButton: React.FC<InstagramShareButtonProps> = ({
       if (postContent) {
         navigator.clipboard?.writeText(postContent).catch(() => {})
         // Small hint so the user knows to paste the copied caption
-        toast({
-          title: 'Text kopiert',
-          description: 'Füge den Text in Instagram in das Beschreibungsfeld ein.',
-        })
+        toast.success('Text kopiert - Füge den Text in Instagram in das Beschreibungsfeld ein.')
       }
     }
 

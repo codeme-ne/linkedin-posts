@@ -1,7 +1,6 @@
 import React from 'react'
 import { Save } from 'lucide-react'
-import { Button } from '../Button'
-import { ButtonProps } from '../Button/Button.types'
+import { Button, ButtonProps } from '@/components/ui/button'
 
 interface SaveButtonProps extends Omit<ButtonProps, 'variant' | 'leftIcon' | 'children'> {
   text?: string
@@ -13,7 +12,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
 }) => {
   return (
     <Button
-      variant="primary"
+      variant="default"
       leftIcon={<Save size={16} />}
       {...props}
     >

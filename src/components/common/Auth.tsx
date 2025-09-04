@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { signInWithEmail, signUpWithPassword, signInWithPassword, resetPasswordForEmail } from '@/api/supabase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import { getSupabaseClient } from '@/api/supabase'
 
@@ -18,7 +18,6 @@ export function Auth() {
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const [authMode, setAuthMode] = useState<AuthMode>('login')
-  const { toast } = useToast()
 
   // Safely reconcile pending subscription on the server (service role)
   // Instead of writing from the client (RLS-safe and avoids duplication)
@@ -33,10 +32,7 @@ export function Auth() {
       })
       const json = await resp.json().catch(() => ({})) as { activated?: number }
       if (json?.activated) {
-        toast({
-          title: '🎉 Ihr Pro-Abo wurde aktiviert!',
-          description: 'Sie haben jetzt Zugang zu allen Pro-Features.',
-        })
+        toast.success('🎉 Ihr Pro-Abo wurde aktiviert! - Sie haben jetzt Zugang zu allen Pro-Features.')
       }
     } catch (err) {
       console.error('Error reconciling pending subscription:', err)
@@ -50,19 +46,11 @@ export function Auth() {
     // Bei Registrierung Passwörter prüfen
     if (authMode === 'register') {
       if (password.length < 6) {
-        toast({
-          title: 'Passwort zu kurz',
-          description: 'Das Passwort muss mindestens 6 Zeichen lang sein.',
-          variant: 'destructive'
-        })
+        toast.error('Passwort zu kurz - Das Passwort muss mindestens 6 Zeichen lang sein.')
         return
       }
       if (password !== passwordConfirm) {
-        toast({
-          title: 'Passwörter stimmen nicht überein',
-          description: 'Bitte stelle sicher, dass beide Passwörter identisch sind.',
-          variant: 'destructive'
-        })
+        toast.error('Passwörter stimmen nicht überein - Bitte stelle sicher, dass beide Passwörter identisch sind.')
         return
       }
     }
@@ -74,20 +62,13 @@ export function Auth() {
         if (error) {
           // Spezielle Behandlung für verschiedene Fehlertypen
           if (error.message?.includes('User already registered')) {
-            toast({
-              title: 'E-Mail bereits registriert',
-              description: 'Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an oder verwende eine andere E-Mail.',
-              variant: 'destructive'
-            })
+            toast.error('E-Mail bereits registriert - Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an oder verwende eine andere E-Mail.')
           } else {
             throw error
           }
         } else if (data?.user && !data.session) {
           // User wurde erstellt, aber noch nicht bestätigt (email confirmation enabled)
-          toast({
-            title: 'Registrierung erfolgreich! 📧',
-            description: 'Bitte prüfe deine E-Mail und klicke auf den Bestätigungslink, um deinen Account zu aktivieren.'
-          })
+          toast.success('Registrierung erfolgreich! 📧 - Bitte prüfe deine E-Mail und klicke auf den Bestätigungslink, um deinen Account zu aktivieren.')
           // Form zurücksetzen
           setEmail('')
           setPassword('')
@@ -95,10 +76,7 @@ export function Auth() {
           setAuthMode('login')
         } else if (data?.session) {
           // User wurde erstellt und ist bereits eingeloggt (email confirmation disabled)
-          toast({
-            title: 'Registrierung erfolgreich!',
-            description: 'Du wirst automatisch weitergeleitet...'
-          })
+          toast.success('Registrierung erfolgreich! - Du wirst automatisch weitergeleitet...')
           
           // Check for pending subscription
           if (data.user) {
@@ -110,26 +88,15 @@ export function Auth() {
         if (error) {
           // Spezielle Fehlerbehandlung für Login
           if (error.message?.includes('Invalid login credentials')) {
-            toast({
-              title: 'Anmeldung fehlgeschlagen',
-              description: 'E-Mail oder Passwort ist falsch. Bitte überprüfe deine Eingaben.',
-              variant: 'destructive'
-            })
+            toast.error('Anmeldung fehlgeschlagen - E-Mail oder Passwort ist falsch. Bitte überprüfe deine Eingaben.')
           } else if (error.message?.includes('Email not confirmed')) {
-            toast({
-              title: 'E-Mail nicht bestätigt',
-              description: 'Bitte bestätige deine E-Mail-Adresse über den Link in der Bestätigungs-E-Mail.',
-              variant: 'destructive'
-            })
+            toast.error('E-Mail nicht bestätigt - Bitte bestätige deine E-Mail-Adresse über den Link in der Bestätigungs-E-Mail.')
           } else {
             throw error
           }
         } else if (data?.session) {
           console.log('Login successful:', data)
-          toast({
-            title: 'Erfolgreich angemeldet!',
-            description: 'Du wirst weitergeleitet...'
-          })
+          toast.success('Erfolgreich angemeldet! - Du wirst weitergeleitet...')
           
           // Check for pending subscription on login too
           if (data.user) {
@@ -139,11 +106,7 @@ export function Auth() {
       }
     } catch (err) {
       console.error('Auth error:', err)
-      toast({
-        title: authMode === 'register' ? 'Registrierung fehlgeschlagen' : 'Login fehlgeschlagen',
-        description: err instanceof Error ? err.message : String(err),
-        variant: 'destructive'
-      })
+      toast.error(`${authMode === 'register' ? 'Registrierung fehlgeschlagen' : 'Login fehlgeschlagen'} - ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setLoading(false)
     }
@@ -157,16 +120,9 @@ export function Auth() {
     try {
       const { error } = await signInWithEmail(email)
       if (error) throw error
-      toast({
-        title: 'Magic Link gesendet',
-        description: 'Bitte prüfe deine E-Mail, um dich einzuloggen.'
-      })
+      toast.success('Magic Link gesendet - Bitte prüfe deine E-Mail, um dich einzuloggen.')
     } catch (err) {
-      toast({
-        title: 'Login fehlgeschlagen',
-        description: err instanceof Error ? err.message : String(err),
-        variant: 'destructive'
-      })
+      toast.error(`Login fehlgeschlagen - ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setLoading(false)
     }
@@ -317,26 +273,15 @@ export function Auth() {
                 className="underline hover:text-foreground transition-colors"
                 onClick={async () => {
                   if (!email) {
-                    toast({
-                      title: 'E-Mail erforderlich',
-                      description: 'Bitte gib deine E-Mail-Adresse ein, um dein Passwort zurückzusetzen.',
-                      variant: 'destructive'
-                    })
+                    toast.error('E-Mail erforderlich - Bitte gib deine E-Mail-Adresse ein, um dein Passwort zurückzusetzen.')
                     return
                   }
                   try {
                     const { error } = await resetPasswordForEmail(email)
                     if (error) throw error
-                    toast({
-                      title: 'E-Mail gesendet!',
-                      description: 'Prüfe deine E-Mail für den Link zum Zurücksetzen des Passworts.',
-                    })
+                    toast.success('E-Mail gesendet! - Prüfe deine E-Mail für den Link zum Zurücksetzen des Passworts.')
                   } catch (err) {
-                    toast({
-                      title: 'Fehler',
-                      description: err instanceof Error ? err.message : 'Passwort-Reset fehlgeschlagen',
-                      variant: 'destructive'
-                    })
+                    toast.error(`Fehler - ${err instanceof Error ? err.message : 'Passwort-Reset fehlgeschlagen'}`)
                   }
                 }}
               >

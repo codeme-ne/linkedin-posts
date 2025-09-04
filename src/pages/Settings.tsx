@@ -5,7 +5,7 @@ import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   User, 
@@ -26,7 +26,6 @@ export default function Settings() {
   const { isPro } = useUsageTracking();
   const [email, setEmail] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,14 +36,10 @@ export default function Settings() {
     setIsLoggingOut(true);
     try {
       await signOut();
-      toast({ title: "Abgemeldet", description: "Du wurdest erfolgreich abgemeldet." });
+      toast.success("Abgemeldet - Du wurdest erfolgreich abgemeldet.");
       navigate("/");
     } catch {
-      toast({ 
-        title: "Fehler", 
-        description: "Beim Abmelden ist ein Fehler aufgetreten.",
-        variant: "destructive"
-      });
+      toast.error("Fehler - Beim Abmelden ist ein Fehler aufgetreten.");
     } finally {
       setIsLoggingOut(false);
     }
