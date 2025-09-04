@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { savePost, signOut } from "@/api/supabase";
+import { savePost } from "@/api/supabase";
 import { SavedPosts } from "@/components/common/SavedPosts";
 import { AccountButton } from "@/components/common/AccountButton";
 import {
@@ -26,10 +26,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Loader2, Settings as SettingsIcon } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Auth } from "@/components/common/Auth";
-import { Link } from "react-router-dom";
+// Link import removed - AccountButton now handles navigation
 import { PlatformSelector } from "@/components/common/PlatformSelector";
 import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";

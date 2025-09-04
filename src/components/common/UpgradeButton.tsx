@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonHTMLAttributes, ReactNode, useState } from "react";
 import { getSupabaseClient } from "@/api/supabase";
 import { cn } from "@/lib/utils";
-import { Check, Loader2, Sparkles, ExternalLink, CreditCard } from "lucide-react";
+import { Check, Loader2, Sparkles, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
 import { getDefaultStripePlan } from "@/config/app.config";

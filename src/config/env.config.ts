@@ -104,8 +104,12 @@ export function validateServerEnvironment(): EnvironmentValidationResult {
  */
 export function getEnvVar(varName: keyof EnvironmentVariables): string | undefined {
   // Client-side (Vite)
-  if (typeof import !== 'undefined' && import.meta && import.meta.env) {
-    return import.meta.env[varName];
+  if (typeof window !== 'undefined') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const viteEnv = (import.meta as any)?.env;
+    if (viteEnv) {
+      return viteEnv[varName];
+    }
   }
   
   // Server-side (Node.js)

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   User, 
@@ -52,7 +53,7 @@ export default function Settings() {
     ? "Pro (Lifetime)"
     : "Free";
 
-  const billingPortalUrl = import.meta.env.VITE_STRIPE_BILLING_PORTAL as string | undefined;
+  // billingPortalUrl removed - Customer Portal now handled via API
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-secondary">

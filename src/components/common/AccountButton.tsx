@@ -6,7 +6,6 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { getSession, signOut } from "@/api/supabase";
 import { toast } from "sonner";
 import { 
-  User, 
   CreditCard, 
   LogOut, 
   ChevronDown,

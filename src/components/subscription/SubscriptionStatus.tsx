@@ -5,7 +5,7 @@ import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Calendar, CreditCard, Clock, AlertTriangle, Crown, Sparkles, TrendingUp, CheckCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+// cn utility removed - not used in this component
 
 export function SubscriptionStatus() {
   const {
