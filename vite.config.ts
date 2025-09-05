@@ -46,6 +46,27 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    cors: true,
+    proxy: {
+      // Proxy alle API-Routes zu Vercel Functions
+      '^/api/.*': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, options) => {
+          // Fallback falls Vercel nicht läuft - bessere Error Messages
+          proxy.on('error', (err, req, res) => {
+            console.log('\n🚨 API Proxy Error: Vercel dev server nicht erreichbar auf Port 3001')
+            console.log('💡 Tipp: Starte "vercel dev --port 3001" in einem separaten Terminal')
+            res.writeHead(503, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ 
+              error: 'API temporarily unavailable - Vercel dev server not running',
+              hint: 'Run "vercel dev --port 3001" in a separate terminal'
+            }))
+          })
+        }
+      }
+    }
   },
   preview: {
     port: 4173,

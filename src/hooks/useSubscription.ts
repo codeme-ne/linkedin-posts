@@ -12,7 +12,6 @@ export interface Subscription {
   stripe_subscription_id: string | null;
   stripe_payment_intent_id?: string | null;
   status: 'trial' | 'active' | 'canceled' | 'past_due';
-  is_active: boolean;
   interval: 'lifetime' | 'monthly' | 'yearly';
   amount: number | null;
   currency: string | null;
@@ -45,7 +44,7 @@ export function useSubscription() {
       // ShipFast pattern: Simple query focusing on active status
       const { data, error: fetchError } = await supabase
         .from('subscriptions')
-        .select('id, user_id, stripe_customer_id, stripe_subscription_id, status, is_active, interval, amount, currency, current_period_end, extraction_limit')
+        .select('id, user_id, stripe_customer_id, stripe_subscription_id, status, interval, amount, currency, current_period_end, extraction_limit')
         .eq('user_id', user.id)
         .single();
 
@@ -91,7 +90,7 @@ export function useSubscription() {
   };
 
   // ShipFast pattern: Simple hasAccess-style computed properties
-  const hasAccess = subscription?.is_active ?? false;
+  const hasAccess = subscription?.status === 'active' || subscription?.status === 'trial';
   const isActive = hasAccess; // Alias for compatibility
   const isPro = hasAccess; // Alias for compatibility
   const isLifetime = subscription?.interval === 'lifetime';

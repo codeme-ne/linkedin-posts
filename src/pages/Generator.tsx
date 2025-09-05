@@ -35,7 +35,7 @@ import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";
 import { InstagramLogo } from "@/design-system/components/Icons/InstagramLogo";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
-import { PaywallModal } from "@/components/common/PaywallModal";
+import { PaywallGuard } from "@/components/common/PaywallGuard";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentGeneration } from "@/hooks/useContentGeneration";
 import { useUrlExtraction } from "@/hooks/useUrlExtraction";
@@ -46,7 +46,6 @@ export default function Generator() {
   const [inputText, setInputText] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(["linkedin"]);
-  const [showPaywall, setShowPaywall] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sourceUrl, setSourceUrl] = useState("");
   const [usePremiumExtraction, setUsePremiumExtraction] = useState(false);
@@ -60,28 +59,11 @@ export default function Generator() {
 
   // Event handlers
   const handleRemix = async () => {
-    if (!canTransform) {
-      setShowPaywall(true);
-      return;
-    }
-    
     await generateContent(inputText, selectedPlatforms);
   };
 
   const handleExtract = async () => {
     if (!sourceUrl) return;
-    
-    // Check if trying to use premium without Pro
-    if (usePremiumExtraction && !isPro) {
-      setShowPaywall(true);
-      return;
-    }
-    
-    // Check usage limit for standard extraction (non-premium)
-    if (!usePremiumExtraction && !canExtract) {
-      setShowPaywall(true);
-      return;
-    }
     
     const result = await extractContent(sourceUrl, usePremiumExtraction);
     if (result) {
@@ -177,15 +159,23 @@ export default function Generator() {
                   className="flex-1 h-10 px-3 rounded-md border bg-background"
                   aria-label="Quelle-URL"
                 />
-                <Button onClick={handleExtract} disabled={!sourceUrl || isExtracting} className="md:w-48">
-                  {isExtracting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importiere…
-                    </>
-                  ) : (
-                    <>Von URL importieren</>
-                  )}
-                </Button>
+{((!usePremiumExtraction && canExtract()) || (usePremiumExtraction && isPro)) ? (
+                  <Button onClick={handleExtract} disabled={!sourceUrl || isExtracting} className="md:w-48">
+                    {isExtracting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importiere…
+                      </>
+                    ) : (
+                      <>Von URL importieren</>
+                    )}
+                  </Button>
+                ) : (
+                  <PaywallGuard feature={usePremiumExtraction ? "Premium URL-Extraktion" : "Standard URL-Extraktion"}>
+                    <Button disabled className="md:w-48 opacity-50">
+                      Von URL importieren (Pro Feature)
+                    </Button>
+                  </PaywallGuard>
+                )}
               </div>
               
               {/* Premium extraction toggle - visible to all, but gated for free users */}
@@ -195,10 +185,6 @@ export default function Generator() {
                     type="checkbox"
                     checked={usePremiumExtraction}
                     onChange={(e) => {
-                      if (!isPro && e.target.checked) {
-                        setShowPaywall(true);
-                        return;
-                      }
                       setUsePremiumExtraction(e.target.checked);
                     }}
                     className="rounded border-gray-300 text-primary focus:ring-primary"
@@ -241,23 +227,35 @@ export default function Generator() {
               </div>
             )}
 
-            <Button
-              onClick={handleRemix}
-              disabled={isLoading || !inputText || selectedPlatforms.length === 0}
-              size="lg"
-              className="w-full text-lg h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  {generationProgress.progress > 0 
-                    ? `${Math.round(generationProgress.progress)}% - ${generationProgress.currentPlatform}`
-                    : "Initialisiere..."}
-                </>
-              ) : (
-                <>✨ Transformieren</>
-              )}
-            </Button>
+{canTransform() ? (
+              <Button
+                onClick={handleRemix}
+                disabled={isLoading || !inputText || selectedPlatforms.length === 0}
+                size="lg"
+                className="w-full text-lg h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    {generationProgress.progress > 0 
+                      ? `${Math.round(generationProgress.progress)}% - ${generationProgress.currentPlatform}`
+                      : "Initialisiere..."}
+                  </>
+                ) : (
+                  <>✨ Transformieren</>
+                )}
+              </Button>
+            ) : (
+              <PaywallGuard feature="Content-Generierung">
+                <Button
+                  disabled
+                  size="lg"
+                  className="w-full text-lg h-12 opacity-50"
+                >
+                  ✨ Transformieren (Pro Feature)
+                </Button>
+              </PaywallGuard>
+            )}
           </CardContent>
         </Card>
         
@@ -372,11 +370,6 @@ export default function Generator() {
         isAuthenticated={!!userEmail}
         onLoginClick={() => setLoginOpen(true)}
         initialExpanded={searchParams.get('expand') === 'saved'}
-      />
-      
-      <PaywallModal 
-        open={showPaywall} 
-        onOpenChange={setShowPaywall} 
       />
     </div>
   );

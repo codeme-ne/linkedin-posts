@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as Popover from "@radix-ui/react-popover";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,11 @@ export function AccountButton({ className }: AccountButtonProps) {
       }
     }
   };
+
+  // Load user data on component mount
+  useEffect(() => {
+    loadUserData();
+  }, []);
 
   const handleLogout = async () => {
     setIsLogoutLoading(true);
