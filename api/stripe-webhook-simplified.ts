@@ -1,6 +1,15 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
+// Fix TypeScript definition issue - invoice.subscription exists in API but not in types
+declare module 'stripe' {
+  namespace Stripe {
+    interface Invoice {
+      subscription?: string | Stripe.Subscription | null;
+    }
+  }
+}
+
 export const config = {
   runtime: 'edge',
 }
