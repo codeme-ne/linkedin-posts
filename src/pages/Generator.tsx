@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import { useState, useEffect } from "react";
+=======
+import { useEffect, useState } from "react";
+import { linkedInPostsFromNewsletter, xTweetsFromBlog, instagramPostsFromBlog, suggestTopicIdeasFromInputs } from "@/api/claude";
+>>>>>>> 2d74d0a (feat: Finalize app for launch)
 import { savePost } from "@/api/supabase";
 import { SavedPosts } from "@/components/common/SavedPosts";
 import { AccountButton } from "@/components/common/AccountButton";
@@ -23,10 +28,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+<<<<<<< HEAD
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+=======
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Settings as SettingsIcon } from "lucide-react";
+>>>>>>> 2d74d0a (feat: Finalize app for launch)
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Auth } from "@/components/common/Auth";
 // Link import removed - AccountButton now handles navigation
@@ -49,11 +61,37 @@ export default function Generator() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sourceUrl, setSourceUrl] = useState("");
   const [usePremiumExtraction, setUsePremiumExtraction] = useState(false);
+<<<<<<< HEAD
   
   // ShipFast pattern: localStorage-based free tier tracking
   const [freeGenerations, setFreeGenerations] = useState(() => {
     return parseInt(localStorage.getItem('freeGenerationsCount') || '0', 10);
   });
+=======
+  const [extractionUsage, setExtractionUsage] = useState<{ used: number; limit: number; remaining: number } | null>(null);
+  // Progress tracking states
+  const [generationProgress, setGenerationProgress] = useState(0); // 0-100
+  const [currentPlatformGenerating, setCurrentPlatformGenerating] = useState<string>("");
+  const [totalPlatforms, setTotalPlatforms] = useState(0);
+  const [completedPlatforms, setCompletedPlatforms] = useState(0);
+  // Idea generation from uploads
+  const [ideaNotes, setIdeaNotes] = useState("");
+  const [ideaTexts, setIdeaTexts] = useState<string[]>([]);
+  const [ideaSuggestions, setIdeaSuggestions] = useState<string[]>([]);
+  const [topicCount, setTopicCount] = useState<number>(7);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [ideaLinks, setIdeaLinks] = useState<string[]>([]);
+  const [tabsValue, setTabsValue] = useState<"posts" | "ideas">("posts");
+
+  // Dev API base: use VITE_DEV_API_TARGET if set; otherwise, when on localhost, fall back to deployed URL
+  const DEV_DEFAULT_TARGET = 'https://linkedin-posts-ashen.vercel.app';
+  const envTarget = import.meta.env?.VITE_DEV_API_TARGET as string | undefined;
+  const apiBase = envTarget && envTarget.length > 0
+    ? envTarget.replace(/\/$/, '')
+    : (typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)/.test(window.location.hostname)
+        ? DEV_DEFAULT_TARGET
+        : '');
+>>>>>>> 2d74d0a (feat: Finalize app for launch)
 
   // Custom hooks
   const { userEmail, loginOpen, setLoginOpen, searchParams } = useAuth();
@@ -69,8 +107,29 @@ export default function Generator() {
 
   // ShipFast pattern: Save free generations count to localStorage
   useEffect(() => {
+<<<<<<< HEAD
     localStorage.setItem('freeGenerationsCount', freeGenerations.toString());
   }, [freeGenerations]);
+=======
+    getSession().then(({ data }) => {
+      setUserEmail(data.session?.user.email ?? null);
+    });
+    const { data: sub } = onAuthStateChange((_event, session) => {
+      setUserEmail(session?.user.email ?? null);
+      if (session) setLoginOpen(false);
+    });
+    
+    // Load saved style examples
+    const savedStyles = window.localStorage.getItem('styleExamples');
+    if (savedStyles) {
+      setStyleExamples(savedStyles);
+    }
+    
+    return () => {
+      sub?.subscription?.unsubscribe?.();
+    };
+  }, []);
+>>>>>>> 2d74d0a (feat: Finalize app for launch)
 
   // Event handlers with free tier limits
   const FREE_LIMIT = 3;
@@ -180,14 +239,21 @@ export default function Generator() {
           </Badge>
         </div>
 
-        <Card className="shadow-xl border-0 bg-card/50 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Newsletter eingeben oder importieren</CardTitle>
-            <CardDescription>
-              Füge deinen Newsletter-Text ein oder importiere ihn per URL, und wähle die Zielplattformen
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
+        <Tabs value={tabsValue} onValueChange={(v) => setTabsValue(v as 'posts' | 'ideas' | 'workflow')} className="w-full">
+          <TabsList className="w-full justify-start">
+            <TabsTrigger value="posts">Posts erstellen</TabsTrigger>
+            <TabsTrigger value="ideas">Themen‑Ideen</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="posts">
+            <Card className="shadow-xl border-0 bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle>Newsletter eingeben oder importieren</CardTitle>
+                <CardDescription>
+                  Füge deinen Newsletter-Text ein oder importiere ihn per URL, und wähle die Zielplattformen
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
             <div className="space-y-3">
               <div className="flex gap-2 flex-col md:flex-row">
                 <input
@@ -245,7 +311,7 @@ export default function Generator() {
               placeholder="Newsletter hier einfügen..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="min-h-[12rem] text-base resize-none"
+              className="min-h-[10rem] md:min-h-[12rem] text-base resize-none"
             />
             <div className="space-y-2">
               <PlatformSelector value={selectedPlatforms} onChange={setSelectedPlatforms} />
@@ -297,10 +363,557 @@ export default function Generator() {
             )}
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="ideas">
+            <Card className="shadow-xl border-0 bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle>Themen-Ideen aus Uploads (Beta)</CardTitle>
+                <CardDescription>
+                  Lade Bild/Text-Dokumente hoch (bis 20MB/Datei) oder füge unten Notizen ein. Wir schlagen dir prägnante Themen-Ideen vor.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Input
+                    id="idea-files"
+                    type="file"
+                    multiple
+                    accept="image/png,image/jpeg,image/webp,text/plain,text/markdown,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,audio/mpeg,audio/wav,audio/mp4,audio/aac,audio/ogg"
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (!files.length) return;
+                      const addedTexts: string[] = [];
+                      let usedApi = 0;
+                  for (const f of files) {
+                    if (f.size > 20 * 1024 * 1024) {
+                          toast({ title: "Datei zu groß", description: `${f.name} überschreitet 20MB`, variant: "destructive" });
+                          continue;
+                        }
+                        const type = (f.type || '').toLowerCase();
+                        try {
+                          const isText = type.startsWith('text/') || /\.(txt|md)$/i.test(f.name);
+                          const needsApi = type.startsWith('image/') || type.startsWith('audio/') || type === 'application/pdf' || /\.(pdf|docx)$/i.test(f.name);
+                          if (isText && !needsApi) {
+                            const t = (await f.text()).trim();
+                            if (t) addedTexts.push(t);
+                          } else {
+                        const form = new FormData();
+                        form.append('file', f, f.name);
+                        const url = apiBase ? `${apiBase}/api/extract-file` : '/api/extract-file';
+                        const resp = await fetch(url, { method: 'POST', body: form, redirect: 'follow' as RequestRedirect });
+                        if (!resp.ok) {
+                          let msg = '';
+                          try {
+                            const j = await resp.json();
+                            msg = j?.error || '';
+                          } catch { /* noop */ }
+                          if (!msg) {
+                            try { msg = await resp.text(); } catch { /* noop */ }
+                          }
+                          throw new Error(msg || `${resp.status} ${resp.statusText}`);
+                        }
+                        const data = await resp.json();
+                        if (data?.text) {
+                          addedTexts.push(String(data.text));
+                          usedApi++;
+                        }
+                        if (data?.meta?.links?.length) {
+                          setIdeaLinks((prev) => {
+                            const set = new Set(prev);
+                            for (const l of data.meta.links as string[]) set.add(l);
+                            return Array.from(set).slice(0, 200);
+                          });
+                        }
+                      }
+                    } catch (err) {
+                      console.error('upload extract error', err);
+                      const msg = err instanceof Error && err.message ? `: ${err.message.slice(0, 180)}` : '';
+                      toast({ title: "Extraktion fehlgeschlagen", description: `${f.name}${msg}` , variant: "destructive" });
+                    }
+                  }
+                  if (addedTexts.length) setIdeaTexts(prev => [...prev, ...addedTexts]);
+                  if (!addedTexts.length) return;
+                  toast({ title: "Uploads verarbeitet", description: `${addedTexts.length} Textquelle(n) ${usedApi ? `(via API: ${usedApi})` : ''}` });
+                  e.currentTarget.value = '';
+                }}
+              />
+              <p className="text-xs text-muted-foreground">Unterstützt: PNG/JPG/WEBP, PDF/DOCX, TXT/MD, Audio (mp3/wav/aac/ogg). Max 20MB/Datei.</p>
+            </div>
+            {/* Links aus Uploads / Studien */}
+            {!!ideaLinks.length && (
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Gefundene Links / Studien</div>
+                <div className="max-h-48 overflow-auto rounded-md border divide-y">
+                  {ideaLinks.slice(0, 50).map((link, i) => (
+                    <div key={i} className="p-2 text-xs flex items-center gap-2">
+                      <span className="truncate flex-1" title={link}>{link}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSourceUrl(link);
+                          setTabsValue("posts");
+                        }}
+                      >
+                        Übernehmen
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Manuelles Einfügen von Links */}
+            <div className="space-y-2">
+              <Textarea
+                placeholder="Optional: Mehrere Links (je Zeile eine URL) einfügen…"
+                className="min-h-[6rem]"
+                onBlur={(e) => {
+                  const lines = e.target.value.split(/\n+/).map(s => s.trim()).filter(Boolean);
+                  if (!lines.length) return;
+                  setIdeaLinks(prev => Array.from(new Set([...prev, ...lines])));
+                  e.target.value = '';
+                  toast({ title: "Links hinzugefügt", description: `${lines.length} Link(s) gespeichert.` });
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Textarea
+                placeholder="Kurz einfügen: Worüber willst du posten? Was gefällt dir am Stil? (optional)"
+                value={ideaNotes}
+                onChange={(e) => setIdeaNotes(e.target.value)}
+                className="min-h-[8rem]"
+              />
+            </div>
+                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  {!!ideaTexts.length && <span>{ideaTexts.length} Text-Quelle(n)</span>}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    disabled={isSuggesting || (!ideaNotes && ideaTexts.length === 0)}
+                    onClick={async () => {
+                      setIsSuggesting(true);
+                      try {
+                    const ideas = await suggestTopicIdeasFromInputs({ userNotes: ideaNotes, texts: ideaTexts });
+                        setIdeaSuggestions(ideas);
+                        if (!ideas.length) {
+                          toast({ title: "Keine Ideen", description: "Bitte mehr Kontext/Text hinzufügen." });
+                        }
+                      } catch (e) {
+                        console.error(e);
+                        toast({ title: "Fehler", description: "Ideen konnten nicht generiert werden.", variant: "destructive" });
+                      } finally {
+                        setIsSuggesting(false);
+                      }
+                    }}
+                    className="md:w-56"
+                  >
+                    {isSuggesting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analysiere…</>) : (<>Themen-Ideen generieren</>)}
+                  </Button>
+                  {!!ideaSuggestions.length && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const joined = ideaSuggestions.slice(0, 3).map((s, i) => `${i+1}. ${s}`).join("\n");
+                        setInputText(prev => [joined, prev].filter(Boolean).join("\n\n"));
+                        toast({ title: "Übernommen", description: "Top-Ideen zum Eingabetext hinzugefügt." });
+                      }}
+                    >
+                      Top‑Ideen übernehmen
+                    </Button>
+                  )}
+                </div>
+                {!!ideaSuggestions.length && (
+                  <div className="bg-muted/40 rounded-md p-3 text-sm whitespace-pre-wrap">
+                    {ideaSuggestions.map((s) => `• ${s}`).join("\n")}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        <div className="space-y-2">
+                      <label className="text-sm font-medium">Oder URL eingeben</label>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="https://..."
+                          value={sourceUrl}
+                          onChange={(e) => setSourceUrl(e.target.value)}
+                        />
+                        <Button
+                          onClick={async () => {
+                            if (!sourceUrl.trim()) return;
+                            setIsExtracting(true);
+                            try {
+                              const result = await extractFromUrl(sourceUrl);
+                              const content = [result.title, result.content].filter(Boolean).join("\n\n");
+                              setInputText(content);
+                              toast({ title: "Inhalt importiert", description: result.title || sourceUrl });
+                            } catch (e) {
+                              console.error("Extract error", e);
+                              toast({
+                                title: "Import fehlgeschlagen",
+                                description: e instanceof Error ? e.message : String(e),
+                                variant: "destructive",
+                              });
+                            } finally {
+                              setIsExtracting(false);
+                            }
+                          }}
+                          disabled={isExtracting || !sourceUrl.trim()}
+                        >
+                          {isExtracting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Extrahieren"}
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {uploadedFiles.length > 0 && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Hochgeladene Dateien ({uploadedFiles.length})</label>
+                        <div className="max-h-48 overflow-auto rounded-md border divide-y">
+                          {uploadedFiles.map((file, i) => (
+                            <div key={i} className="p-2 flex items-center justify-between hover:bg-muted/50">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{file.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {(file.size / 1024).toFixed(1)} KB • {file.type.split('/')[0] || 'text'}
+                                  {file.text && ` • ${file.text.slice(0, 50)}...`}
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setUploadedFiles(prev => prev.filter((_, idx) => idx !== i));
+                                  setIdeaTexts(prev => {
+                                    const newTexts = [...prev];
+                                    newTexts.splice(i, 1);
+                                    return newTexts;
+                                  });
+                                  toast({ title: "Datei entfernt", description: file.name });
+                                }}
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {ideaTexts.length} Textquelle(n) bereit für Themenextraktion
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ),
+                topics: (
+                  <div className="space-y-4">
+                    {/* Context info */}
+                    {(ideaTexts.length > 0 || uploadedFiles.length > 0) && (
+                      <div className="p-3 bg-muted/50 rounded-md">
+                        <p className="text-sm font-medium mb-1">Verfügbare Quellen</p>
+                        <p className="text-xs text-muted-foreground">
+                          {uploadedFiles.length} Datei(en) hochgeladen • {ideaTexts.length} Textquelle(n) extrahiert
+                        </p>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Zusätzlicher Kontext</label>
+                      <Textarea
+                        placeholder="Beschreibe deine Zielgruppe, gewünschte Themen oder spezielle Anforderungen..."
+                        value={ideaNotes}
+                        onChange={(e) => setIdeaNotes(e.target.value)}
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <label className="text-sm font-medium">Anzahl Themen</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input
+                            type="number"
+                            min="3"
+                            max="15"
+                            value={topicCount}
+                            onChange={(e) => setTopicCount(Math.min(15, Math.max(3, parseInt(e.target.value) || 7)))}
+                            className="w-20"
+                          />
+                          <span className="text-sm text-muted-foreground">Ideen generieren</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Button
+                      onClick={async () => {
+                        if (!ideaNotes && ideaTexts.length === 0) {
+                          toast({ 
+                            title: "Keine Quellen verfügbar", 
+                            description: "Bitte lade erst Dateien hoch oder füge Notizen hinzu.",
+                            variant: "destructive" 
+                          });
+                          return;
+                        }
+                        
+                        setIsSuggesting(true);
+                        try {
+                          const ideas = await suggestTopicIdeasFromInputs({ 
+                            userNotes: ideaNotes, 
+                            texts: ideaTexts 
+                          });
+                          setIdeaSuggestions(ideas.slice(0, topicCount));
+                          if (!ideas.length) {
+                            toast({ 
+                              title: "Keine Ideen generiert", 
+                              description: "Bitte mehr Kontext oder andere Dateien hinzufügen." 
+                            });
+                          } else {
+                            toast({ 
+                              title: "Themen erfolgreich generiert", 
+                              description: `${ideas.length} Themen-Ideen erstellt` 
+                            });
+                          }
+                        } catch (e) {
+                          console.error('Topic generation error:', e);
+                          const errorMsg = e instanceof Error ? e.message : 'Unbekannter Fehler';
+                          toast({ 
+                            title: "Fehler bei der Themengenerierung", 
+                            description: errorMsg.slice(0, 100), 
+                            variant: "destructive" 
+                          });
+                        } finally {
+                          setIsSuggesting(false);
+                        }
+                      }}
+                      disabled={isSuggesting || (!ideaNotes && ideaTexts.length === 0)}
+                      className="w-full"
+                    >
+                      {isSuggesting ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analysiere...</>
+                      ) : (
+                        <>Themen-Ideen generieren</>
+                      )}
+                    </Button>
+                    
+                    {ideaSuggestions.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium">Generierte Themen ({ideaSuggestions.length})</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setIsSuggesting(true);
+                              // Regenerate with same parameters
+                              suggestTopicIdeasFromInputs({ 
+                                userNotes: ideaNotes, 
+                                texts: ideaTexts 
+                              }).then(ideas => {
+                                setIdeaSuggestions(ideas.slice(0, topicCount));
+                                toast({ title: "Neue Themen generiert" });
+                              }).finally(() => setIsSuggesting(false));
+                            }}
+                            disabled={isSuggesting}
+                          >
+                            Neu generieren
+                          </Button>
+                        </div>
+                        <div className="bg-muted/40 rounded-md p-3 text-sm space-y-2">
+                          {ideaSuggestions.map((s, i) => (
+                            <div key={i} className="flex items-start gap-2 group hover:bg-background/50 p-1 rounded">
+                              <span className="text-muted-foreground">{i + 1}.</span>
+                              <span className="flex-1">{s}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-6 px-2"
+                                onClick={() => {
+                                  setInputText(prev => prev ? `${prev}\n\n${i+1}. ${s}` : `${i+1}. ${s}`);
+                                  toast({ title: "Thema hinzugefügt", description: `"${s.slice(0, 50)}..."` });
+                                }}
+                              >
+                                +
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              const joined = ideaSuggestions.slice(0, 3).map((s, i) => `${i+1}. ${s}`).join("\n");
+                              setInputText(prev => [joined, prev].filter(Boolean).join("\n\n"));
+                              toast({ title: "Übernommen", description: "Top-3 Themen zum Eingabetext hinzugefügt." });
+                            }}
+                          >
+                            Top-3 übernehmen
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              const allJoined = ideaSuggestions.map((s, i) => `${i+1}. ${s}`).join("\n");
+                              setInputText(allJoined);
+                              toast({ title: "Alle übernommen", description: `${ideaSuggestions.length} Themen als Eingabetext gesetzt.` });
+                            }}
+                          >
+                            Alle verwenden
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ),
+                style: (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Schreibstil wählen</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { id: 'professional', label: '📚 Professionell', desc: 'Sachlich und strukturiert' },
+                          { id: 'casual', label: '💬 Casual', desc: 'Locker und persönlich' },
+                          { id: 'storytelling', label: '📖 Storytelling', desc: 'Erzählerisch und emotional' },
+                          { id: 'direct', label: '🎯 Direkt', desc: 'Klar und auf den Punkt' }
+                        ].map((style) => (
+                          <Button
+                            key={style.id}
+                            variant={selectedStyle === style.id ? "default" : "outline"}
+                            className="justify-start h-auto py-3 px-4"
+                            onClick={() => setSelectedStyle(style.id)}
+                          >
+                            <div className="text-left">
+                              <div>{style.label}</div>
+                              <div className="text-xs text-muted-foreground font-normal">{style.desc}</div>
+                            </div>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Eigene Stil-Beispiele</label>
+                      <Textarea
+                        placeholder="Füge hier Beispiel-Posts ein, die deinem gewünschten Stil entsprechen..."
+                        className="min-h-[150px]"
+                        value={styleExamples}
+                        onChange={(e) => {
+                          setStyleExamples(e.target.value);
+                          window.localStorage.setItem('styleExamples', e.target.value);
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Diese Beispiele werden als Stil-Referenz für die KI verwendet
+                      </p>
+                    </div>
+                    
+                    {styleExamples && (
+                      <div className="p-3 bg-muted/50 rounded-md">
+                        <p className="text-xs font-medium mb-1">Stil-Referenz gespeichert</p>
+                        <p className="text-xs text-muted-foreground">
+                          {styleExamples.split('\n').length} Zeile(n) • {styleExamples.length} Zeichen
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ),
+                generate: (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Eingabetext</label>
+                      <Textarea
+                        placeholder="Newsletter, Blogpost oder eigener Text..."
+                        value={inputText}
+                        onChange={(e) => setInputText(e.target.value)}
+                        className="min-h-[150px] md:min-h-[200px] text-base"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Plattformen</label>
+                      <PlatformSelector
+                        value={selectedPlatforms}
+                        onChange={setSelectedPlatforms}
+                      />
+                    </div>
+                    
+                    <Button
+                      onClick={handleRemix}
+                      disabled={isLoading || !inputText.trim() || selectedPlatforms.length === 0}
+                      className="w-full"
+                    >
+                      {isLoading ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generiere...</>
+                      ) : (
+                        <>Posts generieren</>
+                      )}
+                    </Button>
+                    
+                    {generationProgress > 0 && generationProgress < 100 && (
+                      <div className="space-y-2">
+                        <Progress value={generationProgress} />
+                        <p className="text-xs text-center text-muted-foreground">
+                          {currentPlatformGenerating && `Generiere ${currentPlatformGenerating}...`}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ),
+                review: (
+                  <div className="space-y-4">
+                    {Object.entries(postsByPlatform).map(([platform, posts]) => 
+                      posts.length > 0 && (
+                        <Card key={platform}>
+                          <CardHeader>
+                            <CardTitle className="text-base">
+                              {PLATFORM_LABEL[platform as Platform]} Posts
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            {posts.map((post, index) => (
+                              <div key={index} className="p-3 bg-muted rounded-md">
+                                <pre className="whitespace-pre-wrap text-sm">{post}</pre>
+                                <div className="flex gap-2 mt-2">
+                                  <SaveButton
+                                    onClick={async () => {
+                                      if (!userEmail) {
+                                        setLoginOpen(true);
+                                        return;
+                                      }
+                                      try {
+                                        await savePost(post, platform as Platform);
+                                        toast({ title: "Gespeichert" });
+                                        setRefreshKey(Date.now());
+                                      } catch (error) {
+                                        console.error(error);
+                                        toast({ title: "Fehler beim Speichern", variant: "destructive" });
+                                      }
+                                    }}
+                                  />
+                                  {platform === "linkedin" && <LinkedInShareButton text={post} />}
+                                  {platform === "x" && <XShareButton text={post} />}
+                                  {platform === "instagram" && <InstagramShareButton />}
+                                </div>
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+                      )
+                    )}
+                    
+                    {Object.values(postsByPlatform).every(posts => posts.length === 0) && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Noch keine Posts generiert. Gehe zurück zum "Posts generieren" Schritt.
+                      </div>
+                    )}
+                  </div>
+          </TabsContent>
+        </Tabs>
         
-  {/* Extra spacing for mobile to prevent content being covered by bottom drawer + safe area */}
-  <div className="md:hidden" style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }} aria-hidden="true" />
-        {(["linkedin", "x", "instagram"] as Platform[]).map((platform) => {
+        <div className="space-y-8">
+          {/* Extra spacing for mobile to prevent content being covered by bottom drawer + safe area */}
+          <div className="md:hidden" style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }} aria-hidden="true" />
+          
+          {(["linkedin", "x", "instagram"] as Platform[]).map((platform) => {
           const items = postsByPlatform[platform] || [];
           if (items.length === 0) return null;
           return (
@@ -401,6 +1014,7 @@ export default function Generator() {
           );
         })}
         </div>
+      </div>
       </div>
       
       <SavedPosts
