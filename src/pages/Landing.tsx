@@ -42,23 +42,33 @@ export default function Landing() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 overflow-hidden relative">
   <DecorativeBackground />
 
-      <div className="relative z-10 container mx-auto px-4 py-8 flex flex-col min-h-screen">
+      <div className="relative z-10 container mx-auto px-4 py-4 md:py-8 flex flex-col min-h-screen">
     <HeaderBar isVisible={isVisible} onSignup={() => navigate("/signup")} />
 
         {/* Main content with staggered animations */}
-        <main className="flex flex-col items-stretch py-8 lg:py-16">
+        <main className="flex flex-col items-stretch py-6 md:py-8 lg:py-16">
           <div className="max-w-6xl w-full grid lg:grid-cols-2 items-start gap-10 lg:gap-16 mx-auto">
             {/* Left column: Marketing content with entrance animations */}
             <div className="space-y-8 flex flex-col justify-start">
       <HeroSection isVisible={isVisible} onSignup={() => navigate("/signup")} />
             </div>
 
-            {/* Right column: Placeholder for Video/GIF */}
+            {/* Right column: Demo Video */}
             <div className="flex flex-col justify-start">
               <div className={`self-start mt-6 lg:mt-0 transition-all duration-700 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} order-first lg:order-none`}>
-                {/* TODO: Video/GIF hier einfügen */}
-                <div className="w-full h-[400px] bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl flex items-center justify-center">
-                  <p className="text-muted-foreground">Video/GIF Platzhalter</p>
+                {/* Demo Video with GIF-like behavior */}
+                <div className="w-full rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-primary/5 to-accent/5">
+                  <video 
+                    className="w-full h-auto"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
+                  >
+                    <source src="https://pw-bunny.b-cdn.net/Linkedin-Posts-Landing/First%20SaSS.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
                 </div>
               </div>
             </div>

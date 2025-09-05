@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
+import CookieConsent from "react-cookie-consent"
 import Landing from '@/pages/Landing'
 import Generator from '@/pages/Generator'
 import SignUp from '@/pages/SignUp'
@@ -37,6 +38,16 @@ export default function App() {
         <Route path="*" element={<Landing />} />
       </Routes>
       <Toaster />
+      <CookieConsent
+        location="bottom"
+        buttonText="Ich verstehe"
+        cookieName="socialTransformerCookieConsent"
+        style={{ background: "#2B373B" }}
+        buttonStyle={{ color: "#4e503b", fontSize: "13px" }}
+        expires={150}
+      >
+        Diese Webseite verwendet Cookies, um die Benutzererfahrung zu verbessern.
+      </CookieConsent>
     </>
   )
 }
