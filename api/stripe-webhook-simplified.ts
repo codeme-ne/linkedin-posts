@@ -154,13 +154,18 @@ export default async function handler(req: Request) {
         // Subscription updated - handle plan changes
         const subscription = event.data.object as Stripe.Subscription
         
+        // In API version 2025-08-27.basil, current_period_start/end moved to subscription items
+        const firstItem = subscription.items?.data?.[0] as any
+        const periodStart = firstItem?.current_period_start || Math.floor(Date.now() / 1000)
+        const periodEnd = firstItem?.current_period_end || Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000)
+        
         const { error } = await supabase
           .from('subscriptions')
           .update({
             status: subscription.status,
             is_active: subscription.status === 'active',
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            current_period_start: new Date(periodStart * 1000).toISOString(),
+            current_period_end: new Date(periodEnd * 1000).toISOString(),
             updated_at: new Date().toISOString(),
           })
           .eq('stripe_subscription_id', subscription.id)
@@ -200,6 +205,7 @@ export default async function handler(req: Request) {
         // Recurring payment successful - ensure access is granted
         const invoice = event.data.object as Stripe.Invoice
         
+        // invoice.subscription is always a string ID (per TypeScript definition)
         if (invoice.subscription) {
           const { error } = await supabase
             .from('subscriptions')
@@ -208,7 +214,7 @@ export default async function handler(req: Request) {
               is_active: true,
               updated_at: new Date().toISOString(),
             })
-            .eq('stripe_subscription_id', invoice.subscription as string)
+            .eq('stripe_subscription_id', invoice.subscription)
 
           if (error) {
             console.error('Failed to reactivate subscription:', error)
@@ -224,6 +230,7 @@ export default async function handler(req: Request) {
         // Payment failed - could revoke access or wait for retry
         const invoice = event.data.object as Stripe.Invoice
         
+        // invoice.subscription is always a string ID (per TypeScript definition)
         if (invoice.subscription) {
           // For now, just log - Stripe will retry automatically
           console.log(`⚠️  Payment failed for subscription: ${invoice.subscription}`)
