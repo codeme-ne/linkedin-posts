@@ -72,6 +72,15 @@ export default function Generator() {
     localStorage.setItem('freeGenerationsCount', freeGenerations.toString());
   }, [freeGenerations]);
 
+  // Fix Magic Link auth state synchronization
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('type') === 'magiclink' || urlParams.get('type') === 'recovery') {
+      // Clean redirect to refresh auth state and remove URL parameters
+      window.location.href = '/app';
+    }
+  }, []);
+
   // Event handlers with free tier limits
   const FREE_LIMIT = 3;
   
