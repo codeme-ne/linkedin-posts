@@ -6,7 +6,7 @@ export const config = {
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2025-08-27.basil',
 })
 
 const supabase = createClient(
@@ -26,20 +26,29 @@ export default async function handler(req: Request) {
     const { priceId, mode = 'payment', successUrl, cancelUrl } = body
 
     if (!priceId) {
-      return Response.json({ error: 'Price ID is required' }, { status: 400 })
+      return new Response(JSON.stringify({ error: 'Price ID is required' }), { 
+        status: 400, 
+        headers: { 'Content-Type': 'application/json' } 
+      })
     }
 
     if (!successUrl || !cancelUrl) {
-      return Response.json(
-        { error: 'Success and cancel URLs are required' },
-        { status: 400 }
+      return new Response(
+        JSON.stringify({ error: 'Success and cancel URLs are required' }),
+        { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' } 
+        }
       )
     }
 
     if (!['payment', 'subscription'].includes(mode)) {
-      return Response.json(
-        { error: 'Mode must be either "payment" or "subscription"' },
-        { status: 400 }
+      return new Response(
+        JSON.stringify({ error: 'Mode must be either "payment" or "subscription"' }),
+        { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' } 
+        }
       )
     }
 
@@ -108,12 +117,18 @@ export default async function handler(req: Request) {
     // Create the checkout session
     const session = await stripe.checkout.sessions.create(sessionParams)
 
-    return Response.json({ url: session.url })
+    return new Response(JSON.stringify({ url: session.url }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    })
   } catch (error: any) {
     console.error('Stripe checkout creation error:', error)
-    return Response.json(
-      { error: error.message || 'Internal server error' },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({ error: error.message || 'Internal server error' }),
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' } 
+      }
     )
   }
 }
