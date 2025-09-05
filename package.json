@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5173",
     "dev:frontend": "vite",
     "dev:api": "vercel dev --port 3001",
     "dev:full": "concurrently \"npm run dev:frontend\" \"npm run dev:api\"",
@@ -27,6 +27,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.534.0",
     "react": "^18.3.1",
+    "react-cookie-consent": "^9.0.0",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.8.2",
     "sonner": "^2.0.7",

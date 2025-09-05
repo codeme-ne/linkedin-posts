@@ -43,11 +43,11 @@ export default function Landing() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 overflow-hidden relative">
   <DecorativeBackground />
 
-      <div className="relative z-10 container mx-auto px-4 py-8 flex flex-col min-h-screen">
+      <div className="relative z-10 container mx-auto px-4 py-4 md:py-8 flex flex-col min-h-screen">
     <HeaderBar isVisible={isVisible} onSignup={() => navigate("/signup")} />
 
         {/* Main content with staggered animations */}
-        <main className="flex flex-col items-stretch py-8 lg:py-16">
+        <main className="flex flex-col items-stretch py-6 md:py-8 lg:py-16">
           <div className="max-w-6xl w-full grid lg:grid-cols-2 items-start gap-10 lg:gap-16 mx-auto">
             {/* Left column: Marketing content with entrance animations */}
             <div className="space-y-8 flex flex-col justify-start">

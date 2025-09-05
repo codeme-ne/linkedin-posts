@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { Toaster } from 'sonner'
+import CookieConsent from "react-cookie-consent"
 import ProtectedRoute from '@/components/common/ProtectedRoute'
 
 // Lazy load all pages for better performance
@@ -49,6 +50,16 @@ export default function App() {
         </Routes>
       </Suspense>
       <Toaster />
+      <CookieConsent
+        location="bottom"
+        buttonText="Ich verstehe"
+        cookieName="socialTransformerCookieConsent"
+        style={{ background: "#2B373B" }}
+        buttonStyle={{ color: "#4e503b", fontSize: "13px" }}
+        expires={150}
+      >
+        Diese Webseite verwendet Cookies, um die Benutzererfahrung zu verbessern.
+      </CookieConsent>
     </>
   )
 }

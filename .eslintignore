@@ -1,0 +1,6 @@
+serena/**
+serena/.venv/**
+serena/test/**
+serena/test/resources/**
+**/dist/**
+**/*.min.js

@@ -427,7 +427,7 @@ export default function Generator() {
               placeholder="Newsletter hier einfügen..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="min-h-[10rem] md:min-h-[12rem] text-base resize-none"
+              className="min-h-[12rem] text-base resize-none"
             />
             <div className="space-y-2">
               <PlatformSelector value={selectedPlatforms} onChange={setSelectedPlatforms} />
@@ -644,9 +644,14 @@ export default function Generator() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
 
-        <div className="space-y-2">
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Unterstützt: Bilder, PDFs, Dokumente, Audio-Dateien
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
                       <label className="text-sm font-medium">Oder URL eingeben</label>
                       <div className="flex gap-2">
                         <Input
@@ -937,7 +942,7 @@ export default function Generator() {
                         placeholder="Newsletter, Blogpost oder eigener Text..."
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
-                        className="min-h-[150px] md:min-h-[200px] text-base"
+                        className="min-h-[200px]"
                       />
                     </div>
                     
@@ -1019,14 +1024,15 @@ export default function Generator() {
                       </div>
                     )}
                   </div>
+                )
+              }}
+            />
           </TabsContent>
         </Tabs>
         
-        <div className="space-y-8">
-          {/* Extra spacing for mobile to prevent content being covered by bottom drawer + safe area */}
-          <div className="md:hidden" style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }} aria-hidden="true" />
-          
-          {(["linkedin", "x", "instagram"] as Platform[]).map((platform) => {
+  {/* Extra spacing for mobile to prevent content being covered by bottom drawer + safe area */}
+  <div className="md:hidden" style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }} aria-hidden="true" />
+        {(["linkedin", "x", "instagram"] as Platform[]).map((platform) => {
           const items = postsByPlatform[platform] || [];
           if (items.length === 0) return null;
           return (
@@ -1128,7 +1134,6 @@ export default function Generator() {
           );
         })}
         </div>
-      </div>
       </div>
       
       <SavedPosts
