@@ -17,23 +17,7 @@ export default function SignUp() {
     });
   const { data: sub } = onAuthStateChange(async (_event, session) => {
       if (session) {
-        // Reconcile any pending subscriptions for this user's email
-        let activated = false
-        try {
-          const resp = await fetch('/api/reconcile-subscription', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`
-            }
-          })
-          const json = await resp.json().catch(() => ({})) as { activated?: number }
-          activated = !!json?.activated
-        } catch (e) {
-          // non-blocking
-          console.warn('Reconcile failed (non-blocking):', e)
-        }
-        // Navigate with welcome flag only if activation actually happened
-        navigate(activated ? "/app?welcome=1" : "/app", { replace: true });
+        navigate("/app", { replace: true });
       }
     });
     return () => sub?.subscription?.unsubscribe?.();

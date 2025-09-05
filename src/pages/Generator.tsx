@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { savePost } from "@/api/supabase";
 import { SavedPosts } from "@/components/common/SavedPosts";
 import { AccountButton } from "@/components/common/AccountButton";
@@ -34,9 +34,9 @@ import { PlatformSelector } from "@/components/common/PlatformSelector";
 import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";
 import { InstagramLogo } from "@/design-system/components/Icons/InstagramLogo";
-import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { PaywallGuard } from "@/components/common/PaywallGuard";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useContentGeneration } from "@/hooks/useContentGeneration";
 import { useUrlExtraction } from "@/hooks/useUrlExtraction";
 import { usePostEditing } from "@/hooks/usePostEditing";
@@ -49,28 +49,67 @@ export default function Generator() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sourceUrl, setSourceUrl] = useState("");
   const [usePremiumExtraction, setUsePremiumExtraction] = useState(false);
+  
+  // ShipFast pattern: localStorage-based free tier tracking
+  const [freeGenerations, setFreeGenerations] = useState(() => {
+    return parseInt(localStorage.getItem('freeGenerationsCount') || '0', 10);
+  });
 
   // Custom hooks
   const { userEmail, loginOpen, setLoginOpen, searchParams } = useAuth();
+  const { hasAccess } = useSubscription();
+  
+  // ShipFast pattern: Simple access control
+  const canTransform = () => hasAccess || freeGenerations < FREE_LIMIT;
+  const canExtract = () => hasAccess || freeGenerations < FREE_LIMIT;
+  const isPro = hasAccess;
   const { postsByPlatform, isLoading, generationProgress, generateContent, updatePost } = useContentGeneration();
   const { isExtracting, extractionUsage, extractContent } = useUrlExtraction();
   const { editing, editedContent, setEditedContent, startEdit, cancelEdit, isEditing } = usePostEditing();
-  const { canTransform, canExtract, isPro } = useUsageTracking();
 
-  // Event handlers
+  // ShipFast pattern: Save free generations count to localStorage
+  useEffect(() => {
+    localStorage.setItem('freeGenerationsCount', freeGenerations.toString());
+  }, [freeGenerations]);
+
+  // Event handlers with free tier limits
+  const FREE_LIMIT = 3;
+  
   const handleRemix = async () => {
-    await generateContent(inputText, selectedPlatforms);
+    // ShipFast pattern: Check limit before generation
+    if (!hasAccess && freeGenerations >= FREE_LIMIT) {
+      toast.error("Dein kostenloses Limit ist erreicht. Upgrade zu Premium für unlimitierte Generierungen.");
+      return;
+    }
+
+    const success = await generateContent(inputText, selectedPlatforms);
+    
+    // Increment counter only on successful generation for free users
+    if (success && !hasAccess) {
+      setFreeGenerations(count => count + 1);
+    }
   };
 
   const handleExtract = async () => {
     if (!sourceUrl) return;
     
-    const result = await extractContent(sourceUrl, usePremiumExtraction);
+    // ShipFast pattern: Check limit before extraction
+    if (!hasAccess && freeGenerations >= FREE_LIMIT) {
+      toast.error("Dein kostenloses Limit ist erreicht. Upgrade zu Premium für unlimitierte Extraktionen.");
+      return;
+    }
+    
+    const result = await extractContent(sourceUrl, usePremiumExtraction, isPro);
     if (result) {
       const prefill = [result.title, result.content]
         .filter(Boolean)
         .join("\n\n");
       setInputText(prefill);
+      
+      // Increment counter only on successful extraction for free users
+      if (!hasAccess) {
+        setFreeGenerations(count => count + 1);
+      }
     }
   };
 
@@ -160,7 +199,7 @@ export default function Generator() {
                   aria-label="Quelle-URL"
                 />
 {((!usePremiumExtraction && canExtract()) || (usePremiumExtraction && isPro)) ? (
-                  <Button onClick={handleExtract} disabled={!sourceUrl || isExtracting} className="md:w-48">
+                  <Button onClick={handleExtract} disabled={!sourceUrl || isExtracting || (!hasAccess && freeGenerations >= FREE_LIMIT)} className="md:w-48">
                     {isExtracting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importiere…

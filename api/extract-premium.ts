@@ -1,5 +1,5 @@
 // Edge Function: Premium Content-Extraktion mit Firecrawl
-// Limitiert auf 20 Extraktionen pro Monat für Premium-Nutzer
+// Unbegrenzter Zugang für Premium-Nutzer (ShipFast-Pattern)
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -24,19 +24,6 @@ type ExtractPremiumResponse = {
     extractedAt: string;
     extractionType: 'firecrawl';
   };
-  usage?: {
-    used: number;
-    limit: number;
-    remaining: number;
-    resetsAt: string;
-  };
-};
-
-type UsageInfo = {
-  used_count: number;
-  limit_count: number;
-  remaining_count: number;
-  reset_at: string;
 };
 
 // Initialisiere Supabase Client mit Service Role für RLS-Bypass
@@ -75,77 +62,62 @@ async function getUserFromAuth(authHeader: string, supabase: ReturnType<typeof g
   }
 }
 
-// Prüfe und aktualisiere Nutzungslimit
-async function checkAndUpdateUsage(
+// ShipFast Pattern: Simple Premium Access Check
+async function checkPremiumAccess(
   supabase: ReturnType<typeof getSupabaseClient>, 
-  userId: string, 
-  url: string
-): Promise<{ allowed: boolean; usage: UsageInfo | null; error?: string }> {
+  userId: string
+): Promise<{ hasAccess: boolean; error?: string }> {
   try {
-    // Hole aktuelle Nutzungsstatistik
-    const { data: usageData, error: usageError } = await supabase
-      .rpc('get_monthly_extraction_usage', {
-        p_user_id: userId,
-        p_extraction_type: 'firecrawl'
-      })
+    const { data: subscription, error } = await supabase
+      .from('subscriptions')
+      .select('is_active')
+      .eq('user_id', userId)
       .single();
 
-    if (usageError) {
-      console.error('Usage-Abfrage-Fehler:', usageError);
-      return { allowed: false, usage: null, error: 'Nutzungsabfrage fehlgeschlagen' };
-    }
-
-    const usage = usageData as UsageInfo;
-
-    // Prüfe ob Limit erreicht
-    if (usage.remaining_count <= 0) {
-      return { 
-        allowed: false, 
-        usage,
-        error: `Monatliches Limit von ${usage.limit_count} Premium-Extraktionen erreicht. Zurücksetzung am ${new Date(usage.reset_at).toLocaleDateString('de-DE')}.`
-      };
-    }
-
-    // Logge die Nutzung
-    const { error: insertError } = await supabase
-      .from('extraction_usage')
-      .insert({
-        user_id: userId,
-        extraction_type: 'firecrawl',
-        url: url,
-        success: true,
-        metadata: {
-          timestamp: new Date().toISOString(),
-          source: 'extract-premium'
-        }
-      });
-
-    if (insertError) {
-      console.error('Usage-Logging-Fehler:', insertError);
-      // Fahre trotzdem fort, da das Logging fehlschlagen könnte
-    }
-
-    return { 
-      allowed: true, 
-      usage: {
-        ...usage,
-        used_count: usage.used_count + 1,
-        remaining_count: usage.remaining_count - 1
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No subscription found - user is not premium
+        return { hasAccess: false };
       }
-    };
+      console.error('Subscription check error:', error);
+      return { hasAccess: false, error: 'Subscription check failed' };
+    }
+
+    return { hasAccess: subscription?.is_active === true };
   } catch (error) {
-    console.error('Usage-Check-Fehler:', error);
-    return { allowed: false, usage: null, error: 'Interner Fehler bei Nutzungsprüfung' };
+    console.error('Premium access check error:', error);
+    return { hasAccess: false, error: 'Internal error during access check' };
   }
+}
+
+// CORS Origin validation
+function getAllowedOrigins(): string[] {
+  const prod = ['https://tranformer.social'];
+  const dev = ['http://localhost:5173', 'http://localhost:5174'];
+  return process.env.NODE_ENV === 'production' ? prod : [...prod, ...dev];
+}
+
+function validateOrigin(origin: string | null): string | null {
+  if (!origin) return null;
+  const allowedOrigins = getAllowedOrigins();
+  return allowedOrigins.includes(origin) ? origin : null;
 }
 
 // Hauptfunktion
 export default async function handler(req: Request) {
-  const cors = {
-    'Access-Control-Allow-Origin': '*',
+  // Validate origin for CORS
+  const origin = req.headers.get('origin');
+  const allowedOrigin = validateOrigin(origin);
+  
+  const cors: Record<string, string> = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
+  
+  // Only add CORS header if origin is allowed
+  if (allowedOrigin) {
+    cors['Access-Control-Allow-Origin'] = allowedOrigin;
+  }
 
 
   // Handle Preflight
@@ -220,19 +192,13 @@ export default async function handler(req: Request) {
       );
     }
 
-    // 4. Nutzungslimit prüfen
-    const { allowed, usage, error: usageError } = await checkAndUpdateUsage(supabase, user.id, url);
+    // 4. Premium-Zugang prüfen
+    const { hasAccess, error: accessError } = await checkPremiumAccess(supabase, user.id);
     
-    if (!allowed) {
+    if (!hasAccess) {
       return new Response(
         JSON.stringify({ 
-          error: usageError || 'Nutzungslimit erreicht',
-          usage: usage ? {
-            used: usage.used_count,
-            limit: usage.limit_count,
-            remaining: usage.remaining_count,
-            resetsAt: usage.reset_at
-          } : undefined
+          error: accessError || 'Premium-Zugang erforderlich. Upgrade zu Premium für unbegrenzte Extraktionen.',
         }),
         { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } }
       );
@@ -270,16 +236,8 @@ export default async function handler(req: Request) {
       const errorText = await firecrawlResponse.text();
       console.error('Firecrawl API Fehler:', firecrawlResponse.status, errorText);
       
-      // Logge Fehler in Datenbank
-      await supabase
-        .from('extraction_usage')
-        .update({ 
-          success: false, 
-          error_message: `Firecrawl API Fehler: ${firecrawlResponse.status}` 
-        })
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
+      // Log error for debugging
+      console.error(`Firecrawl API error for user ${user.id}:`, firecrawlResponse.status, errorText);
       
       return new Response(
         JSON.stringify({ 
@@ -336,13 +294,6 @@ export default async function handler(req: Request) {
         extractedAt: new Date().toISOString(),
         extractionType: 'firecrawl',
       },
-      // Nutzung bereits in checkAndUpdateUsage erhöht; hier nicht nochmals inkrementieren
-      usage: usage ? {
-        used: usage.used_count,
-        limit: usage.limit_count,
-        remaining: usage.remaining_count,
-        resetsAt: usage.reset_at,
-      } : undefined,
     };
 
     return new Response(JSON.stringify(response), {

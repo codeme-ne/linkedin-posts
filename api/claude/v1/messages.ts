@@ -3,13 +3,33 @@ export const config = {
   regions: ['fra1'], // Frankfurt für niedrige Latenz in Europa
 };
 
+// CORS Origin validation
+function getAllowedOrigins(): string[] {
+  const prod = ['https://tranformer.social'];
+  const dev = ['http://localhost:5173', 'http://localhost:5174'];
+  return process.env.NODE_ENV === 'production' ? prod : [...prod, ...dev];
+}
+
+function validateOrigin(origin: string | null): string | null {
+  if (!origin) return null;
+  const allowedOrigins = getAllowedOrigins();
+  return allowedOrigins.includes(origin) ? origin : null;
+}
+
 export default async function handler(req: Request) {
-  // CORS Headers für lokale Entwicklung
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
+  // Validate origin for CORS
+  const origin = req.headers.get('origin');
+  const allowedOrigin = validateOrigin(origin);
+  
+  const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, x-api-key, anthropic-version, anthropic-dangerous-direct-browser-access',
   };
+  
+  // Only add CORS header if origin is allowed
+  if (allowedOrigin) {
+    headers['Access-Control-Allow-Origin'] = allowedOrigin;
+  }
 
   // Handle preflight
   if (req.method === 'OPTIONS') {

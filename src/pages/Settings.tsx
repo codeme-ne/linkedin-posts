@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { UpgradeButton } from "@/components/common/UpgradeButton";
 import { getSession, signOut } from "@/api/supabase";
-import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -25,7 +24,6 @@ import {
 
 export default function Settings() {
   const { subscription, loading, openCustomerPortal } = useSubscription();
-  const { isPro } = useUsageTracking();
   const [email, setEmail] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
@@ -47,9 +45,10 @@ export default function Settings() {
     }
   };
 
+  const isPro = subscription?.is_active || false;
   const planLabel = loading
     ? "Lädt…"
-    : subscription?.is_active
+    : isPro
     ? "Pro (Lifetime)"
     : "Free";
 

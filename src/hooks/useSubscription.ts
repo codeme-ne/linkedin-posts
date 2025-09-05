@@ -12,6 +12,7 @@ export interface Subscription {
   stripe_subscription_id: string | null;
   stripe_payment_intent_id?: string | null;
   status: 'trial' | 'active' | 'canceled' | 'past_due';
+  is_active: boolean; // Single Source of Truth for premium access
   interval: 'lifetime' | 'monthly' | 'yearly';
   amount: number | null;
   currency: string | null;
@@ -21,8 +22,6 @@ export interface Subscription {
   trial_ends_at?: string | null;
   created_at?: string;
   updated_at?: string;
-  extraction_limit: number;
-  extraction_reset_at?: string | null;
 }
 
 export function useSubscription() {
@@ -44,7 +43,7 @@ export function useSubscription() {
       // ShipFast pattern: Simple query focusing on active status
       const { data, error: fetchError } = await supabase
         .from('subscriptions')
-        .select('id, user_id, stripe_customer_id, stripe_subscription_id, status, interval, amount, currency, current_period_end, extraction_limit')
+        .select('id, user_id, stripe_customer_id, stripe_subscription_id, status, is_active, interval, amount, currency, current_period_end')
         .eq('user_id', user.id)
         .single();
 
@@ -89,8 +88,8 @@ export function useSubscription() {
     }
   };
 
-  // ShipFast pattern: Simple hasAccess-style computed properties
-  const hasAccess = subscription?.status === 'active' || subscription?.status === 'trial';
+  // ShipFast pattern: Simple hasAccess computed from is_active
+  const hasAccess = subscription?.is_active === true;
   const isActive = hasAccess; // Alias for compatibility
   const isPro = hasAccess; // Alias for compatibility
   const isLifetime = subscription?.interval === 'lifetime';
@@ -104,9 +103,6 @@ export function useSubscription() {
   const currentPeriodEnd = subscription?.current_period_end 
     ? new Date(subscription.current_period_end)
     : null;
-
-  // Usage tracking (keep for premium features)
-  const extractionLimit = subscription?.extraction_limit ?? 20;
 
   useEffect(() => {
     fetchSubscription();
@@ -148,9 +144,6 @@ export function useSubscription() {
     
     // Billing info
     currentPeriodEnd,
-    
-    // Usage info
-    extractionLimit,
     
     // Actions
     refreshSubscription,

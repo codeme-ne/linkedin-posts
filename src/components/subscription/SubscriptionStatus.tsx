@@ -17,7 +17,6 @@ export function SubscriptionStatus() {
     isTrial,
     isPastDue,
     currentPeriodEnd,
-    extractionLimit,
   } = useSubscription();
 
   if (loading) {
@@ -233,7 +232,7 @@ export function SubscriptionStatus() {
                 <span className="text-sm font-medium">Premium Extractions</span>
               </div>
               <Badge variant="secondary" className="text-xs">
-                {extractionLimit}/Monat
+                Unbegrenzt
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { linkedInPostsFromNewsletter, xTweetsFromBlog, instagramPostsFromBlog } from '@/api/claude'
-import { useUsageTracking } from '@/hooks/useUsageTracking'
 import type { Platform } from '@/config/platforms'
 import { PLATFORM_LABEL } from '@/config/platforms'
 
@@ -26,16 +25,9 @@ export const useContentGeneration = () => {
     completedPlatforms: 0,
   })
 
-  const { canTransform, incrementUsage } = useUsageTracking()
-
   const generateContent = async (inputText: string, selectedPlatforms: Platform[]) => {
     if (!inputText.trim()) {
       toast.error("Bitte gib einen Text ein")
-      return false
-    }
-
-    if (!canTransform) {
-      toast.error("Maximale Anzahl an Transformationen erreicht")
       return false
     }
 
@@ -83,8 +75,7 @@ export const useContentGeneration = () => {
             progress: Math.round((completed / selectedPlatforms.length) * 100),
           }))
 
-          // Increment usage for each successful platform
-          incrementUsage()
+          // Usage tracking now handled in Generator.tsx
         } catch (platformError) {
           toast.error(`Fehler bei ${platformName}: ${platformError instanceof Error ? platformError.message : String(platformError)}`)
         }

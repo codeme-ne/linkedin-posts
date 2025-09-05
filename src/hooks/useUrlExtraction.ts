@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { extractFromUrl } from '@/api/extract'
-import { useUsageTracking } from '@/hooks/useUsageTracking'
 
 interface ExtractionResult {
   title: string
@@ -17,9 +16,8 @@ interface ExtractionUsage {
 export const useUrlExtraction = () => {
   const [isExtracting, setIsExtracting] = useState(false)
   const [extractionUsage, setExtractionUsage] = useState<ExtractionUsage | null>(null)
-  const { incrementExtractionUsage, isPro } = useUsageTracking()
 
-  const extractContent = async (sourceUrl: string, usePremiumExtraction: boolean): Promise<ExtractionResult | null> => {
+  const extractContent = async (sourceUrl: string, usePremiumExtraction: boolean, isPro: boolean = false): Promise<ExtractionResult | null> => {
     if (!sourceUrl.trim()) return null
 
     setIsExtracting(true)
@@ -66,9 +64,6 @@ export const useUrlExtraction = () => {
           content: extractResult.content || ""
         }
         toast.success(`Inhalt importiert - ${result.title || sourceUrl}`)
-        
-        // Increment usage after successful standard extraction
-        incrementExtractionUsage()
       }
       
       return result
