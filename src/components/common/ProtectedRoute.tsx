@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { getSession, onAuthStateChange } from '@/api/supabase'
 
 interface Props {
-  children: JSX.Element
+  children: ReactNode
 }
 
 export default function ProtectedRoute({ children }: Props) {
