@@ -3,6 +3,9 @@ import { toast } from 'sonner'
 import { linkedInPostsFromNewsletter, xTweetsFromBlog, instagramPostsFromBlog } from '@/api/claude'
 import type { Platform } from '@/config/platforms'
 import { PLATFORM_LABEL } from '@/config/platforms'
+import Anthropic from '@anthropic-ai/sdk'
+import { buildSinglePostPrompt, validatePost } from '@/libs/promptBuilder'
+import { useSubscription } from '@/hooks/useSubscription'
 
 interface GenerationProgress {
   progress: number // 0-100
@@ -17,6 +20,9 @@ export const useContentGeneration = () => {
     x: [],
     instagram: [],
   })
+  // Single-post state (new)
+  const [generatedPosts, setGeneratedPosts] = useState<Partial<Record<Platform, { post: string; regenerationCount: number; isEdited: boolean }>>>({})
+  const [activeGenerations, setActiveGenerations] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(false)
   const [generationProgress, setGenerationProgress] = useState<GenerationProgress>({
     progress: 0,
@@ -24,6 +30,8 @@ export const useContentGeneration = () => {
     totalPlatforms: 0,
     completedPlatforms: 0,
   })
+  // Free tier usage from subscription
+  const { decrementUsage, hasUsageRemaining } = useSubscription()
 
   const generateContent = async (inputText: string, selectedPlatforms: Platform[]) => {
     if (!inputText.trim()) {
@@ -102,6 +110,92 @@ export const useContentGeneration = () => {
     }
   }
 
+  // === New: Single post generation per platform ===
+  const anthropic = new Anthropic({
+    apiKey: 'not-needed',
+    dangerouslyAllowBrowser: true,
+    baseURL: `${window.location.origin}/api/claude`
+  })
+
+  const generateSinglePost = async (
+    content: string,
+    platform: Platform,
+    isRegeneration = false,
+  ): Promise<string> => {
+    if (!content.trim()) {
+      toast.error('Bitte gib einen Text ein')
+      throw new Error('Empty content')
+    }
+
+    if (!isRegeneration && !hasUsageRemaining()) {
+      toast.error('Tageslimit erreicht. Upgrade für unbegrenzte Generierung.')
+      throw new Error('Usage limit reached')
+    }
+
+    const current = generatedPosts[platform]
+    const regenerationCount = current?.regenerationCount || 0
+    const generationId = `${platform}-${Date.now()}`
+    setActiveGenerations((prev) => new Set([...prev, generationId]))
+
+    try {
+      const prompt = buildSinglePostPrompt(
+        content,
+        platform,
+        isRegeneration ? regenerationCount + 1 : undefined,
+      )
+
+      const maxTokens = platform === 'x' ? 1024 : 2048
+      const temperature = isRegeneration ? 0.8 + regenerationCount * 0.05 : 0.7
+
+      const response = await anthropic.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: maxTokens,
+        temperature,
+        messages: [
+          { role: 'user', content: prompt },
+        ],
+      })
+
+      const generatedPost = (response.content[0] as { text: string }).text.trim()
+
+      // Validate and store
+      validatePost(generatedPost, platform)
+
+      setGeneratedPosts((prev) => ({
+        ...prev,
+        [platform]: {
+          post: generatedPost,
+          regenerationCount: isRegeneration ? regenerationCount + 1 : 0,
+          isEdited: false,
+        },
+      }))
+
+      if (!isRegeneration) {
+        decrementUsage()
+      }
+
+      return generatedPost
+    } finally {
+      setActiveGenerations((prev) => {
+        const next = new Set(prev)
+        next.delete(generationId)
+        return next
+      })
+    }
+  }
+
+  const regeneratePost = async (content: string, platform: Platform) => {
+    const current = generatedPosts[platform]
+    if (current?.isEdited) {
+      const proceed = window.confirm('Das Regenerieren überschreibt Ihre Änderungen. Fortfahren?')
+      if (!proceed) return null
+    }
+    return generateSinglePost(content, platform, true)
+  }
+
+  const isGenerating = (platform: Platform) =>
+    Array.from(activeGenerations).some((id) => id.startsWith(platform))
+
   const updatePost = (platform: Platform, index: number, content: string) => {
     setPostsByPlatform(prev => {
       const updated = { ...prev }
@@ -120,6 +214,12 @@ export const useContentGeneration = () => {
     isLoading,
     generationProgress,
     generateContent,
+    // New API
+    generatedPosts,
+    setGeneratedPosts,
+    generateSinglePost,
+    regeneratePost,
+    isGenerating,
     updatePost,
     clearPosts,
   }

@@ -140,76 +140,26 @@ Deine Beschreibungen sollten einzigartig, ansprechend und für Instagram optimie
 
 // === X (Twitter) generation ===
 const xFromBlogPrompt_de = `
-Sie sind ein erfahrener Content-Marketer mit der Aufgabe, ansprechende Tweets aus einem Blogbeitrag zu erstellen. Ihr Ziel ist es, 5 unterschiedliche Tweets zu verfassen, die das Wesen des Blogbeitrags erfassen und dabei den einzigartigen Schreibstil des Autors beibehalten. Diese Tweets sollen auf Deutsch sein, unabhängig von der Sprache des ursprünglichen Blogbeitrags.
 
-Hier ist der Blogbeitrag, den Sie analysieren sollen:
+Du bist ein Social-Media-Experte und Ghostwriter.
 
+Du arbeitest für einen beliebten Blogger, und deine Aufgabe ist es, deren Blogbeitrag zu nehmen und verschiedene Tweets zu erstellen, um Ideen aus dem Beitrag zu teilen.
+
+Da du ein Ghostwriter bist, musst du sicherstellen, dass du dem Stil, Ton und der Stimme des Blogbeitrags so genau wie möglich folgst.
+
+Denke daran: Tweets dürfen nicht länger als 280 Zeichen sein.
+
+WICHTIG (Ausgabeformat – strikt befolgen):
+- Gib NUR die Tweets zurück, eine Zeile pro Tweet.
+- KEINE Einleitung, KEINE Überschrift, KEINE Labels/Nummerierung (z. B. "Hier sind 5 Tweets…", "Tweets:", "Tweet 1:"), KEINE Aufzählungszeichen, KEINE leeren Zeilen.
+- Mindestens 5 und höchstens 10 Tweets.
+- Keine Hashtags, keine Emojis.
+
+Hier ist der Blogbeitrag: 
 <blogpost>
 {{BLOGPOST}}
 </blogpost>
-
-Bevor Sie die Tweets erstellen, analysieren Sie bitte den Blogbeitrag gründlich. Wrap your analysis in <blogpost_analysis> tags:
-
-<blogpost_analysis>
-1. Identifizieren Sie 5-7 Hauptpunkte oder interessante Fakten aus dem Blogbeitrag. Für jeden Punkt:
-   a. Zitieren Sie die relevante Passage aus dem Blogbeitrag.
-   b. Falls der Blogbeitrag nicht auf Deutsch ist, geben Sie eine kurze deutsche Übersetzung des Zitats.
-   c. Beschreiben Sie, wie dieser Punkt in einen Tweet umgewandelt werden könnte.
-
-2. Beschreiben Sie den Schreibstil und Ton des Autors. Notieren Sie spezifische Phrasen oder Satzstrukturen, die charakteristisch für den Autor sind.
-
-3. Für jeden Hauptpunkt, entwickeln Sie eine Tweet-Idee:
-   a. Formulieren Sie den Tweet auf Deutsch.
-   b. Zählen Sie die Zeichen laut, indem Sie jedes Wort mit einer Nummer versehen (z.B. 1.Dieses 2.ist 3.ein 4.Beispieltweet).
-   c. Notieren Sie, wie der Stil und Ton des Tweets dem des Autors entspricht.
-   d. Wenn die Zeichenzahl 280 überschreitet, überarbeiten und zählen Sie erneut, bis der Tweet passt.
-
-4. Identifizieren Sie potenzielle "Scrollstopper"-Elemente für jeden Tweet, die die Leser zum Innehalten und Interagieren bringen könnten.
-
-5. Basierend auf dem Inhalt, beschreiben Sie die Zielgruppe und wie die Tweets für deutschsprachige Leser ansprechend gestaltet werden können.
-
-6. Wählen Sie die 5 besten Tweet-Ideen aus, die verschiedene Aspekte des Blogbeitrags abdecken und innerhalb des Zeichenlimits liegen.
-</blogpost_analysis>
-
-Erstellen Sie nun 5 Tweets basierend auf Ihrer Analyse. Jeder Tweet sollte einen anderen Hauptpunkt oder eine wichtige Idee aus dem Inhalt hervorheben. Befolgen Sie diese Richtlinien:
-
-1. Schreiben Sie alle Tweets auf Deutsch, unabhängig von der Originalsprache des Blogbeitrags.
-2. Stellen Sie sicher, dass jeder Tweet in sich geschlossen ist und ohne Kontext aus den anderen Tweets verstanden werden kann.
-3. Behalten Sie durchgehend den Schreibstil und Ton des Autors bei.
-4. Konzentrieren Sie sich auf interessante, überraschende oder zum Nachdenken anregende Fakten oder Ideen aus dem Blogbeitrag. Diese sollten als "Scrollstopper" fungieren - Inhalte, die Leser zum Innehalten und Interagieren bringen.
-5. Halten Sie jeden Tweet innerhalb des Twitter-Limits von 280 Zeichen.
-6. Verwenden Sie keine Emojis in den Tweets.
-7. Vermeiden Sie die Verwendung von Hashtags, es sei denn, sie werden speziell im Blogbeitrag erwähnt.
-8. Verwenden Sie keine Twitter-spezifischen Funktionen wie @mentions oder URLs, es sei denn, sie sind entscheidend für den Inhalt des Blogbeitrags.
-9. Wenn es relevante Statistiken oder Zitate im Blogbeitrag gibt, erwägen Sie, diese gegebenenfalls einzubauen.
-10. Formulieren Sie die Tweets nicht als Empfehlungen oder Anweisungen (z.B. vermeiden Sie Phrasen wie "Machen Sie dies..." oder "Sie sollten...").
-11. Konzentrieren Sie sich auf konkrete, wertvolle Informationen. Vermeiden Sie allgemeine Aussagen oder Verallgemeinerungen.
-
-Präsentieren Sie Ihre Tweets in folgendem Format:
-
-<tweets>
-<tweet1>
-[Tweet-Inhalt für den ersten Hauptpunkt auf Deutsch]
-</tweet1>
-
-<tweet2>
-[Tweet-Inhalt für den zweiten Hauptpunkt auf Deutsch]
-</tweet2>
-
-<tweet3>
-[Tweet-Inhalt für den dritten Hauptpunkt auf Deutsch]
-</tweet3>
-
-<tweet4>
-[Tweet-Inhalt für den vierten Hauptpunkt auf Deutsch]
-</tweet4>
-
-<tweet5>
-[Tweet-Inhalt für den fünften Hauptpunkt auf Deutsch]
-</tweet5>
-</tweets>
-
-Denken Sie daran, dass jeder Tweet ein "Scrollstopper" sein sollte, der plausibel vom ursprünglichen Autor zur Förderung seines Blogbeitrags geschrieben worden sein könnte, gegebenenfalls ins Deutsche übersetzt. Ziel ist es, die Aufmerksamkeit des Lesers zu fesseln und ihn dazu zu ermutigen, sich mit dem vollständigen Blogbeitrag auseinanderzusetzen.`;
+`;
 
 function sanitizeTweet(tweet: string): string {
   let t = tweet.trim();

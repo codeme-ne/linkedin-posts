@@ -4,12 +4,16 @@ Transform newsletters and blog posts into platform-optimized social media conten
 
 ## Features
 
-- 🤖 **AI-Powered Transformation** - Uses Claude AI to intelligently transform long-form content
-- 📱 **Multi-Platform Support** - Generate posts for LinkedIn, X (Twitter), and Instagram
-- 💾 **Save & Manage Posts** - Store your generated posts for later use
-- 🚀 **Direct Sharing** - Share directly to social platforms or save as drafts
-- 💰 **Monetization Ready** - Integrated Stripe payments with Beta Lifetime Deal (€49)
-- 🔒 **Usage Limits** - Free users get 2 transformations/day, Pro users get unlimited
+
+### Neu: Single-Post-Generierung pro Plattform
+
+Zusätzlich zur bestehenden Batch-Generierung gibt es nun eine Single-Post-Generierung:
+
+- Hook: `useContentGeneration` enthält `generateSinglePost`, `regeneratePost`, `isGenerating` und `generatedPosts`
+- UI: `PlatformGenerators` rendert pro Plattform eine eigene Kachel mit Generieren/Regenerieren und Inline-Editor
+- Prompting: `src/libs/promptBuilder.ts` kapselt plattformspezifische Prompts und `validatePost`
+
+Einbindung auf der Seite `src/pages/Generator.tsx` unterhalb des Haupt-Formulars.
 
 ## Tech Stack
 

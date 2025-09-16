@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getSupabaseClient } from '../api/supabase';
 import { createCustomerPortal } from '../libs/api-client';
 import { toast } from 'sonner';
@@ -125,6 +125,28 @@ export function useSubscription() {
     };
   }, []);
 
+  // === Single-Post usage helpers (free tier) ===
+  const [usageCount, setUsageCount] = useState<number>(() => {
+    const today = new Date().toDateString();
+    return parseInt(localStorage.getItem(`usage_${today}`) || '0', 10);
+  })
+
+  const decrementUsage = useCallback(() => {
+    if (hasAccess) return; // Pro users unlimited
+    const today = new Date().toDateString();
+    const currentUsage = parseInt(localStorage.getItem(`usage_${today}`) || '0', 10);
+    const next = currentUsage + 1;
+    localStorage.setItem(`usage_${today}`, String(next));
+    setUsageCount(next);
+  }, [hasAccess])
+
+  const hasUsageRemaining = useCallback(() => {
+    if (hasAccess) return true;
+    const today = new Date().toDateString();
+    const currentUsage = parseInt(localStorage.getItem(`usage_${today}`) || '0', 10);
+    return currentUsage < 2; // free limit per day
+  }, [hasAccess])
+
   return {
     // Core data
     subscription,
@@ -148,5 +170,9 @@ export function useSubscription() {
     // Actions
     refreshSubscription,
     openCustomerPortal,
+    // Free tier helpers
+    decrementUsage,
+    hasUsageRemaining,
+    dailyUsage: usageCount,
   };
 }

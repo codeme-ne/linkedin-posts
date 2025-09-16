@@ -1,101 +1,330 @@
-# CLAUDE.md
+# 🔄 Projekt Awareness & Kontext
 
-Diese Datei gibt Claude Code (claude.ai/code) Anweisungen, Kontext und Best Practices für die Arbeit an diesem Repository. Dein Ziel ist es, den Code zu verstehen, Fehler zu beheben und neue Features gemäß den hier definierten Mustern zu implementieren.
+- Lies zu Beginn jeder neuen Aufgabe die Dateien:
+	- `README.md` (Zweck, Setup, Befehle)
+	- `src/config/app.config.ts` und `src/config/env.config.ts` (Feature Flags, Pläne, Umgebungsvariablen)
+	- `vercel.json` (CSP, Headers) und `vite.config.ts` (Alias, Dev-Proxy)
+	- Relevante Edge Functions unter `api/` (Routen & Verträge)
+- Aufgabenverwaltung: Falls kein `TASK.md` existiert (aktuell nicht vorhanden), lege eines an oder nutze GitHub Issues. Notiere neue Aufgaben mit Datum und Kurzbeschreibung.
+- Nutze konsistente Benennungen, Ordnerstruktur und Muster wie in diesem Repository (siehe Struktur unten).
+- Lokale Entwicklung: Starte Frontend + API zusammen (siehe Befehle). Edge-Funktionen laufen über Vercel Dev.
 
-## 🚨 WICHTIGE ANWEISUNGEN & WARNUNGEN (BITTE ZUERST LESEN) 🚨
+---
 
-Der Code befindet sich in einer Umstellungsphase. Es gibt veraltete und neue Muster nebeneinander. Halte dich strikt an die folgenden Regeln:
+## 🧱 Code-Struktur & Modularität
 
-**Stripe Webhook**: Es gibt zwei Webhook-Dateien. Verwende und erweitere ausschließlich `api/stripe-webhook-simplified.ts`. Die Datei `api/stripe-webhook.ts` und die dazugehörige Logik mit der `pending_subscriptions`-Tabelle sind veraltet. Das Ziel ist ein einfacher "Direct Processing"-Flow.
+- Halte Dateien unter 500 Zeilen. Wenn größer: extrahiere Logik in Hooks/Utils oder untergeordnete Komponenten.
+- Struktur nach Verantwortlichkeiten/Funktionen:
+	- `src/`
+		- `api/` – Frontend-Clients für Edge-APIs und Integrationen
+			- `claude.ts` – Nutzung der Anthropic API über unsere Proxy-Route (`/api/claude`)
+			- `extract.ts` – Standard-Extraktion (POST `/api/extract`)
+			- `extract-premium.ts` – Premium-Extraktion-Client (Firecrawl)
+			- `linkedin.ts` – LinkedIn Draft/Share-Integration
+			- `supabase.ts` – Supabase Client, Auth- und Saved-Posts-CRUD
+		- `config/` – zentralisierte App-/Env-Konfiguration
+			- `app.config.ts` – Feature-Flags, Stripe-Pläne/Preis-IDs, Limits, URLs
+			- `env.config.ts` – getEnvVar()/Validation/Helper, Required/Recommended Vars
+			- `platforms.ts` – Plattform-Typen und Labels
+		- `components/` – UI-, Landing-, Common- und Design-Komponenten
+		- `design-system/` – wiederverwendbare DS-Bausteine
+		- `hooks/` – State/Business-Logik als React Hooks
+			- `useContentGeneration.ts` – KI-Generierung pro Plattform
+			- `useUrlExtraction.ts` – URL-Import (Standard/Premium)
+			- `useSubscription.ts` – Premium-Zugriff über `subscriptions.is_active`
+			- `useAuth.ts` – Login-State/Magic-Link-Handling
+		- `pages/` – Routen (Landing, Generator/App, Settings, etc.)
+		- `libs/` & `lib/` – API-Client-Helfer und Utils
+	- `api/` – Vercel Edge Functions (Server-seitig)
+		- `extract.ts`, `extract-premium.ts` (Firecrawl), `claude/v1/messages.ts`
+		- `stripe/` – `create-checkout.ts`, `create-portal.ts`
+		- `stripe-webhook-simplified.ts`
+- Imports: Verwende den Vite-Alias `@` für `src` (siehe `vite.config.ts`). Bevorzuge klare relative/alias Imports, keine „magischen“ Pfade.
+- Umgebungszugriffe: client-seitig ausschließlich `env.config.ts`-Helper nutzen; server-seitig `process.env` mit nicht-VITE-Keys.
 
-**Veraltete UI-Komponenten (Ignorieren)**:
-- **Buttons**: Das Verzeichnis `src/design-system/components/Button/` ist veraltet. Nutze IMMER die Button-Komponente aus `src/components/ui/button.tsx`.
-- **Toasts**: Die Dateien `src/components/ui/toast.tsx` und `toaster.tsx` sind veraltet. Verwende für alle Benachrichtigungen `import { toast } from 'sonner'`.
+---
 
-**Payment-Logik im Frontend**:
-- **NEU & KORREKT**: Die Komponente `src/components/common/ButtonCheckout.tsx` erstellt dynamische Bezahl-Sessions. Sie wird in `PaywallGuard.tsx` verwendet. Dies ist das zu verwendende Muster.
-- **ALT & VERALTET**: Die `PaywallModal.tsx` nutzt feste Stripe Payment Links aus der Konfiguration. Diese Komponente soll durch den PaywallGuard ersetzt werden. Erstelle keine neuen Logiken, die auf festen Payment Links basieren.
+## 🌍 Umgebungsvariablen
 
-**Claude API-Aufrufe**:
-- Alle KI-Anfragen müssen über den Backend-Proxy `api/claude/v1/messages.ts` laufen.
-- Die Datei `src/api/claude.ts` im Frontend dient nur dazu, diesen Proxy-Endpunkt aufzurufen. Sie darf niemals direkt die Anthropic-API ansprechen. Die Initialisierung mit `dangerouslyAllowBrowser: true` ist nur ein Relikt und für die Konfiguration des baseURL notwendig.
+- Client (Vite, Pflicht):
+	- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- Server (Edge Functions, Pflicht für volle Funktionalität):
+	- `CLAUDE_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
+	- `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL` (bzw. `VITE_SUPABASE_URL` als Fallback)
+- Optional/Empfohlen:
+	- `VITE_STRIPE_PAYMENT_LINK_LIFETIME`, `VITE_STRIPE_PAYMENT_LINK_MONTHLY`
+	- `FIRECRAWL_API_KEY` (Premium-Extraktion)
 
-## 🚀 Projektübersicht (Project Overview)
+	- `VITE_BASE_URL`, `VITE_DOMAIN_NAME`, `RESEND_API_KEY`
+ 	- Vorbereitung Supabase (ab Nov 2025): zusätzlich `SUPABASE_PUBLISHABLE_KEY` (ersetzt anon) und `SUPABASE_SECRET_KEY` (ersetzt service_role). Übergangsphase: beide Formate parallel unterstützen.
+- Validierung: `env.init()`/`validateClientEnvironment()` für Client; `validateServerEnvironment()` für Server.
+- Sicherheit: Keine Server-Secrets in `VITE_`-Variablen. `VITE_CLAUDE_API_KEY` niemals in Produktion nutzen – Zugriff erfolgt über unsere Proxy-Route `/api/claude`.
 
-Social Transformer ist eine SaaS-Anwendung, die lange Texte (Newsletter, Blog-Artikel) in optimierte Social-Media-Posts umwandelt. Die Architektur orientiert sich am robusten "ShipFast"-Pattern.
+Hinweis: In mehreren Edge Functions ist die CORS-Allowlist auf `https://tranformer.social`. Sie heißt genau so, der „Schreibfehler“ ohne "s" ist Absicht. Beim Anpassen CORS/URLs konsistent pflegen und diesen Sonderfall berücksichtigen.
 
-**Tech Stack**: React 18, TypeScript, Vite, Supabase (Auth, DB), Vercel Edge Functions, Stripe (Payments), TailwindCSS, shadcn/ui, Anthropic Claude 3.5 Sonnet.
+---
 
-## ⚙️ Wichtige Befehle (Key Commands)
+## 🧪 Tests & Zuverlässigkeit
 
-### Entwicklungsserver (Development Servers)
-- `npm run dev`: **EMPFOHLEN** - Startet Vite-Dev-Server (Port 5173) mit API-Proxy. Funktioniert ohne Vercel für UI-Entwicklung.
-- `npm run dev:full`: Startet Frontend (5173) + Vercel API Server (3001) parallel. **Beste Lösung für Full-Stack-Entwicklung**.
-- `npm run dev:frontend`: Nur Frontend ohne API-Funktionalität.
-- `npm run dev:api`: Nur Vercel serverless functions auf Port 3001.
+- Aktuell sind keine Tests eingerichtet. Empfehlung:
+	- Richte Vitest + React Testing Library ein.
+	- Lege Tests unter `tests/` an, gespiegelt zur App-Struktur (z. B. `tests/hooks/useContentGeneration.test.ts`).
+	- Schreibe je Feature mindestens:
+		- 1 Happy-Path-Test
+		- 1 Edge Case (leere Eingaben, Limits, Timeouts)
+		- 1 Failure Case (API-Fehler, 401/403/429)
+- Edge Functions:
+	- Eingaben strikt validieren (URL-Format, Auth Header, Plan-Status)
+	- Timeouts via `AbortController` (siehe `api/extract.ts`, 30s) beibehalten
+	- Aussagekräftige Fehlertexte + Statuscodes (400/401/403/429/5xx)
+	- CORS nur für erlaubte Origins setzen
+- Frontend:
+	- Side Effects in Hooks isolieren, Loading/Progress/UI-Feedback testen
+	- Kostenlose Nutzungen lokal per `localStorage` zählen (ShipFast-Muster)
 
-### Build & Quality
-- `npm run build`: Erstellt den Produktions-Build.
-- `npm run lint`: Führt ESLint zur Code-Überprüfung aus.
+---
 
-**⚠️ Wichtiger Hinweis**: Die ursprüngliche `vercel dev` Konfiguration hat MIME-Type-Probleme mit Vite 6. Verwende stattdessen die neuen Scripts für eine stabile Entwicklungsumgebung.
+## ✅ Aufgabenabschluss
 
-## 🏛️ Architektur (Intended State)
+- Schließe Aufgaben unmittelbar in `TASK.md` oder als GitHub Issue ab (Status, Datum, kurzer Abschlusskommentar).
+- Füge entdeckte Unteraufgaben/ToDos in einen Abschnitt „Während der Arbeit entdeckt“ hinzu.
+- Aktualisiere bei Verhaltensänderungen die Config/Docs (`README.md`, `docs/`), inkl. .env-Beispiele.
 
-**Frontend (`/src`)**:
-- `src/pages/`: Hauptseiten der App (Generator.tsx, Settings.tsx).
-- `src/hooks/`: Geschäftslogik (useContentGeneration.ts, useSubscription.ts).
-- `src/api/`: Client-seitige API-Wrapper.
-- `src/config/`: Zentrale Konfiguration für Stripe-Pläne, Features, etc.
+---
 
-**Backend (`/api`)**: Serverlose Vercel Edge Functions.
-- `api/claude/v1/messages.ts`: Sicherer Proxy zur Claude API.
-- `api/stripe-webhook-simplified.ts`: Einziger Webhook zur Verarbeitung von Stripe-Events.
-- `api/stripe/create-checkout.ts`: Erstellt dynamische Stripe Checkout Sessions.
+## 📎 Stil & Konventionen
 
-**Datenbank (`/supabase/migrations`)**:
-- `subscriptions`: Speichert den Abo-Status. Die Spalte `is_active` ist entscheidend.
-- `generation_usage`: Zählt die Nutzung für kostenlose Accounts.
-- `saved_posts`: Gespeicherte Beiträge der Nutzer.
+- Sprache: TypeScript + React 19 (Vite 7), TailwindCSS; UI via Radix/shadcn.
+- ESLint ist konfiguriert (`eslint.config.js`). Prüfe vor PRs: `npm run lint`.
+- Benennung:
+	- Komponenten: PascalCase in `components/`
+	- Hooks: `useXxx.ts`
+	- Dateien: sprechend, nach Verantwortlichkeit
+- Kommentare/Docs: JSDoc für Funktionen/Hooks.
+	- Beispiel:
+		/**
+		 * Erzeugt LinkedIn-Posts aus Newsletter-Inhalt.
+		 * @param content Eingabetext (Newsletter/Blog)
+		 * @returns String-Array mit bis zu 3 Posts
+		 */
+- Konfiguration zentral über `src/config/` – Feature Flags, Limits und Pläne nie hart im Code duplizieren.
+- API-Design: Edge Functions mit `runtime: 'edge'`, JSON-Responses, explizite Statuscodes, CORS-Header nur bei erlaubten Origins.
 
-## ✨ Wichtigste Abläufe (Core Workflows)
+---
 
-### 1. Content-Generierung
-1. UI (Generator.tsx) sammelt Input-Text und Zielplattformen.
-2. Hook (useContentGeneration.ts) prüft die Nutzungslimits (useUsageTracking.ts).
-3. Client API (src/api/claude.ts) formuliert den Prompt und ruft den Backend-Proxy auf.
-4. Backend Proxy (api/claude/v1/messages.ts) leitet die Anfrage sicher an die Anthropic API weiter.
-5. Die Antwort wird im UI dargestellt.
+## 📚 Dokumentation & Erklärbarkeit
 
-### 2. Bezahlung & Abonnements (Ziel-Flow)
-1. UI (ButtonCheckout.tsx) ruft das Backend auf, um eine Checkout-Session zu erstellen.
-2. Backend (api/stripe/create-checkout.ts) erstellt eine Stripe Session und leitet den Nutzer weiter.
-3. Nach erfolgreicher Zahlung sendet Stripe ein `checkout.session.completed`-Event.
-4. Backend Webhook (api/stripe-webhook-simplified.ts) empfängt das Event, verifiziert die Signatur und schreibt den Kauf direkt in die `subscriptions`-Tabelle in Supabase (`status: 'active'`, `is_active: true`).
-5. Hook (useSubscription.ts) liest den `is_active`-Status aus und gibt dem Nutzer im Frontend sofort Zugriff auf Premium-Features.
+- Pflege `README.md` bei neuen Features/Dependencies/Setup-Schritten.
+- Kommentiere nicht-triviale Logik; füge bei komplexen Stellen „Reason:“ Kommentare hinzu (Warum diese Entscheidung?).
+- Ergänze `docs/` (z. B. Supabase-Setup) um Migrations-/RLS-Hinweise, wenn betroffene Tabellen/Policies geändert werden.
 
-## 🤖 Claude AI Prompts
+---
 
-**Speicherort**: `src/api/claude.ts`.
-**Fokus**: Die Prompts sind detailliert und enthalten strikte Formatierungsregeln (z.B. `LINKEDIN:`-Präfix). Halte dich bei Änderungen an diese Struktur. Optimiere sie für Qualität und Konsistenz, aber bewahre die Kernanforderungen.
+## 🧠 AI-Verhaltensregeln
 
-## 💡 Entwicklungs-Tipps & Best Practices
+- Keine Annahmen ohne Beleg im Code/Repo. Frage nach, wenn Kontext fehlt.
+- Keine erfundenen Libraries/APIs. Nur im Projekt oder offiziell dokumentierte Pakete verwenden.
+- Pfade/Module vor Nutzung verifizieren (Ordnerstruktur s. o.).
+- Bestehenden Code nicht löschen/überschreiben, außer wenn Aufgabe es verlangt und Auswirkungen verstanden/kommuniziert sind.
+- Secrets nie client-seitig exponieren. Für Claude immer die Proxy-Route `/api/claude/v1/messages` verwenden.
 
-- **Fokus auf "ShipFast"-Pattern**: Bevorzuge einfache, direkte Logik. Der `is_active`-Status in der `subscriptions`-Tabelle ist die "Single Source of Truth" für den Premium-Zugang.
-- **Umgang mit veraltetem Code**: Wenn du auf veralteten Code stößt (siehe Warnungen oben), verwende ihn nicht. Ersetze ihn stattdessen durch die neue, empfohlene Implementierung.
-- **Fehlerbehebung**: `api-client.ts` bietet ein zentrales Error-Handling mit sonner-Toasts. Nutze dies. Für Backend-Fehler, prüfe die Ausgabe des `vercel dev`-Terminals.
-- **Konfiguration**: Änderungen an Preisen, Feature-Namen oder Limits sollten zentral in `src/config/app.config.ts` vorgenommen werden.
+---
 
-## 🔧 Bereiche für Refactoring & Fehlerbehebung
+## 🔌 Wichtige Systeme & Endpunkte (Vertrag kurz)
 
-Dies sind Aufgaben, bei denen du proaktiv helfen kannst:
+- Anthropic/Claude (Proxy):
+	- POST `/api/claude/v1/messages`
+	- Headers: `anthropic-version`, `x-api-key` (server-seitig), JSON-Body wie Anthropic `messages` API
+	- Zweck: Client ruft lokal die Proxy-Route auf; Key bleibt server-seitig
 
-1. **Migration zu ButtonCheckout abschließen**: Ersetze alle Vorkommen von PaywallModal und festen Stripe Payment Links durch den PaywallGuard und ButtonCheckout.
+- Extraktion:
+	- POST `/api/extract` – Body `{ url: string }`
+		- Antwort: `{ title?, byline?, excerpt?, content: string, length?, siteName? }`
+		- 400 bei ungültiger URL, 422 bei inhaltsarmer Seite, 504 bei Timeout
+	- POST `/api/extract-premium` – Auth `Bearer <access_token>` erforderlich, Premium-Abo nötig
+		- Antwort: `{ title?, content, markdown?, html?, screenshot?, metadata?, usage? }`
+		- 401 (nicht eingeloggt), 403 (kein Abo), 429 (Limit), 500/502 bei Fehlern
 
-2. **Auth-Flow aufräumen**: Entferne die reconcile-subscription-Logik aus dem SignUp.tsx-Flow, da der vereinfachte Webhook dies überflüssig macht.
+- Stripe:
+	- Webhook: POST `/api/stripe-webhook-simplified`
+		- Verifiziert via `STRIPE_WEBHOOK_SECRET`
+		- Events: `checkout.session.completed`, `customer.subscription.updated|deleted`, `invoice.paid|payment_failed`
+		- Schreibt/aktualisiert `subscriptions` mit `is_active` als SSOT
+	- Checkout: POST `/api/stripe/create-checkout`
+		- Body: `{ priceId: string, mode: 'payment'|'subscription', successUrl: string, cancelUrl: string }`
+		- Optional `Authorization: Bearer` für Zuordnung zu User
+		- Antwort: `{ url: string }`
+	- Customer Portal: POST `/api/stripe/create-portal` – Auth Pflicht
+		- Body: `{ returnUrl: string }`, Antwort `{ url: string }`
 
-3. **Sicherheits-Hardening**: Implementiere die Vorschläge aus `docs/security/security-report.md`, insbesondere:
-   - **CORS-Policy**: Ersetze den `*` Wildcard in den API-Routen durch eine Herkunfts-Whitelist.
-   - **Security Headers**: Füge empfohlene Security-Header in `vercel.json` hinzu.
+- LinkedIn:
+	- `src/api/linkedin.ts` – Draft via REST (optional Token) oder Share-Dialog Fallback.
 
-4. **Veralteten Code entfernen**: Lösche die Verzeichnisse und Dateien, die explizit als "DEPRECATED" markiert sind, um die Codebasis zu bereinigen.
+- Datenbank (Supabase):
+	- `subscriptions` – Zugriffskontrolle über `is_active`
+	- `saved_posts` – gespeicherte Beiträge (RLS via `auth.uid()`)
+	- RPC `get_monthly_extraction_usage` für Premium-Limits (falls aktiviert)
+
+---
+
+## ⚙️ Lokale Entwicklung & Befehle
+
+- NPM Scripts (`package.json`):
+	- `npm run dev` – Vite (Frontend) auf Port 5173
+	- `npm run dev:api` – Vercel Dev (Edge Functions) auf Port 3001
+	- `npm run dev:full` – beides parallel (empfohlen)
+	- `npm run build` – TypeScript Build + Vite Bundle
+	- `npm run preview` – Produktions-Bundle lokal ansehen
+	- `npm run lint` – ESLint ausführen
+- Dev-Proxy: Alle `/api/*` Requests werden von Vite zu `http://localhost:3001` weitergeleitet (siehe `vite.config.ts`).
+- CSP (`vercel.json`): `connect-src` erlaubt `self`, Supabase, Anthropic, Stripe. Für neue externe Client-Aufrufe (selten nötig) CSP anpassen.
+
+---
+
+## 🔐 Sicherheit & Best Practices
+
+- Secrets strikt nur server-seitig (Edge). Keine `VITE_`-Leaks.
+- CORS nur für bekannte Origins setzen (Production + Localhost). Domain-Sonderfall beachten: `tranformer.social` ist absichtlich so konfiguriert.
+- Eingaben validieren (URLs, Auth Header). Rate-Limits respektieren (z. B. Premium-Extraktion).
+- Netzwerk-Calls mit Timeouts (`AbortController`) absichern.
+- LinkedIn: Access Token in Entwicklung testen; in Produktion bevorzugt Share-Dialog.
+
+---
+
+## 🚀 2025 Technologie-Updates & Migrationsempfehlungen
+
+Dieser Abschnitt bündelt aktuelle Änderungen (Stand: Sep 2025), die unser Projekt betreffen können. Ziel ist eine sichere, schrittweise Migration ohne Produktionsrisiken.
+
+### 1) TailwindCSS v4 – Breaking Changes und Migrationsplan
+
+Wesentliche Änderungen:
+- CSS-first: `tailwind.config.js` optional/entfällt, Design Tokens via `@theme` im CSS.
+- Neue Imports: `@import "tailwindcss"` statt `@tailwind base/components/utilities`.
+- Vite-Integration: Verwende `@tailwindcss/vite` Plugin (Autoprefixer nicht nötig).
+- Aktualisierte Browser-Minimalstände (z. B. Safari ≥ 16.4).
+
+Empfohlene Schritte (Branch: `chore/tw4-migration`):
+- Vite-Konfiguration anpassen:
+
+```ts
+// vite.config.ts (Tailwind v4)
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+	plugins: [tailwindcss(), react()],
+})
+```
+
+- CSS-Einstieg umstellen (z. B. `src/index.css`):
+
+```css
+@import "tailwindcss";
+
+@theme {
+	/* Beispiel: Markenvariablen */
+	--font-display: "Inter", system-ui, sans-serif;
+	--color-brand-500: oklch(0.7 0.2 140);
+}
+```
+
+- Entferne V3-spezifische PostCSS/Autoprefixer-Einträge, wenn nicht mehr nötig.
+- UI Smoke-Tests durchführen (Landing, Generator, Dialoge). Falls shadcn/Radix Klassen betroffen, gezielt nachziehen.
+
+Hinweis: Rollback-Strategie bereithalten (separater PR, schrittweise Migration von Komponenten).
+
+### 2) Supabase API-Schlüssel (ab Nov 2025)
+
+Supabase führt neue Schlüssel-Namen/Formate ein:
+- `sb_publishable_...` (ersetzt `anon`)
+- `sb_secret_...` (ersetzt `service_role`)
+
+Migrationsstrategie:
+- Env-Dokumentation erweitern (siehe Abschnitt Umgebungsvariablen).
+- Code dual-fähig machen (Fallback-Reihenfolge):
+	- Client: `VITE_SUPABASE_ANON_KEY` ODER `SUPABASE_PUBLISHABLE_KEY`
+	- Server: `SUPABASE_SERVICE_ROLE_KEY` ODER `SUPABASE_SECRET_KEY`
+- Zero-Downtime-Rotation testen (Staging): alte+neue Schlüssel parallel, dann Altwerte entsorgen.
+
+Beispiel-Konfiguration (Pseudo):
+
+```ts
+// Server (Edge) – Auswahl Secret Key
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
+// Client – Auswahl Publishable
+const anonOrPublishable = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_PUBLISHABLE_KEY
+```
+
+### 3) Vercel Functions (Edge Runtime) – Terminologie & Limits
+
+- Bezeichnung: „Vercel Functions“ mit „Edge Runtime“ statt „Edge Functions“.
+- Ausführungslimits aktualisiert (z. B. 300s für Streaming), „Fluid Compute“ Modell für Kosteneffizienz.
+- Dokumentation/Kommentare in `api/**` entsprechend anpassen (kein Codezwang, nur Terminologie in Docs).
+
+### 4) ESLint v9 (Flat Config) – Pflege
+
+- Wir nutzen bereits Flat Config (`eslint.config.js`).
+- Empfehlung: Regelmäßig auf v9.x aktualisieren, `typescript-eslint` in Einklang halten, CI-Lint vor PR erzwingen.
+
+### 5) TypeScript – 5.9 aktuell, 6.0 in Planung
+
+- Beibehalten ≥ 5.9. Geplante Migration auf 6.0 Ende 2025 prüfen (Breaking Changes beachten).
+- Empfohlen: striktere Typen in Hooks/APIs, `noUncheckedIndexedAccess` projektweit evaluieren.
+
+### 6) Node.js Mindestversion
+
+- Ab sofort Node.js ≥ 20 für lokale Entwicklung/CI empfehlen (Vite 7, Tailwind v4 Tools).
+- README/CLAUDE entsprechend vermerken.
+
+### 7) Domain-Name – Sonderfall
+
+- `tranformer.social` (ohne „s“) ist bewusst so konfiguriert (CORS-Allowlist). Keine Korrektur vornehmen; bei Änderungen den Sonderfall dokumentieren.
+
+### ✅ Sofort / Kurzfristig / Laufend
+
+Sofort:
+1. Tailwind v4 Migrations-PR vorbereiten (Vite-Plugin, CSS-Import, Smoke-Tests)
+2. Supabase Schlüssel-Migrationsplan im `docs/` festhalten
+
+Kurzfristig:
+1. Terminologie in Docs auf „Vercel Functions (Edge Runtime)“ aktualisieren
+2. Node.js ≥ 20 in README/Eng-Docs fixieren
+
+Laufend:
+1. Monatliches Dependency-/Ecosystem-Review (ESLint/TS/Vite/Radix/Stripe-Changelog)
+2. Automatisierte Minor/Patch-Updates (Renovate/Dependabot), manuelle Review für Majors
+
+---
+
+## 🧩 Wiederkehrende Muster (ShipFast-inspiriert)
+
+- Zugriffskontrolle über `subscriptions.is_active` als Single Source of Truth.
+- Kostenlose Limits client-seitig per `localStorage` (z. B. `freeGenerationsCount`).
+- Stripe-Fluss: Preis-IDs in `app.config.ts`, Checkout über Edge-Route, Webhook aktiviert Abo und setzt `is_active`.
+- KI-Generierung: Plattform-Loop mit Fortschrittsanzeige, robuste Parsing/Parsing-Fallbacks für Output.
+
+---
+
+## ➕ Erweiterungen – Vorgehen
+
+- Neue Plattform hinzufügen:
+	1) `src/config/platforms.ts` erweitern (Typ & Label)
+	2) `useContentGeneration.ts` um Fall ergänzen
+	3) UI: `PlatformSelector`/Renderlogik anpassen
+- Neues Feature-Flag:
+	- In `app.config.ts` unter `features` hinzufügen und im Code abfragen
+- Neue Edge Function:
+	- Datei unter `api/` mit `export const config = { runtime: 'edge' }`
+	- CORS wie in vorhandenen Routen implementieren
+	- Bei Bedarf `vercel.json`/CSP prüfen
+- DB-Änderung:
+	- Migration unter `supabase/migrations/` ergänzen, `docs/` updaten
+
+PR-Checkliste:
+1) Lint sauber, Build erfolgreich
+2) Env-Variablen dokumentiert/validiert
+3) Edge-Inputs validiert, aussagekräftige Fehlercodes
+4) UI-States (Loading/Fehler) abgedeckt
+5) README/TASKs aktualisiert
+

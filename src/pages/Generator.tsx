@@ -40,6 +40,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useContentGeneration } from "@/hooks/useContentGeneration";
 import { useUrlExtraction } from "@/hooks/useUrlExtraction";
 import { usePostEditing } from "@/hooks/usePostEditing";
+import PlatformGenerators from "@/components/common/PlatformGenerators";
 
 export default function Generator() {
   // Local state
@@ -309,6 +310,23 @@ export default function Generator() {
 
         
         <div className="space-y-8">
+          {/* New: Single-post generators per platform */}
+          {inputText.trim() && (
+            <Card className="shadow-xl border-0 bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle>Plattform-spezifische Generierung (einzeln)</CardTitle>
+                <CardDescription>Erzeuge und regeneriere Beiträge pro Plattform mit eigenem Editor</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PlatformGenerators 
+                  content={inputText}
+                  onPostGenerated={(platform, post) => {
+                    console.log(`Generated ${platform} post: ${post.length} chars`)
+                  }}
+                />
+              </CardContent>
+            </Card>
+          )}
           {/* Extra spacing for mobile to prevent content being covered by bottom drawer + safe area */}
           <div className="md:hidden" style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }} aria-hidden="true" />
           
