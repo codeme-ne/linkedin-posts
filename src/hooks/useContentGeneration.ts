@@ -3,9 +3,9 @@ import { toast } from 'sonner'
 import { linkedInPostsFromNewsletter, xTweetsFromBlog, instagramPostsFromBlog } from '@/api/claude'
 import type { Platform } from '@/config/platforms'
 import { PLATFORM_LABEL } from '@/config/platforms'
-import Anthropic from '@anthropic-ai/sdk'
-import { buildSinglePostPrompt, validatePost } from '@/libs/promptBuilder'
+import { buildSinglePostPrompt, validatePost, normalizeSinglePostResponse } from '@/libs/promptBuilder'
 import { useSubscription } from '@/hooks/useSubscription'
+import { generateClaudeMessage } from '@/libs/api-client'
 
 interface GenerationProgress {
   progress: number // 0-100
@@ -110,12 +110,7 @@ export const useContentGeneration = () => {
     }
   }
 
-  // === New: Single post generation per platform ===
-  const anthropic = new Anthropic({
-    apiKey: 'not-needed',
-    dangerouslyAllowBrowser: true,
-    baseURL: `${window.location.origin}/api/claude`
-  })
+  // === New: Single post generation per platform (via Edge Function helper) ===
 
   const generateSinglePost = async (
     content: string,
@@ -147,16 +142,17 @@ export const useContentGeneration = () => {
       const maxTokens = platform === 'x' ? 1024 : 2048
       const temperature = isRegeneration ? 0.8 + regenerationCount * 0.05 : 0.7
 
-      const response = await anthropic.messages.create({
+      const response = await generateClaudeMessage({
         model: 'claude-3-5-sonnet-20241022',
         max_tokens: maxTokens,
         temperature,
         messages: [
           { role: 'user', content: prompt },
         ],
-      })
+      }, { timeout: 25000 })
 
-      const generatedPost = (response.content[0] as { text: string }).text.trim()
+  const raw = (response.content[0] as { text: string }).text
+  const generatedPost = normalizeSinglePostResponse(raw, platform)
 
       // Validate and store
       validatePost(generatedPost, platform)
@@ -174,7 +170,21 @@ export const useContentGeneration = () => {
         decrementUsage()
       }
 
+      toast.success(`${platform.toUpperCase()} Post generiert!`)
+
       return generatedPost
+    } catch (error: any) {
+      let errorMessage = 'Generierung fehlgeschlagen. Bitte erneut versuchen.'
+      const msg = error?.message || ''
+      if (msg.includes('Usage limit') || msg.includes('limit')) {
+        errorMessage = 'Tageslimit erreicht. Upgrade für unbegrenzte Posts.'
+      } else if (msg.includes('429') || msg.toLowerCase().includes('rate')) {
+        errorMessage = 'Zu viele Anfragen. Bitte 30 Sekunden warten.'
+      } else if (error?.name === 'AbortError') {
+        errorMessage = 'Anfrage-Timeout. Bitte versuche es erneut.'
+      }
+      toast.error(errorMessage)
+      throw error
     } finally {
       setActiveGenerations((prev) => {
         const next = new Set(prev)

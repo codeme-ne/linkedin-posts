@@ -271,3 +271,52 @@ export const createCustomerPortal = async (returnUrl: string): Promise<{ url: st
 };
 
 export default apiClient;
+
+// === Anthropic Claude helper with timeout ===
+export interface ClaudeMessageRequestMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+export interface ClaudeMessageRequestBody {
+  model: string;
+  max_tokens: number;
+  temperature?: number;
+  messages: ClaudeMessageRequestMessage[];
+}
+
+export interface ClaudeContentBlock {
+  type?: string;
+  text: string;
+}
+
+export interface ClaudeMessageResponse {
+  id?: string;
+  type?: string;
+  role?: string;
+  content: ClaudeContentBlock[];
+  stop_reason?: string | null;
+  model?: string;
+}
+
+/**
+ * Call Claude via our Edge Function with timeout and basic headers.
+ * Uses apiClient.post under the hood to leverage timeout/error handling.
+ */
+export async function generateClaudeMessage(
+  body: ClaudeMessageRequestBody,
+  opts: { timeout?: number } = {}
+): Promise<ClaudeMessageResponse> {
+  return post<ClaudeMessageResponse>(
+    '/api/claude/v1/messages',
+    body,
+    {
+      headers: {
+        'anthropic-version': '2023-06-01',
+      },
+      timeout: opts.timeout ?? 25000,
+      // Claude proxy doesn't require auth; skip to avoid unnecessary header
+      skipAuth: true,
+    }
+  );
+}

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import { useContentGeneration } from '@/hooks/useContentGeneration'
 import type { Platform } from '@/config/platforms'
 
@@ -100,16 +101,16 @@ export function PlatformGenerators({ content, onPostGenerated }: PlatformGenerat
               {hasPost && (
                 <div className="space-y-2">
                   <textarea
-                    value={currentPost.post}
+                    value={currentPost!.post}
                     onChange={(e) => handlePostEdit(k, e.target.value)}
                     className="w-full p-3 border rounded-md text-sm resize-none bg-background"
                     rows={6}
                     placeholder={`${name} Post...`}
                   />
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{currentPost.isEdited && '✏️ Bearbeitet'}</span>
+                    <span>{currentPost!.isEdited && '✏️ Bearbeitet'}</span>
                     <span>
-                      {currentPost.post.length}
+                      {currentPost!.post.length}
                       {k === 'x' && '/280'}
                       {k === 'instagram' && '/2200'}
                     </span>
@@ -118,7 +119,10 @@ export function PlatformGenerators({ content, onPostGenerated }: PlatformGenerat
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => navigator.clipboard.writeText(currentPost.post)}
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(currentPost!.post)
+                        toast.success('Post in Zwischenablage kopiert.')
+                      }}
                     >
                       📋 Kopieren
                     </Button>
