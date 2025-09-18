@@ -1,5 +1,10 @@
 # 🔄 Projekt Awareness & Kontext
 
+## 🌐 Production Domains & Deployment
+- **Current Production**: https://linkedin-posts-98eptac77-lukaszangerl-gmxats-projects.vercel.app
+- **Main Domain**: https://linkedin-posts-one.vercel.app
+- **Related Domains**: transformer.social, tranformer.social
+
 - Lies zu Beginn jeder neuen Aufgabe die Dateien:
 	- `README.md` (Zweck, Setup, Befehle)
 	- `src/config/app.config.ts` und `src/config/env.config.ts` (Feature Flags, Pläne, Umgebungsvariablen)
