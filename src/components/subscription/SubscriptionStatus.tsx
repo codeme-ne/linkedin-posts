@@ -13,7 +13,7 @@ export function SubscriptionStatus() {
     loading,
     error,
     isActive,
-    isLifetime,
+    isYearly,
     isTrial,
     isPastDue,
     currentPeriodEnd,
@@ -127,7 +127,7 @@ export function SubscriptionStatus() {
     if (isActive) return (
       <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 gap-1">
         <CheckCircle className="w-3 h-3" />
-        {isLifetime ? 'Lifetime' : 'Aktiv'}
+        {isYearly ? 'Jahres-Abo' : 'Aktiv'}
       </Badge>
     );
     return <Badge variant="secondary">Inaktiv</Badge>;
@@ -165,8 +165,8 @@ export function SubscriptionStatus() {
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">Plan</p>
               <p className="text-lg font-semibold flex items-center gap-2">
-                {isLifetime && <Sparkles className="w-4 h-4 text-yellow-500" />}
-                {isLifetime ? 'Lifetime Deal' : 
+                {isYearly && <Sparkles className="w-4 h-4 text-yellow-500" />}
+                {isYearly ? 'Jahres-Abo' : 
                  subscription.interval === 'monthly' ? 'Monatlich Pro' : 
                  subscription.interval === 'yearly' ? 'Jährlich Pro' : 
                  'Pro Plan'}
@@ -177,7 +177,7 @@ export function SubscriptionStatus() {
               <p className="text-sm font-medium text-muted-foreground mb-1">Preis</p>
               <p className="text-lg font-semibold text-green-600">
                 {formatCurrency(subscription.amount, subscription.currency)}
-                {!isLifetime && ` / ${subscription.interval === 'monthly' ? 'Monat' : 'Jahr'}`}
+                {` / ${subscription.interval === 'monthly' ? 'Monat' : 'Jahr'}`}
               </p>
             </div>
           </div>
@@ -210,7 +210,7 @@ export function SubscriptionStatus() {
         )}
 
         {/* Renewal Info for Subscriptions */}
-        {!isLifetime && currentPeriodEnd && (
+        {currentPeriodEnd && (
           <div>
             <div className="flex items-center gap-2 text-gray-700 mb-1">
               <Calendar className="w-4 h-4" />
@@ -244,9 +244,9 @@ export function SubscriptionStatus() {
         {/* Customer Portal Button */}
         <div className="pt-2 space-y-2">
           <CustomerPortalButton className="w-full" />
-          {isLifetime && (
+          {isYearly && (
             <p className="text-xs text-center text-muted-foreground">
-              🎉 Lifetime Deal - Keine wiederkehrenden Zahlungen
+              🎉 Jahres-Abo - 2 Monate gratis im Vergleich zum Monatsabo
             </p>
           )}
         </div>

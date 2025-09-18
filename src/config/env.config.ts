@@ -14,7 +14,7 @@ export interface EnvironmentVariables {
   
   // Stripe (payment links)
   VITE_STRIPE_PAYMENT_LINK?: string;
-  VITE_STRIPE_PAYMENT_LINK_LIFETIME?: string;
+  VITE_STRIPE_PAYMENT_LINK_YEARLY?: string;
   VITE_STRIPE_PAYMENT_LINK_MONTHLY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   STRIPE_SECRET_KEY?: string;
@@ -61,7 +61,7 @@ const REQUIRED_SERVER_VARS: (keyof EnvironmentVariables)[] = [
  * Optional but recommended environment variables
  */
 const RECOMMENDED_VARS: (keyof EnvironmentVariables)[] = [
-  'VITE_STRIPE_PAYMENT_LINK_LIFETIME',
+  'VITE_STRIPE_PAYMENT_LINK_YEARLY',
   'VITE_STRIPE_PAYMENT_LINK_MONTHLY',
   'FIRECRAWL_API_KEY'
 ];
