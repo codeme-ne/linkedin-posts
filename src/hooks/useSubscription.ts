@@ -13,7 +13,7 @@ export interface Subscription {
   stripe_payment_intent_id?: string | null;
   status: 'trial' | 'active' | 'canceled' | 'past_due';
   is_active: boolean; // Single Source of Truth for premium access
-  interval: 'lifetime' | 'monthly' | 'yearly';
+  interval: 'monthly' | 'yearly';
   amount: number | null;
   currency: string | null;
   current_period_start?: string | null;
@@ -92,7 +92,7 @@ export function useSubscription() {
   const hasAccess = subscription?.is_active === true;
   const isActive = hasAccess; // Alias for compatibility
   const isPro = hasAccess; // Alias for compatibility
-  const isLifetime = subscription?.interval === 'lifetime';
+  const isYearly = subscription?.interval === 'yearly';
   
   // Simplified status checks
   const isTrial = subscription?.status === 'trial';
@@ -159,7 +159,7 @@ export function useSubscription() {
     // Computed states (aliases for compatibility)
     isActive,
     isPro,
-    isLifetime,
+    isYearly,
     isTrial,
     isPastDue,
     isCanceled,

@@ -3,29 +3,13 @@
 
 BEGIN;
 
--- Add new columns for extended subscription management
-ALTER TABLE public.subscriptions
-  ADD COLUMN IF NOT EXISTS interval TEXT CHECK (interval IN ('lifetime', 'monthly', 'yearly')),
-  ADD COLUMN IF NOT EXISTS amount INTEGER,
-  ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'eur',
-  ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT,
-  ADD COLUMN IF NOT EXISTS current_period_start TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN DEFAULT FALSE,
-  ADD COLUMN IF NOT EXISTS canceled_at TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS stripe_price_id TEXT,
-  ADD COLUMN IF NOT EXISTS stripe_product_id TEXT;
+-- Note: Most columns already exist in base schema (000_create_subscriptions_table.sql)
+-- Only adding missing columns that are not in the base schema
+-- Removed redundant columns: interval, amount, currency, stripe_subscription_id, etc.
 
--- Index for Subscription lookups
-CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_subscription_id
-  ON public.subscriptions(stripe_subscription_id);
+-- No additional columns needed - all columns already exist in base schema
 
--- Index for Status queries
-CREATE INDEX IF NOT EXISTS idx_subscriptions_status
-  ON public.subscriptions(status);
-
--- Index for User ID lookups (if not exists)
-CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id
-  ON public.subscriptions(user_id);
+-- Note: All indexes already exist in base schema (000_create_subscriptions_table.sql)
+-- No additional indexes needed
 
 COMMIT;

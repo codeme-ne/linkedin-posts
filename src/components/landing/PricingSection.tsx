@@ -55,7 +55,7 @@ export function PricingSection() {
                   {formatPrice(plan.price)}
                 </span>
                 <span className={`ml-2 ${plan.popular ? 'text-foreground' : 'text-muted'}`}>
-                  {plan.interval === 'lifetime' ? 'einmalig' : `pro ${plan.interval === 'monthly' ? 'Monat' : 'Jahr'}`}
+                  {plan.interval === 'yearly' ? 'pro Jahr' : `pro ${plan.interval === 'monthly' ? 'Monat' : 'Jahr'}`}
                 </span>
               </div>
             </div>
@@ -79,7 +79,7 @@ export function PricingSection() {
               }
               variant={plan.popular ? "outline" : "default"}
             >
-              {plan.interval === 'lifetime' ? 'Lifetime Deal sichern' : 'Monatsabo starten'}
+              {plan.interval === 'yearly' ? 'Jahresabo starten' : 'Monatsabo starten'}
             </Button>
           </div>
         ))}

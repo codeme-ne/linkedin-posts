@@ -158,7 +158,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">Plan:</span>
                       <span className="font-medium">
-                        {subscription.interval === 'lifetime' ? 'Lifetime Deal' : `Pro ${subscription.interval}`}
+                        {subscription.interval === 'yearly' ? 'Yearly Pro' : `Pro ${subscription.interval}`}
                       </span>
                     </div>
                     {subscription.amount && subscription.currency && (
@@ -169,7 +169,7 @@ export default function Settings() {
                             style: 'currency',
                             currency: subscription.currency.toUpperCase()
                           }).format(subscription.amount / 100)}
-                          {subscription.interval !== 'lifetime' && ` / ${subscription.interval === 'monthly' ? 'Monat' : 'Jahr'}`}
+                          {` / ${subscription.interval === 'monthly' ? 'Monat' : 'Jahr'}`}
                         </span>
                       </div>
                     )}

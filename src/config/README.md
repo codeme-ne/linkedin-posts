@@ -38,8 +38,8 @@ const hasPremiumExtraction = isFeatureEnabled('premiumExtraction');
 ```typescript
 import { env, getSupabaseConfig, isDevelopment } from '@/config/env.config';
 
-// Type-safe environment access
-const apiKey = env.get('VITE_CLAUDE_API_KEY');
+// Type-safe environment access (server-side only)
+const apiKey = env.get('CLAUDE_API_KEY');
 
 // Service-specific configuration
 const supabase = env.supabase;

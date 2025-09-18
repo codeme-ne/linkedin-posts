@@ -69,7 +69,8 @@ export function PaywallGuard({ children, feature = 'Premium Feature', className 
           </ButtonCheckout>
           
           <p className="text-xs text-muted-foreground">
-            {defaultPlan.interval === 'lifetime' && 'Einmalige Zahlung • Lebenslanger Zugang'}
+            {defaultPlan.interval === 'yearly' && 'Jährliche Zahlung • 2 Monate gratis'}
+            {defaultPlan.interval === 'monthly' && 'Monatliche Zahlung • Jederzeit kündbar'}
           </p>
         </CardContent>
       </Card>

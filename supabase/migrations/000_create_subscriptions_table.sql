@@ -1,4 +1,4 @@
-wsl-- Migration: 000_create_subscriptions_table.sql
+-- Migration: 000_create_subscriptions_table.sql
 -- Purpose: Create the base subscriptions table
 
 BEGIN;
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
   stripe_payment_intent_id TEXT,
   status TEXT DEFAULT 'trial' CHECK (status IN ('trial', 'active', 'canceled', 'past_due')),
   is_active BOOLEAN DEFAULT FALSE,
-  interval TEXT CHECK (interval IN ('lifetime', 'monthly', 'yearly')),
+  interval TEXT CHECK (interval IN ('monthly', 'yearly')),
   amount INTEGER,
   currency TEXT DEFAULT 'eur',
   stripe_price_id TEXT,

@@ -9,8 +9,7 @@ export interface EnvironmentVariables {
   VITE_SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   
-  // Claude AI (client-side fallback, server-side required)
-  VITE_CLAUDE_API_KEY?: string;
+  // Claude AI (server-side only for security)
   CLAUDE_API_KEY?: string;
   
   // Stripe (payment links)
@@ -155,7 +154,7 @@ export function isProduction(): boolean {
  */
 export function getStripePaymentLinks() {
   return {
-    lifetime: getEnvVar('VITE_STRIPE_PAYMENT_LINK_LIFETIME'),
+    yearly: getEnvVar('VITE_STRIPE_PAYMENT_LINK_YEARLY'),
     monthly: getEnvVar('VITE_STRIPE_PAYMENT_LINK_MONTHLY'),
     legacy: getEnvVar('VITE_STRIPE_PAYMENT_LINK') // fallback
   };
@@ -184,13 +183,12 @@ export function getLinkedInConfig() {
 }
 
 /**
- * Get Claude AI configuration
+ * Get Claude AI configuration (server-side only for security)
  */
 export function getClaudeConfig() {
   return {
-    clientApiKey: getEnvVar('VITE_CLAUDE_API_KEY'), // Not recommended for production
-    serverApiKey: getEnvVar('CLAUDE_API_KEY'), // Recommended for production
-    isConfigured: !!(getEnvVar('VITE_CLAUDE_API_KEY') || getEnvVar('CLAUDE_API_KEY'))
+    serverApiKey: getEnvVar('CLAUDE_API_KEY'), // Server-side only
+    isConfigured: !!getEnvVar('CLAUDE_API_KEY')
   };
 }
 

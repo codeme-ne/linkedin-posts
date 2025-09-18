@@ -211,6 +211,6 @@ export function formatPrice(amount: number, currency: string = 'eur'): string {
  * @param interval - Interval to check
  * @returns boolean
  */
-export function isValidInterval(interval: string): interval is 'lifetime' | 'monthly' | 'yearly' {
-  return ['lifetime', 'monthly', 'yearly'].includes(interval);
+export function isValidInterval(interval: string): interval is 'monthly' | 'yearly' {
+  return ['monthly', 'yearly'].includes(interval);
 }

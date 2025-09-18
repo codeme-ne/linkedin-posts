@@ -118,7 +118,7 @@ Replace test credentials with live ones when ready to accept real payments.
 ### For Users
 
 1. **Free Tier:** 2 transformations per day
-2. **Pro Tier:** €49 lifetime access, unlimited transformations
+2. **Pro Tier:** €29/month or €299/year, unlimited transformations
 3. **Workflow:**
    - Paste newsletter/blog content
    - Select target platforms (LinkedIn, X, Instagram)

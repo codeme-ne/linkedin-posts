@@ -111,8 +111,23 @@ export default async function handler(req: Request) {
           break
         }
 
-        // Determine subscription interval based on price
-        const interval = session.mode === 'subscription' ? 'monthly' : 'lifetime'
+        // Determine subscription interval based on price ID
+        // Map known price IDs to intervals - both monthly and yearly use subscription mode
+        let interval = 'monthly' // default fallback
+
+        // Monthly plan price ID
+        if (priceId === 'price_1QVhCaGswqzOWBWTAu9e4Hrw') {
+          interval = 'monthly'
+        }
+        // Yearly plan price ID
+        else if (priceId === 'price_1S8oxtA9XtHmOZg4bCHR14fG') {
+          interval = 'yearly'
+        }
+        // For unknown price IDs, log and use session mode as fallback
+        else {
+          console.warn(`Unknown price ID: ${priceId}, using session mode fallback`)
+          interval = session.mode === 'subscription' ? 'monthly' : 'yearly'
+        }
         
         // Create or update subscription record (simplified)
         const subscriptionData = {
@@ -127,10 +142,10 @@ export default async function handler(req: Request) {
           interval,
           stripe_price_id: priceId,
           current_period_start: new Date().toISOString(),
-          // For lifetime deals, set a far future date
-          current_period_end: interval === 'lifetime' 
-            ? new Date('2099-12-31').toISOString()
-            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+          // Set period end based on interval
+          current_period_end: interval === 'yearly'
+            ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 year
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days for monthly
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }
@@ -272,19 +287,19 @@ async function sendWelcomeEmail(email: string, details: {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey || !email) return
 
-  const subject = details.interval === 'lifetime'
-    ? 'Willkommen bei Social Transformer - Lifetime Access! 🎉'
+  const subject = details.interval === 'yearly'
+    ? 'Willkommen bei Social Transformer - Ihr Jahres-Abo ist aktiv! 🎉'
     : 'Willkommen bei Social Transformer - Ihr Pro-Abo ist aktiv! 🎉'
 
   const euros = details.amount.toFixed(2)
   const html = `
     <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height:1.6; color:#0f172a;">
       <h2 style="margin:0 0 16px; color:#1f2937;">Willkommen bei Social Transformer! 🎉</h2>
-      <p>Vielen Dank für Ihren Kauf. Ihr ${details.interval === 'lifetime' ? 'Lifetime-Zugang' : 'Pro-Abo'} ist jetzt aktiv!</p>
+      <p>Vielen Dank für Ihren Kauf. Ihr ${details.interval === 'yearly' ? 'Jahres-Abo' : 'Pro-Abo'} ist jetzt aktiv!</p>
       
       <div style="background:#f8fafc; padding:16px; border-radius:8px; margin:16px 0;">
         <h3 style="margin:0 0 8px; color:#374151;">Ihre Bestellung:</h3>
-        <p style="margin:4px 0;"><strong>Plan:</strong> ${details.interval === 'lifetime' ? 'Lifetime Pro' : 'Monthly Pro'}</p>
+        <p style="margin:4px 0;"><strong>Plan:</strong> ${details.interval === 'yearly' ? 'Yearly Pro' : 'Monthly Pro'}</p>
         <p style="margin:4px 0;"><strong>Betrag:</strong> €${euros}</p>
       </div>
 

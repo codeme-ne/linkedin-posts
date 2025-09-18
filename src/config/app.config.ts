@@ -9,7 +9,7 @@ export interface StripePlan {
   description: string;
   price: number;
   currency: 'EUR' | 'USD';
-  interval: 'lifetime' | 'monthly' | 'yearly';
+  interval: 'monthly' | 'yearly';
   // ShipFast pattern: priceId for Checkout Sessions + fallback paymentLink
   priceId: string;
   paymentLink?: string; // Fallback for existing components
@@ -144,31 +144,30 @@ const config: AppConfig = {
         ]
       },
       {
-        id: "lifetime",
-        name: "Pro - Lifetime",
-        description: "Einmalig zahlen, für immer nutzen", 
-        price: 99,
+        id: "yearly",
+        name: "Pro - Yearly",
+        description: "Jährliches Abo mit Rabatt",
+        price: 299,
         currency: "EUR",
-        interval: "lifetime",
+        interval: "yearly",
         // ShipFast pattern: priceId for dynamic checkout sessions
-        priceId: import.meta.env.DEV 
-          ? "price_1QVhC7GswqzOWBWTnuNP9wWp" // Development price ID
-          : "price_1QVhC7GswqzOWBWTnuNP9wWp", // Production price ID - update when available
-        paymentLink: import.meta.env.VITE_STRIPE_PAYMENT_LINK_LIFETIME || 
-                     import.meta.env.VITE_STRIPE_PAYMENT_LINK || "", // Fallback
+        priceId: import.meta.env.DEV
+          ? "price_1S8oxtA9XtHmOZg4bCHR14fG" // Development price ID
+          : "price_1S8oxtA9XtHmOZg4bCHR14fG", // Production price ID - update when available
+        paymentLink: import.meta.env.VITE_STRIPE_PAYMENT_LINK_YEARLY || "", // Fallback
         features: [
           "Unbegrenzte Posts",
-          "Alle Plattformen (LinkedIn, X, Instagram)", 
+          "Alle Plattformen (LinkedIn, X, Instagram)",
           "Premium URL-Extraktion (JavaScript-Support)",
           "Posts speichern & verwalten",
           "Direct-Posting zu Social Media",
-          "Alle zukünftigen Features inklusive"
+          "2 Monate gratis im Vergleich zum Monatsabo"
         ],
         popular: true,
-        badge: "BETA LIFETIME DEAL"
+        badge: "BESTER WERT"
       }
     ],
-    defaultPlan: "lifetime",
+    defaultPlan: "yearly",
     features: {
       free: [
         "Standard URL-Extraktion",
@@ -332,12 +331,11 @@ export function getEnvironmentConfig() {
       url: import.meta.env.VITE_SUPABASE_URL,
       anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY
     },
-    claude: {
-      apiKey: import.meta.env.VITE_CLAUDE_API_KEY
-    },
+    // Claude API is server-side only for security
+    // Client uses proxy route /api/claude instead
     stripe: {
       paymentLinks: {
-        lifetime: import.meta.env.VITE_STRIPE_PAYMENT_LINK_LIFETIME,
+        yearly: import.meta.env.VITE_STRIPE_PAYMENT_LINK_YEARLY,
         monthly: import.meta.env.VITE_STRIPE_PAYMENT_LINK_MONTHLY,
         legacy: import.meta.env.VITE_STRIPE_PAYMENT_LINK
       }

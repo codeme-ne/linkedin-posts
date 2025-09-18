@@ -58,7 +58,7 @@
 	- `VITE_BASE_URL`, `VITE_DOMAIN_NAME`, `RESEND_API_KEY`
  	- Vorbereitung Supabase (ab Nov 2025): zusätzlich `SUPABASE_PUBLISHABLE_KEY` (ersetzt anon) und `SUPABASE_SECRET_KEY` (ersetzt service_role). Übergangsphase: beide Formate parallel unterstützen.
 - Validierung: `env.init()`/`validateClientEnvironment()` für Client; `validateServerEnvironment()` für Server.
-- Sicherheit: Keine Server-Secrets in `VITE_`-Variablen. `VITE_CLAUDE_API_KEY` niemals in Produktion nutzen – Zugriff erfolgt über unsere Proxy-Route `/api/claude`.
+- Sicherheit: Keine Server-Secrets in `VITE_`-Variablen. Claude API-Zugriff erfolgt ausschließlich über unsere sichere Proxy-Route `/api/claude`.
 
 Hinweis: In mehreren Edge Functions ist die CORS-Allowlist auf `https://tranformer.social`. Sie heißt genau so, der „Schreibfehler“ ohne "s" ist Absicht. Beim Anpassen CORS/URLs konsistent pflegen und diesen Sonderfall berücksichtigen.
 

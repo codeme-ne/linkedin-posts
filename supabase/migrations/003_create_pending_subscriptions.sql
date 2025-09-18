@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.pending_subscriptions (
   stripe_payment_intent_id TEXT,
   stripe_subscription_id TEXT,
   stripe_session_id TEXT,
-  interval TEXT CHECK (interval IN ('lifetime', 'monthly', 'yearly')),
+  interval TEXT CHECK (interval IN ('monthly', 'yearly')),
   amount INTEGER,
   currency TEXT DEFAULT 'eur',
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'activated', 'expired')),
