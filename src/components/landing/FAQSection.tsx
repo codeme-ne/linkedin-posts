@@ -42,14 +42,10 @@ const faqData: FAQItem[] = [
 ];
 
 export function FAQSection() {
-  const [openItems, setOpenItems] = useState<number[]>([]);
+  const [openItem, setOpenItem] = useState<number | null>(null);
 
   const toggleItem = (index: number) => {
-    setOpenItems(prev => 
-      prev.includes(index) 
-        ? prev.filter(i => i !== index)
-        : [...prev, index]
-    );
+    setOpenItem(prev => prev === index ? null : index);
   };
 
   return (
@@ -80,15 +76,15 @@ export function FAQSection() {
                 {item.question}
               </h3>
               <div className="flex-shrink-0">
-                {openItems.includes(index) ? (
+                {openItem === index ? (
                   <ChevronUp className="h-5 w-5 text-muted-foreground" />
                 ) : (
                   <ChevronDown className="h-5 w-5 text-muted-foreground" />
                 )}
               </div>
             </button>
-            
-            {openItems.includes(index) && (
+
+            {openItem === index && (
               <div className="px-6 pb-4 sm:px-8 sm:pb-6">
                 <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
                   <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">

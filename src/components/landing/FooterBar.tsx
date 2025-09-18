@@ -62,9 +62,9 @@ export function FooterBar() {
                 size="sm"
                 variant="outline"
                 className="relative z-20"
-                onClick={() => window.open(import.meta.env.VITE_STRIPE_PAYMENT_LINK, '_blank')}
+                onClick={() => window.open(import.meta.env.VITE_STRIPE_PAYMENT_LINK_YEARLY, '_blank')}
               >
-                Lifetime Deal
+                Jahresabo
               </Button>
             </div>
           </div>
@@ -74,8 +74,8 @@ export function FooterBar() {
             <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Produkt</h4>
             <ul className="space-y-2">
               <li>
-                <button 
-                  onClick={() => navigate('/app')}
+                <button
+                  onClick={() => navigate('/signup')}
                   className="text-sm hover:text-primary transition-colors text-left block w-full cursor-pointer relative z-20"
                 >
                   Generator ausprobieren

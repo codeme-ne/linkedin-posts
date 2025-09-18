@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { getPaymentLink } from "@/config/app.config";
 
 export function CTASection() {
   return (
@@ -29,13 +30,13 @@ export function CTASection() {
             Starte jetzt kostenlos →
           </Button>
           
-          <Button 
+          <Button
             size="lg"
             variant="outline"
             className="w-full sm:w-auto border-primary/30 hover:border-primary/60 transition-all duration-300 font-semibold px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base md:text-lg"
-            onClick={() => window.open('https://buy.stripe.com/9B628qejY6rtfPi8Fl0x200', '_blank')}
+            onClick={() => window.open(getPaymentLink('yearly'), '_blank')}
           >
-            Direkt Lifetime sichern
+            Jetzt Jahresabo sichern
           </Button>
         </div>
         
