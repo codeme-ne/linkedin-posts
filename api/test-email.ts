@@ -40,7 +40,7 @@ export default async function handler(req: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Social Transformer <no-reply@tranformer.social>',
+        from: 'Social Transformer <no-reply@linkedin-posts-one.vercel.app>',
         to,
         subject,
         html,

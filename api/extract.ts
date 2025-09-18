@@ -108,7 +108,7 @@ function truncateContent(content: string): string {
 
 // CORS Origin validation
 function getAllowedOrigins(): string[] {
-  const prod = ['https://tranformer.social'];
+  const prod = ['https://linkedin-posts-one.vercel.app'];
   const dev = ['http://localhost:5173', 'http://localhost:5174'];
   return process.env.NODE_ENV === 'production' ? prod : [...prod, ...dev];
 }

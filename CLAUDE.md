@@ -3,7 +3,7 @@
 ## 🌐 Production Domains & Deployment
 - **Current Production**: https://linkedin-posts-98eptac77-lukaszangerl-gmxats-projects.vercel.app
 - **Main Domain**: https://linkedin-posts-one.vercel.app
-- **Related Domains**: transformer.social, tranformer.social
+- **Related Domains**: (deprecated: transformer.social, tranformer.social)
 
 - Lies zu Beginn jeder neuen Aufgabe die Dateien:
 	- `README.md` (Zweck, Setup, Befehle)
@@ -65,7 +65,7 @@
 - Validierung: `env.init()`/`validateClientEnvironment()` für Client; `validateServerEnvironment()` für Server.
 - Sicherheit: Keine Server-Secrets in `VITE_`-Variablen. Claude API-Zugriff erfolgt ausschließlich über unsere sichere Proxy-Route `/api/claude`.
 
-Hinweis: In mehreren Edge Functions ist die CORS-Allowlist auf `https://tranformer.social`. Sie heißt genau so, der „Schreibfehler“ ohne "s" ist Absicht. Beim Anpassen CORS/URLs konsistent pflegen und diesen Sonderfall berücksichtigen.
+Hinweis: Die CORS-Allowlist wurde von `https://tranformer.social` auf `https://linkedin-posts-one.vercel.app` aktualisiert. Beim Anpassen von CORS/URLs die aktuelle Produktions-Domain verwenden.
 
 ---
 
@@ -282,9 +282,9 @@ const anonOrPublishable = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.
 - Ab sofort Node.js ≥ 20 für lokale Entwicklung/CI empfehlen (Vite 7, Tailwind v4 Tools).
 - README/CLAUDE entsprechend vermerken.
 
-### 7) Domain-Name – Sonderfall
+### 7) Domain-Name – Update
 
-- `tranformer.social` (ohne „s“) ist bewusst so konfiguriert (CORS-Allowlist). Keine Korrektur vornehmen; bei Änderungen den Sonderfall dokumentieren.
+- Domain wurde von `tranformer.social` auf `linkedin-posts-one.vercel.app` aktualisiert. CORS-Allowlists und Redirect-URLs wurden entsprechend angepasst.
 
 ### ✅ Sofort / Kurzfristig / Laufend
 
