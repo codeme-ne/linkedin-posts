@@ -54,7 +54,7 @@ import { Bookmark } from "lucide-react";
 export default function GeneratorV2() {
   // Feature flag check
   const newUxEnabled = useFeatureFlag('NEW_UX', {
-    rolloutPercentage: 10,
+    rolloutPercentage: 100,
     analyticsEnabled: true
   });
 
