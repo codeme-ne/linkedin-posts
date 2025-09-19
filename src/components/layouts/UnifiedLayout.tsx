@@ -60,10 +60,10 @@ export function UnifiedLayout({
         )}
 
         {/* Main Content Area */}
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-6 max-w-screen-2xl">
           <div className="flex gap-6">
-            {/* Main Content - Flexible width */}
-            <div className="flex-1 max-w-4xl">
+            {/* Main Content - Takes 2/3 of available space */}
+            <div className="flex-[2]">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Input Column */}
                 <div className="lg:col-span-1">
@@ -77,11 +77,11 @@ export function UnifiedLayout({
               </div>
             </div>
 
-            {/* Sidebar - Fixed width, not fixed position */}
+            {/* Sidebar - Takes 1/3 of available space */}
             {sidebarArea && (
               <div className={cn(
-                "hidden lg:block transition-all duration-300",
-                sidebarCollapsed ? "w-12" : "w-80"
+                "hidden lg:block flex-1 transition-all duration-300",
+                sidebarCollapsed ? "w-12" : "min-w-[320px] max-w-md"
               )}>
                 <div className="sticky top-20 h-[calc(100vh-5rem)] overflow-hidden border-l bg-background">
                   <Button
@@ -123,7 +123,7 @@ export function UnifiedLayout({
         )}
 
         {/* Main Content - Single Column */}
-        <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <div className="container mx-auto px-4 py-6 max-w-6xl">
           <div className="space-y-8">
             {/* Input Section */}
             <section className="space-y-4">
