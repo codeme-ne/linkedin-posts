@@ -29,6 +29,8 @@ export interface EnvironmentVariables {
   // App configuration
   VITE_DOMAIN_NAME?: string;
   VITE_BASE_URL?: string;
+  VITE_SUPPORT_EMAIL?: string;
+  VITE_APP_VERSION?: string;
   
   // Tracking (optional)
   VITE_OPIK_API_KEY?: string;
@@ -196,16 +198,27 @@ export function getClaudeConfig() {
  * Get application URLs based on environment
  */
 export function getAppUrls() {
-  const baseUrl = getEnvVarWithFallback('VITE_BASE_URL', 
+  const baseUrl = getEnvVarWithFallback('VITE_BASE_URL',
     isDevelopment() ? 'http://localhost:5173' : 'https://transformer.social'
   );
-  
+
   return {
     base: baseUrl,
     app: `${baseUrl}/app`,
     landing: baseUrl,
     signup: `${baseUrl}/signup`,
     settings: `${baseUrl}/settings`
+  };
+}
+
+/**
+ * Get application configuration
+ */
+export function getAppConfig() {
+  return {
+    supportEmail: getEnvVarWithFallback('VITE_SUPPORT_EMAIL', 'support@example.com'),
+    version: getEnvVarWithFallback('VITE_APP_VERSION', '1.0.0'),
+    domainName: getEnvVarWithFallback('VITE_DOMAIN_NAME', 'Social Transformer')
   };
 }
 
@@ -242,18 +255,19 @@ export const env = {
   // Getters
   get: getEnvVar,
   getWithFallback: getEnvVarWithFallback,
-  
+
   // Configuration objects
   supabase: getSupabaseConfig(),
   claude: getClaudeConfig(),
   linkedin: getLinkedInConfig(),
   stripe: getStripePaymentLinks(),
   urls: getAppUrls(),
-  
+  app: getAppConfig(),
+
   // Environment checks
   isDev: isDevelopment(),
   isProd: isProduction(),
-  
+
   // Validation
   validate: validateClientEnvironment,
   validateServer: validateServerEnvironment,
