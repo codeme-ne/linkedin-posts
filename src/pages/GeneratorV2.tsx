@@ -472,6 +472,7 @@ export default function GeneratorV2() {
       outputArea={OutputArea}
       sidebarArea={
         <SavedPosts
+          renderMode="desktop-only"
           onCollapse={setIsSidebarCollapsed}
           refreshKey={refreshKey}
           isAuthenticated={!!userEmail}
@@ -499,6 +500,7 @@ export default function GeneratorV2() {
       defaultSnapPoint={0}
     >
       <SavedPosts
+        renderMode="content-only"
         onCollapse={() => {}}
         refreshKey={refreshKey}
         isAuthenticated={!!userEmail}

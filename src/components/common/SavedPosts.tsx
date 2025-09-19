@@ -22,9 +22,10 @@ interface SavedPostsProps {
   isAuthenticated?: boolean;
   onLoginClick?: () => void;
   initialExpanded?: boolean;
+  renderMode?: 'full' | 'desktop-only' | 'content-only';
 }
 
-const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginClick, initialExpanded }: SavedPostsProps) {
+const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginClick, initialExpanded, renderMode = 'full' }: SavedPostsProps) {
   const [savedPosts, setSavedPosts] = useState<SavedPost[]>([])
   const [isCollapsed, setIsCollapsed] = useState(!initialExpanded)
   const [editingPost, setEditingPost] = useState<{ id: number, content: string } | null>(null)
@@ -84,8 +85,9 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
 
   return (
     <>
-  {/* Mobile: Bottom drawer */}
-  <div className={`md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg transition-transform duration-300 z-40 ${isCollapsed ? 'translate-y-[calc(100%-3rem)]' : 'translate-y-0'}`} style={{ maxHeight: '60vh', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+  {/* Mobile: Bottom drawer - only render in full mode */}
+  {renderMode !== 'desktop-only' && renderMode !== 'content-only' && (
+    <div className={`md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg transition-transform duration-300 z-40 ${isCollapsed ? 'translate-y-[calc(100%-3rem)]' : 'translate-y-0'}`} style={{ maxHeight: '60vh', paddingBottom: 'env(safe-area-inset-bottom)' }}>
   <div className="flex items-center justify-between p-3 border-b">
           <h2 className="text-lg font-bold text-gray-800">Gespeicherte Beiträge</h2>
           <div className="flex items-center gap-1">
@@ -218,11 +220,13 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
           ))}
         </div>
       </div>
+  )}
 
-      {/* Desktop: Side panel - now relative positioned within layout */}
-      <div
-        className={`hidden md:block h-full bg-white transition-transform duration-300 ${isCollapsed ? 'translate-x-[calc(100%-3rem)]' : 'translate-x-0'}`}
-      >
+      {/* Desktop: Side panel - only render when not content-only */}
+      {renderMode !== 'content-only' && (
+        <div
+          className={`hidden md:block h-full bg-white transition-transform duration-300 ${isCollapsed ? 'translate-x-[calc(100%-3rem)]' : 'translate-x-0'}`}
+        >
         <div className="h-full flex flex-col">
           {/* Header with collapse button */}
           <div className="flex items-center h-16 border-b border-gray-200 bg-gray-50/50 sticky top-0 z-10">
@@ -363,6 +367,126 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
           </div>
         </div>
       </div>
+      )}
+
+      {/* Content-only mode - for use inside MobileBottomSheet */}
+      {renderMode === 'content-only' && (
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4">
+          <div className="space-y-4">
+            {!isAuthenticated ? (
+              <div className="p-4 rounded-lg border border-gray-200 bg-white text-center space-y-2">
+                <p className="text-gray-700 text-sm">Bitte logge dich ein, um gespeicherte Beiträge zu sehen.</p>
+                {onLoginClick && (
+                  <Button onClick={onLoginClick} variant="default" size="sm">Login</Button>
+                )}
+              </div>
+            ) : isLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+            ) : savedPosts.length === 0 ? (
+              <div className="p-4 rounded-lg border border-gray-200 bg-white text-center">
+                <p className="text-gray-700 text-sm">Noch keine gespeicherten Beiträge.</p>
+              </div>
+            ) : savedPosts.map((post) => (
+              <div key={post.id} className="p-3 rounded-lg border border-gray-200 bg-white">
+                {editingPost?.id === post.id ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={editingPost.content}
+                      onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg text-sm resize-y"
+                      rows={Math.max(8, editingPost.content.split('\n').length + 2)}
+                      style={{ minHeight: '150px' }}
+                    />
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        onClick={() => setEditingPost(null)}
+                        variant="ghost"
+                        size="sm"
+                      >
+                        Abbrechen
+                      </Button>
+                      <SaveButton
+                        onClick={() => handleEdit(post.id, editingPost.content)}
+                        size="sm"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-gray-800 whitespace-pre-wrap text-sm">{post.content}</p>
+                    <div className="mt-3 flex justify-end">
+                      <div className="flex gap-1">
+                        <EditButton
+                          onClick={() => setEditingPost({ id: post.id, content: post.content })}
+                          size="sm"
+                          text=""
+                          title="Beitrag bearbeiten"
+                        />
+                        {post.platform === 'x' ? (
+                          <XShareButton
+                            tweetContent={post.content}
+                            size="sm"
+                            text=""
+                            title="Auf X teilen"
+                          />
+                        ) : post.platform === 'instagram' ? (
+                          <InstagramShareButton
+                            postContent={post.content}
+                            size="sm"
+                            text=""
+                            title="Auf Instagram teilen"
+                          />
+                        ) : (
+                          <LinkedInShareButton
+                            postContent={post.content}
+                            size="sm"
+                            text=""
+                            title="Auf LinkedIn teilen"
+                          />
+                        )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <div>
+                              <DeleteButton
+                                size="sm"
+                                text=""
+                                title="Beitrag löschen"
+                              />
+                            </div>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Möchtest du diesen Beitrag wirklich löschen?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Diese Aktion kann nicht rückgängig gemacht werden.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Nein</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => handleDelete(post.id)}
+                              >
+                                Ja
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </>
   )
 }

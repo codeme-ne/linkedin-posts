@@ -81,19 +81,26 @@ export function UnifiedLayout({
             {sidebarArea && (
               <div className={cn(
                 "hidden lg:block flex-1 transition-all duration-300",
-                sidebarCollapsed ? "w-12" : "min-w-[320px] max-w-md"
+                sidebarCollapsed ? "w-14" : "min-w-[320px] max-w-md"
               )}>
-                <div className="sticky top-20 h-[calc(100vh-5rem)] overflow-hidden border-l bg-background">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                    className="absolute left-2 top-4 z-10"
-                  >
-                    {sidebarCollapsed ? <ChevronLeft /> : <ChevronRight />}
-                  </Button>
+                <div className="sticky top-20 h-[calc(100vh-5rem)] border-l bg-background flex flex-col">
+                  {/* Sidebar Header with Toggle Button */}
+                  <div className="flex items-center justify-between p-2 border-b">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                      aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    >
+                      {sidebarCollapsed ? <ChevronLeft /> : <ChevronRight />}
+                    </Button>
+                    {!sidebarCollapsed && (
+                      <h3 className="text-sm font-semibold px-2">Saved Posts</h3>
+                    )}
+                  </div>
+                  {/* Sidebar Content */}
                   <div className={cn(
-                    "h-full overflow-y-auto",
+                    "flex-1 overflow-y-auto",
                     sidebarCollapsed && "hidden"
                   )}>
                     {sidebarArea}
