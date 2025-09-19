@@ -80,13 +80,13 @@ async function checkPremiumAccess(
         return { hasAccess: false };
       }
       console.error('Subscription check error:', error);
-      return { hasAccess: false, error: 'Subscription check failed' };
+      return { hasAccess: false, error: 'Überprüfung des Abonnements fehlgeschlagen' };
     }
 
     return { hasAccess: subscription?.is_active === true };
   } catch (error) {
     console.error('Premium access check error:', error);
-    return { hasAccess: false, error: 'Internal error during access check' };
+    return { hasAccess: false, error: 'Interner Fehler bei der Zugriffsüberprüfung' };
   }
 }
 
@@ -152,24 +152,7 @@ export default async function handler(req: Request) {
       );
     }
 
-    // 2. Subscription prüfen
-    const { data: subscription, error: subError } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    if (subError || subscription?.status !== 'active') {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Premium-Abo erforderlich',
-          details: 'Diese Funktion ist nur für Nutzer mit aktivem Premium-Abo verfügbar.'
-        }),
-        { status: 403, headers: { ...cors, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // 3. Request-Body parsen
+    // 2. Request-Body parsen
     const { url } = (await req.json()) as ExtractPremiumRequest;
     
     if (!url || typeof url !== 'string') {
@@ -192,19 +175,19 @@ export default async function handler(req: Request) {
       );
     }
 
-    // 4. Premium-Zugang prüfen
+    // 3. Premium-Zugang prüfen (nur einmal!)
     const { hasAccess, error: accessError } = await checkPremiumAccess(supabase, user.id);
-    
+
     if (!hasAccess) {
       return new Response(
-        JSON.stringify({ 
-          error: accessError || 'Premium-Zugang erforderlich. Upgrade zu Premium für unbegrenzte Extraktionen.',
+        JSON.stringify({
+          error: accessError || 'Premium-Abo erforderlich. Diese Funktion ist nur für Nutzer mit aktivem Premium-Abo verfügbar.',
         }),
-        { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...cors, 'Content-Type': 'application/json' } }
       );
     }
 
-    // 5. Firecrawl API aufrufen
+    // 4. Firecrawl API aufrufen
     const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
     if (!firecrawlApiKey) {
       console.error('FIRECRAWL_API_KEY nicht konfiguriert');
@@ -284,7 +267,18 @@ export default async function handler(req: Request) {
       metadata: firecrawlData?.data?.metadata || {}
     };
     
-    // 6. Response formatieren
+    // 6. Nach erfolgreicher Extraktion: Usage incrementieren
+    // Premium-Nutzer verbrauchen keine free_extractions, aber wir könnten hier
+    // Premium-Usage tracken wenn gewünscht
+    const { data: usageResult, error: usageError } = await supabase
+      .rpc('increment_extraction_usage', { p_user_id: user.id });
+
+    if (usageError) {
+      console.error('Failed to increment extraction usage:', usageError);
+      // Don't fail the request, extraction was successful
+    }
+
+    // 7. Response formatieren
     const response: ExtractPremiumResponse = {
       title: extractedData.title,
       content: extractedData.content || extractedData.markdown || '',

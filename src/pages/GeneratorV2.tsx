@@ -37,6 +37,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useUrlExtraction } from "@/hooks/useUrlExtraction";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { usePostGeneratorState, type GeneratedPost } from "@/hooks/usePostGeneratorState";
+import { useExtractionLimits } from "@/hooks/useExtractionLimits";
 
 // Performance monitoring
 import { perfMonitor, PERF_MARKS, PERF_MEASURES } from "@/utils/performance";
@@ -89,6 +90,9 @@ export default function GeneratorV2() {
   // const canExtract = () => isPremium || canGenerate; // Reserved for future use
   const isPro = hasAccess || isPremium;
   const { extractionUsage, extractContent } = useUrlExtraction();
+
+  // Use extraction limits hook for tracking
+  const { limits: extractionLimits } = useExtractionLimits();
 
   // Fix Magic Link auth state synchronization
   useEffect(() => {
@@ -205,7 +209,9 @@ export default function GeneratorV2() {
         onTextInput={actions.setInputText}
         isExtracting={state.isExtracting}
         isPro={isPro}
-        usageRemaining={extractionUsage?.remaining}
+        usageRemaining={extractionLimits.isPremium
+          ? extractionLimits.premiumRemaining
+          : extractionLimits.freeRemaining}
         usePremiumExtraction={state.usePremiumExtraction}
         onPremiumToggle={actions.setPremiumExtraction}
       />

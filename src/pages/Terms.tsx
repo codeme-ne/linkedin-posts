@@ -102,7 +102,7 @@ export default function Terms() {
           <section>
             <h2 className="text-2xl font-semibold mt-8 mb-4">§ 5 Lifetime Deal</h2>
             <p className="mb-4">
-              (1) Der "Lifetime Deal" gewährt dem Kunden gegen eine einmalige Zahlung von 99 € ein zeitlich 
+              (1) Der "Lifetime Deal" gewährt dem Kunden gegen eine einmalige Zahlung ein zeitlich
               unbegrenztes Nutzungsrecht an der Plattform.
             </p>
             <p className="mb-4">
@@ -191,8 +191,8 @@ export default function Terms() {
               mittels Firecrawl-API.
             </p>
             <p className="mb-4">
-              (2) Die Premium-Content-Extraktion ist auf 20 Anfragen pro Monat und Nutzer begrenzt. 
-              Das Kontingent wird monatlich zurückgesetzt.
+              (2) Die Premium-Content-Extraktion steht unbegrenzt zur Verfügung.
+              Es gibt keine monatlichen Limits für Premium-Nutzer.
             </p>
             <p className="mb-4">
               (3) Bei Überschreitung der Limits werden automatisch die kostenlosen Basis-Features verwendet.

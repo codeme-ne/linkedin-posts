@@ -50,7 +50,7 @@ export function PremiumComparison({
     {
       name: 'Premium URL-Extraktion',
       free: false,
-      pro: '20/Monat',
+      pro: 'Unbegrenzt',
       icon: <Zap className="h-4 w-4" />,
     },
     {

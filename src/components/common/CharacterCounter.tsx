@@ -85,24 +85,10 @@ export function CharacterCounter({
     }
   };
 
-  // Get status message
+  // Get status message - only show numeric display
   const getStatusMessage = () => {
-    if (status === 'exceeded') {
-      return `${charCount - limit.max} characters over limit`;
-    }
-    if (status === 'critical') {
-      return `${limit.max - charCount} characters left`;
-    }
-    if (status === 'warning') {
-      return 'Approaching limit';
-    }
-    if (status === 'ideal') {
-      return 'Perfect length';
-    }
-    if (charCount === 0) {
-      return 'Start typing...';
-    }
-    return `${limit.max - charCount} available`;
+    // Always show numeric format (245/280)
+    return `${charCount}/${limit.max}`;
   };
 
   // Inline counter component

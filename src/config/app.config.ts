@@ -302,6 +302,14 @@ export function formatPrice(amount: number, currency: string = 'EUR'): string {
 }
 
 /**
+ * Pricing constants for easy reference
+ */
+export const PRICING = {
+  monthly: { price: 29, currency: 'EUR' },
+  yearly: { price: 299, currency: 'EUR' }
+} as const;
+
+/**
  * Validate required environment variables
  */
 export function validateEnvironment(): { isValid: boolean; missing: string[] } {

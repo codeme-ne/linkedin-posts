@@ -1,173 +1,206 @@
 import { cn } from '@/lib/utils';
 
-interface SkeletonProps {
-  className?: string;
-}
-
-export function Skeleton({ className }: SkeletonProps) {
+// Skeleton loader variations for different layouts
+export function SkeletonCard({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-md bg-muted",
+        "rounded-lg border bg-card animate-pulse",
+        className
+      )}
+    >
+      <div className="p-6 space-y-4">
+        <div className="h-4 bg-muted rounded w-3/4" />
+        <div className="space-y-2">
+          <div className="h-3 bg-muted rounded" />
+          <div className="h-3 bg-muted rounded w-5/6" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SkeletonPost({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "rounded-lg border bg-card p-4 animate-pulse",
+        className
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 bg-muted rounded-full flex-shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-muted rounded w-1/4" />
+          <div className="h-3 bg-muted rounded w-1/3" />
+          <div className="space-y-2 mt-4">
+            <div className="h-3 bg-muted rounded" />
+            <div className="h-3 bg-muted rounded" />
+            <div className="h-3 bg-muted rounded w-4/5" />
+          </div>
+          <div className="flex gap-4 mt-4">
+            <div className="h-3 bg-muted rounded w-12" />
+            <div className="h-3 bg-muted rounded w-12" />
+            <div className="h-3 bg-muted rounded w-12" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SkeletonList({
+  count = 3,
+  className
+}: {
+  count?: number;
+  className?: string
+}) {
+  return (
+    <div className={cn("space-y-4", className)}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 p-4 rounded-lg border animate-pulse">
+          <div className="w-12 h-12 bg-muted rounded-lg flex-shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 bg-muted rounded w-2/3" />
+            <div className="h-3 bg-muted rounded w-1/2" />
+          </div>
+          <div className="w-20 h-8 bg-muted rounded" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function SkeletonButton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "h-10 bg-muted rounded-md animate-pulse",
         className
       )}
     />
   );
 }
 
-// Content Extraction Skeleton
-export function ExtractionSkeleton() {
+export function SkeletonInput({ className }: { className?: string }) {
   return (
-    <div className="space-y-4 p-6">
-      <div className="flex items-center space-x-4">
-        <Skeleton className="h-12 w-12 rounded-full" />
-        <div className="space-y-2 flex-1">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-3 w-1/2" />
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <Skeleton className="h-20 w-full" />
-        <div className="flex gap-2">
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-32" />
-        </div>
-      </div>
-
-      {/* Progress indicator */}
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Extrahiere Content...</span>
-          <span className="text-muted-foreground">45%</span>
-        </div>
-        <div className="h-2 bg-muted rounded-full overflow-hidden">
-          <div className="h-full bg-primary/50 rounded-full animate-progress" style={{ width: '45%' }} />
-        </div>
-      </div>
-    </div>
+    <div
+      className={cn(
+        "h-10 bg-muted rounded-md animate-pulse",
+        className
+      )}
+    />
   );
 }
 
-// Post Generation Skeleton
-export function PostGenerationSkeleton({ platform }: { platform: string }) {
+export function SkeletonAvatar({
+  size = "md",
+  className
+}: {
+  size?: "sm" | "md" | "lg";
+  className?: string
+}) {
+  const sizeClasses = {
+    sm: "w-8 h-8",
+    md: "w-10 h-10",
+    lg: "w-12 h-12"
+  };
+
   return (
-    <div className="border rounded-lg p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-8 w-8 rounded-full" />
-          <Skeleton className="h-5 w-24" />
-        </div>
-        <Skeleton className="h-6 w-16 rounded-full" />
-      </div>
-
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <Skeleton className="h-4 w-4/6" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
-      </div>
-
-      <div className="flex gap-2">
-        <Skeleton className="h-8 w-20" />
-        <Skeleton className="h-8 w-20" />
-        <Skeleton className="h-8 w-20" />
-      </div>
-
-      {/* Platform-specific animation overlay */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="text-6xl animate-bounce opacity-20">
-          {platform === 'linkedin' && '💼'}
-          {platform === 'x' && '🐦'}
-          {platform === 'instagram' && '📸'}
-        </div>
-      </div>
-    </div>
+    <div
+      className={cn(
+        "bg-muted rounded-full animate-pulse",
+        sizeClasses[size],
+        className
+      )}
+    />
   );
 }
 
-// Post Card Skeleton
-export function PostCardSkeleton() {
+export function SkeletonText({
+  lines = 1,
+  className
+}: {
+  lines?: number;
+  className?: string
+}) {
   return (
-    <div className="border rounded-lg p-6 space-y-4">
-      <div className="space-y-3">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <Skeleton className="h-4 w-4/6" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-4 w-5/6" />
-      </div>
-
-      <div className="pt-4 border-t">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-5 w-24 rounded-full" />
-          <div className="flex gap-2">
-            <Skeleton className="h-8 w-8 rounded" />
-            <Skeleton className="h-8 w-8 rounded" />
-            <Skeleton className="h-8 w-8 rounded" />
-            <Skeleton className="h-8 w-8 rounded" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Analytics Skeleton
-export function AnalyticsSkeleton() {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="border rounded-lg p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-5 w-5 rounded" />
-          </div>
-          <Skeleton className="h-8 w-24" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-3 w-3 rounded-full" />
-            <Skeleton className="h-3 w-16" />
-          </div>
-        </div>
+    <div className={cn("space-y-2", className)}>
+      {Array.from({ length: lines }).map((_, i) => (
+        <div
+          key={i}
+          className={cn(
+            "h-3 bg-muted rounded animate-pulse",
+            i === lines - 1 && lines > 1 && "w-4/5"
+          )}
+        />
       ))}
     </div>
   );
 }
 
-// Platform Selector Skeleton
-export function PlatformSelectorSkeleton() {
+export function SkeletonNavigation({ className }: { className?: string }) {
   return (
-    <div className="flex gap-3">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="flex-1">
-          <Skeleton className="h-24 w-full rounded-lg" />
+    <div className={cn("flex items-center justify-between p-4", className)}>
+      <div className="flex items-center gap-4">
+        <div className="w-32 h-8 bg-muted rounded animate-pulse" />
+        <div className="hidden md:flex items-center gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="w-16 h-4 bg-muted rounded animate-pulse" />
+          ))}
         </div>
-      ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="w-20 h-8 bg-muted rounded animate-pulse" />
+        <div className="w-20 h-8 bg-muted rounded animate-pulse" />
+      </div>
     </div>
   );
 }
 
-// List Skeleton
-export function ListSkeleton({ items = 3 }: { items?: number }) {
+export function SkeletonTable({
+  rows = 5,
+  cols = 4,
+  className
+}: {
+  rows?: number;
+  cols?: number;
+  className?: string
+}) {
   return (
-    <div className="space-y-3">
-      {Array.from({ length: items }).map((_, i) => (
-        <div key={i} className="flex items-center space-x-3">
-          <Skeleton className="h-10 w-10 rounded" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-3 w-1/2" />
+    <div className={cn("w-full", className)}>
+      <div className="border rounded-lg overflow-hidden">
+        <div className="bg-muted/50 p-4 border-b">
+          <div className="flex gap-4">
+            {Array.from({ length: cols }).map((_, i) => (
+              <div key={i} className="h-4 bg-muted rounded animate-pulse flex-1" />
+            ))}
           </div>
-          <Skeleton className="h-8 w-16" />
         </div>
-      ))}
+        <div className="divide-y">
+          {Array.from({ length: rows }).map((_, rowIndex) => (
+            <div key={rowIndex} className="p-4">
+              <div className="flex gap-4">
+                {Array.from({ length: cols }).map((_, colIndex) => (
+                  <div
+                    key={colIndex}
+                    className="h-3 bg-muted rounded animate-pulse flex-1"
+                    style={{
+                      animationDelay: `${(rowIndex * cols + colIndex) * 0.05}s`
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
-// Enhanced Loading States with Messages
+// Loading state props
 interface LoadingStateProps {
   message?: string;
   subMessage?: string;
@@ -175,12 +208,20 @@ interface LoadingStateProps {
   className?: string;
 }
 
-export function ExtractingContent({
+/**
+ * @deprecated Use simple button spinner instead
+ */
+export function DeprecatedExtractingContent({
   message = "Analysiere Content...",
   subMessage = "Dies kann bis zu 30 Sekunden dauern",
   progress,
   className
 }: LoadingStateProps) {
+  // Log deprecation warning
+  if (typeof console !== 'undefined' && console.warn) {
+    console.warn('DeprecatedExtractingContent is deprecated. Please use a simple button spinner instead.');
+  }
+
   const steps = [
     "Lade Webseite...",
     "Extrahiere Hauptinhalt...",
@@ -193,52 +234,52 @@ export function ExtractingContent({
   return (
     <div className={cn("space-y-4", className)}>
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
-          <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 animate-pulse">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-        <h3 className="text-lg font-semibold">{message}</h3>
+        <h3 className="text-lg font-medium">{message}</h3>
         <p className="text-sm text-muted-foreground">{subMessage}</p>
       </div>
 
-      {/* Step Progress */}
-      <div className="space-y-2">
-        {steps.map((step, index) => (
-          <div
-            key={index}
-            className={cn(
-              "flex items-center gap-3 text-sm",
-              index <= currentStep ? "text-foreground" : "text-muted-foreground/50"
-            )}
-          >
-            <div className={cn(
-              "h-2 w-2 rounded-full",
-              index < currentStep ? "bg-primary" :
-              index === currentStep ? "bg-primary animate-pulse" : "bg-muted"
-            )} />
-            <span>{step}</span>
-          </div>
-        ))}
-      </div>
-
       {progress !== undefined && (
-        <div className="space-y-1">
+        <div className="w-full max-w-xs mx-auto">
+          <div className="flex justify-between text-xs text-muted-foreground mb-1">
+            <span>Fortschritt</span>
+            <span>{Math.round(progress)}%</span>
+          </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
             <div
-              className="h-full bg-primary transition-all duration-500 ease-out rounded-full"
+              className="h-full bg-primary transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-xs text-center text-muted-foreground">{progress}%</p>
         </div>
       )}
+
+      <div className="space-y-1">
+        {steps.map((step, i) => (
+          <div
+            key={i}
+            className={cn(
+              "text-sm text-center transition-colors duration-200",
+              i < currentStep ? "text-primary" :
+              i === currentStep ? "text-foreground animate-pulse" :
+              "text-muted-foreground"
+            )}
+          >
+            {i < currentStep && "✓ "}
+            {step}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-export function GeneratingPosts({
-  platform,
-  message = "Generiere Beiträge...",
+export function GeneratingContent({
+  message = "Erstelle Posts...",
   subMessage,
+  platform,
   className
 }: LoadingStateProps & { platform?: string }) {
   const platformEmojis: Record<string, string> = {
@@ -250,25 +291,22 @@ export function GeneratingPosts({
   return (
     <div className={cn("space-y-4", className)}>
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 relative">
-          {platform && (
-            <span className="absolute text-3xl animate-pulse">
-              {platformEmojis[platform]}
-            </span>
-          )}
-          <div className="w-16 h-16 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
-        </div>
-        <h3 className="text-lg font-semibold">{message}</h3>
+        {platform && (
+          <div className="text-3xl animate-bounce">
+            {platformEmojis[platform] || '✨'}
+          </div>
+        )}
+        <h3 className="text-lg font-medium">{message}</h3>
         {subMessage && (
           <p className="text-sm text-muted-foreground">{subMessage}</p>
         )}
       </div>
 
-      <div className="flex justify-center gap-2">
-        {[1, 2, 3].map((i) => (
+      <div className="flex justify-center gap-1">
+        {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="w-2 h-2 bg-primary rounded-full animate-bounce"
+            className="w-2 h-2 bg-primary rounded-full animate-pulse"
             style={{ animationDelay: `${i * 0.1}s` }}
           />
         ))}
@@ -276,3 +314,7 @@ export function GeneratingPosts({
     </div>
   );
 }
+
+// Backward compatibility aliases
+export const ExtractingContent = DeprecatedExtractingContent;
+export const GeneratingPosts = GeneratingContent;
