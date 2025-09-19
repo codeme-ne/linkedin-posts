@@ -221,6 +221,7 @@ export const useContentGeneration = () => {
 
   return {
     postsByPlatform,
+    setPostsByPlatform,
     isLoading,
     generationProgress,
     generateContent,

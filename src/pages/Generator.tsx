@@ -25,13 +25,11 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Auth } from "@/components/common/Auth";
 // Link import removed - AccountButton now handles navigation
-import { PlatformSelector } from "@/components/common/PlatformSelector";
 import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";
 import { InstagramLogo } from "@/design-system/components/Icons/InstagramLogo";
@@ -48,7 +46,6 @@ export default function Generator() {
   // Local state
   const [inputText, setInputText] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
-  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(["linkedin"]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sourceUrl, setSourceUrl] = useState("");
   const [usePremiumExtraction, setUsePremiumExtraction] = useState(false);
@@ -61,15 +58,13 @@ export default function Generator() {
   const {
     canGenerate,
     isPremium,
-    checkAndIncrementUsage,
-    isLoading: usageLoading
+    checkAndIncrementUsage
   } = useUsageTracking();
 
   // Access control using secure tracking
-  const canTransform = () => isPremium || canGenerate;
   const canExtract = () => isPremium || canGenerate;
   const isPro = hasAccess || isPremium;
-  const { postsByPlatform, isLoading, generationProgress, generateContent, updatePost } = useContentGeneration();
+  const { postsByPlatform, setPostsByPlatform, updatePost } = useContentGeneration();
   const { isExtracting, extractionUsage, extractContent } = useUrlExtraction();
   const { editing, editedContent, setEditedContent, startEdit, cancelEdit, isEditing } = usePostEditing();
 
@@ -92,22 +87,6 @@ export default function Generator() {
   }, []); // Empty dependency array ensures this only runs once on mount
 
   // Event handlers with free tier limits
-  
-  const handleRemix = async () => {
-    // Use secure backend tracking
-    const canProceed = await checkAndIncrementUsage();
-    if (!canProceed) {
-      return; // Error message already shown by checkAndIncrementUsage
-    }
-
-    const success = await generateContent(inputText, selectedPlatforms);
-
-    // If generation failed, we might want to restore the usage count
-    // But for simplicity, we keep the increment to prevent abuse
-    if (!success) {
-      toast.error("Generierung fehlgeschlagen. Bitte versuche es erneut.");
-    }
-  };
 
   const handleExtract = async () => {
     if (!sourceUrl) return;
@@ -268,54 +247,6 @@ export default function Generator() {
               onChange={(e) => setInputText(e.target.value)}
               className="min-h-[10rem] md:min-h-[12rem] text-base resize-none"
             />
-            <div className="space-y-2">
-              <PlatformSelector value={selectedPlatforms} onChange={setSelectedPlatforms} />
-            </div>
-
-            {/* Progress bar - only visible when generating */}
-            {isLoading && (
-              <div className="space-y-2">
-                <Progress value={generationProgress.progress} className="h-2" />
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>
-                    {generationProgress.currentPlatform && `Erstelle ${generationProgress.currentPlatform}-Posts...`}
-                  </span>
-                  <span>
-                    {generationProgress.completedPlatforms}/{generationProgress.totalPlatforms} Plattformen
-                  </span>
-                </div>
-              </div>
-            )}
-
-{canTransform() ? (
-              <Button
-                onClick={handleRemix}
-                disabled={isLoading || !inputText || selectedPlatforms.length === 0}
-                size="lg"
-                className="w-full text-lg h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    {generationProgress.progress > 0 
-                      ? `${Math.round(generationProgress.progress)}% - ${generationProgress.currentPlatform}`
-                      : "Initialisiere..."}
-                  </>
-                ) : (
-                  <>✨ Transformieren</>
-                )}
-              </Button>
-            ) : (
-              <PaywallGuard feature="Content-Generierung">
-                <Button
-                  disabled
-                  size="lg"
-                  className="w-full text-lg h-12 opacity-50"
-                >
-                  ✨ Transformieren (Pro Feature)
-                </Button>
-              </PaywallGuard>
-            )}
           </CardContent>
         </Card>
 
@@ -329,10 +260,15 @@ export default function Generator() {
                 <CardDescription>Erzeuge und regeneriere Beiträge pro Plattform mit eigenem Editor</CardDescription>
               </CardHeader>
               <CardContent>
-                <PlatformGenerators 
+                <PlatformGenerators
                   content={inputText}
                   onPostGenerated={(platform, post) => {
-                    console.log(`Generated ${platform} post: ${post.length} chars`)
+                    // Add post to display array
+                    setPostsByPlatform((prev: Record<Platform, string[]>) => ({
+                      ...prev,
+                      [platform]: [...(prev[platform] || []), post]
+                    }));
+                    toast.success(`${PLATFORM_LABEL[platform]} Post generiert!`);
                   }}
                 />
               </CardContent>
