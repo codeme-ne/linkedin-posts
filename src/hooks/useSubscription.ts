@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getSupabaseClient } from '../api/supabase';
 import { createCustomerPortal } from '../libs/api-client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 const supabase = getSupabaseClient();
 
@@ -25,20 +26,22 @@ export interface Subscription {
 }
 
 export function useSubscription() {
+  const { user, loading: authLoading } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
+    // Skip if auth is still loading or no user
+    if (authLoading || !user) {
+      setSubscription(null);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setSubscription(null);
-        return;
-      }
 
       // ShipFast pattern: Simple query focusing on active status
       const { data, error: fetchError } = await supabase
@@ -64,7 +67,7 @@ export function useSubscription() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, authLoading]);
 
   const refreshSubscription = () => {
     fetchSubscription();
@@ -105,25 +108,10 @@ export function useSubscription() {
     : null;
 
   useEffect(() => {
+    // Fetch subscription whenever user changes
+    // The AuthContext already handles auth state changes
     fetchSubscription();
-
-    // Listen for auth changes
-    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
-      (event, _session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          fetchSubscription();
-        } else if (event === 'SIGNED_OUT') {
-          setSubscription(null);
-          setLoading(false);
-          setError(null);
-        }
-      }
-    );
-
-    return () => {
-      authSubscription.unsubscribe();
-    };
-  }, []);
+  }, [fetchSubscription]);
 
   // === Single-Post usage helpers (free tier) ===
   const [usageCount, setUsageCount] = useState<number>(() => {
@@ -147,15 +135,18 @@ export function useSubscription() {
     return currentUsage < 2; // free limit per day
   }, [hasAccess])
 
+  // Combine loading states for better UX
+  const isFullyLoaded = !authLoading && !loading;
+
   return {
     // Core data
     subscription,
-    loading,
+    loading: authLoading || loading, // Combined loading state
     error,
-    
+
     // ShipFast pattern: hasAccess as primary access control
     hasAccess,
-    
+
     // Computed states (aliases for compatibility)
     isActive,
     isPro,
@@ -163,10 +154,10 @@ export function useSubscription() {
     isTrial,
     isPastDue,
     isCanceled,
-    
+
     // Billing info
     currentPeriodEnd,
-    
+
     // Actions
     refreshSubscription,
     openCustomerPortal,
@@ -174,5 +165,8 @@ export function useSubscription() {
     decrementUsage,
     hasUsageRemaining,
     dailyUsage: usageCount,
+
+    // Additional helpers
+    isFullyLoaded,
   };
 }

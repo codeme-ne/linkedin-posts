@@ -1,0 +1,422 @@
+diff --git a/src/App.tsx b/src/App.tsx
+index 64150d2..8cc493e 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
+ import CookieConsent from "react-cookie-consent"
+ import ProtectedRoute from '@/components/common/ProtectedRoute'
+ import { ErrorBoundary } from '@/components/common/ErrorBoundary'
++import { AuthProvider } from '@/contexts/AuthContext'
+
+ // Lazy load all pages for better performance
+ const Landing = lazy(() => import('@/pages/Landing'))
+@@ -23,9 +24,10 @@ const PageLoader = () => (
+
+ export default function App() {
+   return (
+-    <ErrorBoundary>
+-      <Suspense fallback={<PageLoader />}>
+-        <Routes>
++    <AuthProvider>
++      <ErrorBoundary>
++        <Suspense fallback={<PageLoader />}>
++          <Routes>
+           <Route path="/" element={<Landing />} />
+           <Route path="/signup" element={<SignUp />} />
+           <Route path="/privacy" element={<Privacy />} />
+@@ -62,5 +64,6 @@ export default function App() {
+         Diese Webseite verwendet Cookies, um die Benutzererfahrung zu verbessern.
+       </CookieConsent>
+     </ErrorBoundary>
++    </AuthProvider>
+   )
+ }
+
+diff --git a/src/hooks/useSubscription.ts b/src/hooks/useSubscription.ts
+index f072509..194307d 100644
+--- a/src/hooks/useSubscription.ts
++++ b/src/hooks/useSubscription.ts
+@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
+ import { getSupabaseClient } from '../api/supabase';
+ import { createCustomerPortal } from '../libs/api-client';
+ import { toast } from 'sonner';
++import { useAuth } from '@/contexts/AuthContext';
+
+ const supabase = getSupabaseClient();
+
+@@ -25,21 +26,23 @@ export interface Subscription {
+ }
+
+ export function useSubscription() {
++  const { user, loading: authLoading } = useAuth();
+   const [subscription, setSubscription] = useState<Subscription | null>(null);
+   const [loading, setLoading] = useState(true);
+   const [error, setError] = useState<string | null>(null);
+
+-  const fetchSubscription = async () => {
++  const fetchSubscription = useCallback(async () => {
++    // Skip if auth is still loading or no user
++    if (authLoading || !user) {
++      setSubscription(null);
++      setLoading(false);
++      return;
++    }
++
+     try {
+       setLoading(true);
+       setError(null);
+
+-      const { data: { user } } = await supabase.auth.getUser();
+-      if (!user) {
+-        setSubscription(null);
+-        return;
+-      }
+-
+       // ShipFast pattern: Simple query focusing on active status
+       const { data, error: fetchError } = await supabase
+         .from('subscriptions')
+@@ -64,7 +67,7 @@ export function useSubscription() {
+     } finally {
+       setLoading(false);
+     }
+-  };
++  }, [user, authLoading]);
+
+   const refreshSubscription = () => {
+     fetchSubscription();
+@@ -105,25 +108,10 @@ export function useSubscription() {
+     : null;
+
+   useEffect(() => {
++    // Fetch subscription whenever user changes
++    // The AuthContext already handles auth state changes
+     fetchSubscription();
+-
+-    // Listen for auth changes
+-    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+-      (event, _session) => {
+-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+-          fetchSubscription();
+-        } else if (event === 'SIGNED_OUT') {
+-          setSubscription(null);
+-          setLoading(false);
+-          setError(null);
+-        }
+-      }
+-    );
+-
+-    return () => {
+-      authSubscription.unsubscribe();
+-    };
+-  }, []);
++  }, [fetchSubscription]);
+
+   // === Single-Post usage helpers (free tier) ===
+   const [usageCount, setUsageCount] = useState<number>(() => {
+@@ -147,15 +135,18 @@ export function useSubscription() {
+     return currentUsage < 2; // free limit per day
+   }, [hasAccess])
+
++  // Combine loading states for better UX
++  const isFullyLoaded = !authLoading && !loading;
++
+   return {
+     // Core data
+     subscription,
+-    loading,
++    loading: authLoading || loading, // Combined loading state
+     error,
+-
++
+     // ShipFast pattern: hasAccess as primary access control
+     hasAccess,
+-
++
+     // Computed states (aliases for compatibility)
+     isActive,
+     isPro,
+@@ -163,10 +154,10 @@ export function useSubscription() {
+     isTrial,
+     isPastDue,
+     isCanceled,
+-
++
+     // Billing info
+     currentPeriodEnd,
+-
++
+     // Actions
+     refreshSubscription,
+     openCustomerPortal,
+@@ -174,5 +165,8 @@ export function useSubscription() {
+     decrementUsage,
+     hasUsageRemaining,
+     dailyUsage: usageCount,
++
++    // Additional helpers
++    isFullyLoaded,
+   };
+ }
+
+diff --git a/src/pages/Settings.tsx b/src/pages/Settings.tsx
+index dd8edde..ed958cf 100644
+--- a/src/pages/Settings.tsx
++++ b/src/pages/Settings.tsx
+@@ -1,10 +1,12 @@
+-import { useEffect, useState, useMemo } from "react";
++import { useState, useMemo } from "react";
+ import { useSubscription, Subscription } from "@/hooks/useSubscription";
+ import { UpgradeButton } from "@/components/common/UpgradeButton";
+-import { getSession, signOut } from "@/api/supabase";
++import { signOut } from "@/api/supabase";
++import { useAuth } from "@/contexts/AuthContext";
+ import { Button } from "@/components/ui/button";
+ import { Badge } from "@/components/ui/badge";
+ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
++import { Skeleton } from "@/components/ui/skeleton";
+ import { toast } from "sonner";
+ import { cn } from "@/lib/utils";
+ import { Link, useNavigate } from "react-router-dom";
+@@ -80,15 +82,15 @@ const getSubscriptionStatusDetails = (subscription: Subscription | null, isPro:
+ };
+
+ export default function Settings() {
+-  const { subscription, loading, openCustomerPortal } = useSubscription();
+-  const [email, setEmail] = useState<string | null>(null);
++  const { user, loading: authLoading } = useAuth();
++  const { subscription, loading: subscriptionLoading, openCustomerPortal } = useSubscription();
+   const [isLoggingOut, setIsLoggingOut] = useState(false);
+   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+   const navigate = useNavigate();
+
+-  useEffect(() => {
+-    getSession().then(({ data }) => setEmail(data.session?.user.email ?? null));
+-  }, []);
++  // Get email from auth context
++  const email = user?.email ?? null;
++  const loading = authLoading || subscriptionLoading;
+
+   const handleLogout = async () => {
+     setIsLoggingOut(true);
+@@ -169,27 +171,42 @@ export default function Settings() {
+                 </div>
+               </CardHeader>
+             <CardContent className="space-y-4">
+-              <div className="space-y-3">
+-                <div className="flex items-center gap-2 text-sm">
+-                  <Mail className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+-                  <span className="text-muted-foreground">E-Mail:</span>
+-                </div>
+-                <div className="font-medium truncate" role="text" aria-label={`E-Mail-Adresse: ${email ?? "Nicht eingeloggt"}`}>
+-                  {email ?? "Nicht eingeloggt"}
+-                </div>
+-              </div>
+-
+-              {email && (
+-                <Button
+-                  variant="outline"
+-                  onClick={handleLogout}
+-                  disabled={isLoggingOut}
+-                  className="w-full gap-2"
+-                  aria-label={isLoggingOut ? "Abmeldung läuft..." : "Vom Konto abmelden"}
+-                >
+-                  <LogOut className="h-4 w-4" aria-hidden="true" />
+-                  {isLoggingOut ? "Abmelden..." : "Abmelden"}
+-                </Button>
++              {authLoading ? (
++                <>
++                  <div className="space-y-3">
++                    <div className="flex items-center gap-2 text-sm">
++                      <Mail className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
++                      <span className="text-muted-foreground">E-Mail:</span>
++                    </div>
++                    <Skeleton className="h-5 w-48" />
++                  </div>
++                  <Skeleton className="h-10 w-full" />
++                </>
++              ) : (
++                <>
++                  <div className="space-y-3">
++                    <div className="flex items-center gap-2 text-sm">
++                      <Mail className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
++                      <span className="text-muted-foreground">E-Mail:</span>
++                    </div>
++                    <div className="font-medium truncate" role="text" aria-label={`E-Mail-Adresse: ${email ?? "Nicht eingeloggt"}`}>
++                      {email ?? "Nicht eingeloggt"}
++                    </div>
++                  </div>
++
++                  {email && (
++                    <Button
++                      variant="outline"
++                      onClick={handleLogout}
++                      disabled={isLoggingOut}
++                      className="w-full gap-2"
++                      aria-label={isLoggingOut ? "Abmeldung läuft..." : "Vom Konto abmelden"}
++                    >
++                      <LogOut className="h-4 w-4" aria-hidden="true" />
++                      {isLoggingOut ? "Abmelden..." : "Abmelden"}
++                    </Button>
++                  )}
++                </>
+               )}
+             </CardContent>
+             </Card>
+@@ -210,17 +227,24 @@ export default function Settings() {
+                 </div>
+               </CardHeader>
+             <CardContent className="space-y-4">
+-              <div className="space-y-3">
+-                <div className={cn("p-3 rounded-lg border", statusDetails.bgColor)}>
+-                  <div className="flex items-center justify-between mb-2">
+-                    <span className="text-sm text-muted-foreground">Aktueller Plan:</span>
+-                    <div className="flex items-center gap-2">
+-                      {isPro && <Crown className="h-4 w-4 text-yellow-500" />}
+-                      <span className={cn("font-semibold", statusDetails.color)}>{planLabel}</span>
++              {loading ? (
++                <>
++                  <Skeleton className="h-20 w-full" />
++                  <Skeleton className="h-10 w-full" />
++                  <Skeleton className="h-10 w-full" />
++                </>
++              ) : (
++                <div className="space-y-3">
++                  <div className={cn("p-3 rounded-lg border", statusDetails.bgColor)}>
++                    <div className="flex items-center justify-between mb-2">
++                      <span className="text-sm text-muted-foreground">Aktueller Plan:</span>
++                      <div className="flex items-center gap-2">
++                        {isPro && <Crown className="h-4 w-4 text-yellow-500" />}
++                        <span className={cn("font-semibold", statusDetails.color)}>{planLabel}</span>
++                      </div>
+                     </div>
++                    <p className="text-xs text-muted-foreground">{statusDetails.description}</p>
+                   </div>
+-                  <p className="text-xs text-muted-foreground">{statusDetails.description}</p>
+-                </div>
+
+                 {/* Show subscription details for Pro users */}
+                 {subscription && isPro && (
+@@ -300,7 +324,8 @@ export default function Settings() {
+                     {isOpeningPortal ? 'Portal wird geöffnet...' : 'Abonnement verwalten'}
+                   </Button>
+                 )}
+-              </div>
++                </div>
++              )}
+             </CardContent>
+           </Card>
+           </section>
+
+--- NEW FILE: src/contexts/AuthContext.tsx ---
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getSupabaseClient, getSession } from '@/api/supabase';
+import { Session, User } from '@supabase/supabase-js';
+
+const supabase = getSupabaseClient();
+
+interface AuthContextType {
+  session: Session | null;
+  user: User | null;
+  loading: boolean;
+  refreshSession: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refreshSession = async () => {
+    try {
+      const { data: { session: newSession } } = await getSession();
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+    } catch (error) {
+      console.error('Error refreshing session:', error);
+      setSession(null);
+      setUser(null);
+    }
+  };
+
+  useEffect(() => {
+    // Initial session load
+    const loadSession = async () => {
+      try {
+        const { data: { session: initialSession } } = await getSession();
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+      } catch (error) {
+        console.error('Error loading initial session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSession();
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+
+        // Handle specific events
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const value = {
+    session,
+    user,
+    loading,
+    refreshSession,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
+// Export a hook that guarantees a user is logged in
+export function useAuthRequired() {
+  const auth = useAuth();
+
+  if (!auth.loading && !auth.user) {
+    throw new Error('Authentication required');
+  }
+
+  return auth as AuthContextType & { user: User };
+}
+
+--- NEW FILE: src/components/ui/skeleton.tsx ---
+import { cn } from "@/lib/utils"
+
+function Skeleton({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn("animate-pulse rounded-md bg-muted", className)}
+      {...props}
+    />
+  )
+}
+
+export { Skeleton }

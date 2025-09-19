@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 import CookieConsent from "react-cookie-consent"
 import ProtectedRoute from '@/components/common/ProtectedRoute'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 // Lazy load all pages for better performance
 const Landing = lazy(() => import('@/pages/Landing'))
@@ -23,9 +24,10 @@ const PageLoader = () => (
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
+    <AuthProvider>
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/privacy" element={<Privacy />} />
@@ -62,5 +64,6 @@ export default function App() {
         Diese Webseite verwendet Cookies, um die Benutzererfahrung zu verbessern.
       </CookieConsent>
     </ErrorBoundary>
+    </AuthProvider>
   )
 }
