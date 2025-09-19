@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { env } from "@/config/env.config";
+import { getStripePlan } from "@/config/app.config";
 import {
   User,
   CreditCard,
@@ -255,18 +256,25 @@ export default function Settings() {
                         {subscription.interval === 'yearly' ? 'Pro Jährlich' : 'Pro Monatlich'}
                       </span>
                     </div>
-                    {subscription.amount && subscription.currency && (
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Preis:</span>
-                        <span className="font-medium">
-                          {new Intl.NumberFormat('de-DE', {
-                            style: 'currency',
-                            currency: subscription.currency.toUpperCase()
-                          }).format(subscription.amount / 100)}
-                          {subscription.interval === 'monthly' ? ' / Monat' : ' / Jahr'}
-                        </span>
-                      </div>
-                    )}
+                    {(() => {
+                      // Use config prices as source of truth, database amount as fallback
+                      const configPlan = subscription.interval ? getStripePlan(subscription.interval) : null;
+                      const displayAmount = configPlan ? configPlan.price : (subscription.amount || 0) / 100;
+                      const displayCurrency = configPlan ? configPlan.currency : (subscription.currency || 'EUR');
+
+                      return (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Preis:</span>
+                          <span className="font-medium">
+                            {new Intl.NumberFormat('de-DE', {
+                              style: 'currency',
+                              currency: displayCurrency.toUpperCase()
+                            }).format(displayAmount)}
+                            {subscription.interval === 'monthly' ? ' / Monat' : ' / Jahr'}
+                          </span>
+                        </div>
+                      );
+                    })()}
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">Status:</span>
                       <span className={cn(

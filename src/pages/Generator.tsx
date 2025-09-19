@@ -29,6 +29,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Auth } from "@/components/common/Auth";
+import { UpgradeModal } from "@/components/modals/UpgradeModal";
 // Link import removed - AccountButton now handles navigation
 import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";
@@ -64,7 +65,7 @@ export default function Generator() {
   // Access control using secure tracking
   const canExtract = () => isPremium || canGenerate;
   const isPro = hasAccess || isPremium;
-  const { postsByPlatform, setPostsByPlatform, updatePost } = useContentGeneration();
+  const { postsByPlatform, setPostsByPlatform, updatePost, showUpgradeModal, setShowUpgradeModal } = useContentGeneration();
   const { isExtracting, extractionUsage, extractContent } = useUrlExtraction();
   const { editing, editedContent, setEditedContent, startEdit, cancelEdit, isEditing } = usePostEditing();
 
@@ -405,6 +406,13 @@ export default function Generator() {
         isAuthenticated={!!userEmail}
         onLoginClick={() => setLoginOpen(true)}
         initialExpanded={searchParams.get('expand') === 'saved'}
+      />
+
+      {/* Upgrade Modal for usage limit */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        trigger="usage_limit"
       />
     </div>
   );

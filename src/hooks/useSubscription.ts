@@ -3,6 +3,7 @@ import { getSupabaseClient } from '../api/supabase';
 import { createCustomerPortal } from '../libs/api-client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import config from '@/config/app.config';
 
 const supabase = getSupabaseClient();
 
@@ -132,7 +133,7 @@ export function useSubscription() {
     if (hasAccess) return true;
     const today = new Date().toDateString();
     const currentUsage = parseInt(localStorage.getItem(`usage_${today}`) || '0', 10);
-    return currentUsage < 2; // free limit per day
+    return currentUsage < config.limits.freeExtractions; // use config value instead of hardcoded
   }, [hasAccess])
 
   // Combine loading states for better UX
