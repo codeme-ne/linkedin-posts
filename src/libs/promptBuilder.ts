@@ -11,79 +11,127 @@ export function buildSinglePostPrompt(
 
   switch (platform) {
     case "linkedin":
-      return `Du bist ein Social-Media-Experte und Ghostwriter für LinkedIn im DACH-Markt.
-Erstelle GENAU EINEN hochwertigen LinkedIn-Post aus folgendem Inhalt.
+      return `Du bist ein Social-Media-Experte und Ghostwriter für LinkedIn im DACH-Markt. Erstelle genau einen hochwertigen LinkedIn-Post aus folgendem Inhalt.
 
 WICHTIG (Ausgabeformat – strikt befolgen):
-- Gib AUSSCHLIESSLICH den reinen Post-Text zurück.
-- KEINE Labels, KEINE Überschriften, KEINE Nummerierung, KEINE Varianten.
-- KEINE Einleitung/Erklärung vor oder nach dem Post.
-- Beginne mit dem Präfix "LINKEDIN:" (genau so) in der ersten Zeile
+
+Gib ausschließlich den reinen Post-Text zurück (keine Erläuterungen).
+
+Keine Labels, keine Überschriften, keine Nummerierung, keine Varianten.
+
+Keine Einleitung/Erklärung vor oder nach dem Post.
+
+Beginne mit dem Präfix LINKEDIN: (genau so) in der ersten Zeile.
 
 Format- und Stilregeln:
-- Sehr kurze Sätze mit Leerzeilen dazwischen
-- Die ersten zwei Sätze sind der Hook (~80% der Aussage)
-- Keine Hashtags, keine Emojis
-- Gesprächiger, klarer, autoritativer Ton in Du-Form
-- Struktur: starker Hook → Kernidee(n) → klare Erkenntnis/Takeaway → dezente Engagement-Frage
-- Bleibe deutlich unter dem LinkedIn-Limit; lieber prägnant als lang
+
+Sehr kurze Sätze mit Leerzeilen dazwischen für Lesbarkeit.
+
+Die ersten zwei Sätze bilden den Hook (~80% der Kernbotschaft).
+
+Keine Hashtags, keine Emojis.
+
+Gesprächiger, klarer, vertrauenswürdiger und autoritativer Ton in Du-Form.
+
+Struktur: starker Hook → Kernidee(n) → klare Erkenntnis/Takeaway → dezente Engagement-Frage.
+
+Bleibe deutlich unter dem LinkedIn-Limit; lieber prägnant als zu lang.
 
 Best Practices:
-- Mini-Fallbeispiel/Erfahrung für Glaubwürdigkeit
-- Konkrete, umsetzbare Hinweise
-- Zahlen/Signale nutzen, wenn vorhanden${regenerationPrompt}
 
-Inhalt: ${content}`;
+Richte den Inhalt an ein professionelles LinkedIn-Publikum aus (fachlich fundiert und relevant).
+
+Mini-Fallbeispiel oder persönliche Erfahrung einbauen für Glaubwürdigkeit.
+
+Konkrete, umsetzbare Tipps geben, wo möglich.
+
+Zahlen/Fakten verwenden, wenn vorhanden, um Inhalte zu untermauern.${regenerationPrompt}
+
+Inhalt: ${content}
+
+(Basierend auf dem LinkedIn-Prompt-Template aus dem Repository codeme-ne/linkedin-posts)`;
 
     case "x":
-      return `Du bist ein Twitter-Experte mit authentischer Stimme.
-Erstelle GENAU EINEN natürlichen, menschlichen Tweet aus folgendem Inhalt.
+      return `Du bist ein Twitter-Experte mit authentischer Stimme. Erstelle genau einen natürlichen, menschlichen Tweet aus folgendem Inhalt.
 
 WICHTIG (Ausgabeformat – strikt befolgen):
-- Gib NUR den Tweet-Text zurück, ohne Einleitung oder Erklärung.
-- KEINE Labels, KEINE Nummerierung, KEINE Varianten.
-- Eigenständig verständlich (kein Thread)
+
+Gib nur den Tweet-Text zurück, ohne Einleitung oder Erklärung.
+
+Keine Labels, keine Nummerierung, keine Varianten im Output.
+
+Der Tweet muss für sich allein verständlich sein (kein Thread).
 
 STILREGELN:
-- Authentisch und persönlich (wie ein echter Mensch, nicht wie eine Marke)
-- Kurz und prägnant (ideal: 70-100 Zeichen, maximal 280)
-- Emotionen oder Persönlichkeit zeigen
-- Mehrwert bieten: nützliche Info, überraschende Erkenntnis oder kluger Gedanke
-- Call-to-Action wo sinnvoll ("Was denkt ihr?", "Teilt eure Erfahrung")
-- KEINE Hashtags, KEINE Emojis
+
+Authentisch und persönlich schreiben (wie ein echter Mensch, nicht wie eine Marke).
+
+Kurz und prägnant formulieren (ideal 70–100 Zeichen, max. 280 Zeichen).
+
+Emotionen und Persönlichkeit einfließen lassen.
+
+Einen Mehrwert bieten – z. B. nützliche Info, überraschende Erkenntnis oder ein kluger Gedanke.
+
+Call-to-Action stellen, wo sinnvoll (z. B. „Was denkt ihr?", „Teilt eure Erfahrung.").
+
+Relevante Trending-Hashtags verwenden, falls passend (sparsam, max. 1–2).
+
+Keine Emojis nutzen, um die Authentizität zu wahren.
 
 VERMEIDEN:
-- Marketing-Sprache und Werbeton
-- Generische Business-Floskeln
-- Überladene, unauthentische Posts${regenerationPrompt}
+
+Marketing-Sprache oder werblichen Ton unbedingt vermeiden.
+
+Keine generischen Business-Floskeln verwenden.
+
+Überladene, unnatürliche Formulierungen meiden.
+
+(Zielgruppe: breite Twitter-Community – der Tweet soll auf Anhieb verständlich und interessant für viele sein.)${regenerationPrompt}
 
 Inhalt: ${content}`;
 
     case "instagram":
-      return `Du bist ein erfahrener Social-Media-Content-Creator.
-Erstelle GENAU EINE ansprechende Instagram-Beschreibung aus folgendem Inhalt.
+      return `Du bist ein erfahrener Social-Media-Content-Creator. Erstelle genau eine ansprechende Instagram-Beschreibung aus folgendem Inhalt.
 
 WICHTIG (Ausgabeformat – strikt befolgen):
-- Gib AUSSCHLIESSLICH den reinen Post-Text zurück.
-- KEINE Labels, KEINE Nummerierung, KEINE Varianten.
-- KEINE Einleitung/Erklärung.
-- Beginne mit dem Präfix "INSTAGRAM:" (genau so) in der ersten Zeile
+
+Gib ausschließlich den reinen Post-Text zurück (ohne Erklärungen).
+
+Keine Labels, keine Nummerierung, keine Varianten.
+
+Keine Einleitung/Erklärung vor oder nach dem Text.
+
+Beginne mit dem Präfix INSTAGRAM: (genau so) in der ersten Zeile.
 
 Anforderungen:
-- Starker Hook in den ersten 125 Zeichen für Preview
-- Prägnant (3-5 Sätze) und ansprechend
-- Du-Ansprache (nicht "ihr")
-- 3-5 relevante Hashtags am Ende
-- Call-to-Action oder Frage am Ende
-- Nutze die maximalen 2.200 Zeichen effektiv (aber bleibe prägnant)
+
+Starker Hook innerhalb der ersten 125 Zeichen, der Neugier weckt.
+
+Prägnant (3–5 Sätze), locker und ansprechend formuliert.
+
+Direkte Du-Ansprache (nicht „ihr") an den Leser.
+
+3–5 relevante Hashtags am Ende einfügen.
+
+Am Schluss eine Call-to-Action oder Frage stellen, um Interaktion zu fördern.
+
+Nutze bis zu 2.200 Zeichen, aber bleibe möglichst knackig.
 
 Best Practices:
-- Storytelling für Emotionen und Mehrwert
-- Emojis sparsam für visuellen Reiz
-- Kürzere Absätze für bessere Lesbarkeit
-- Authentizität und Konsistenz mit der Stimme des Autors${regenerationPrompt}
 
-Inhalt: ${content}`;
+Storytelling nutzen, um Emotionen zu wecken und Mehrwert zu bieten.
+
+Emojis sparsam einsetzen für visuellen Reiz (passende Emojis unterstützen die Aussage).
+
+Text in kurzen Absätzen strukturieren für bessere Lesbarkeit.
+
+Authentisch bleiben und konsistent in der Stimme des Autors schreiben.
+
+Denke an deine Instagram-Community: persönlicher, freundlicher Ton, als würdest du mit Freunden sprechen.${regenerationPrompt}
+
+Inhalt: ${content}
+
+(Basierend auf dem Instagram-Prompt-Template aus dem Repository codeme-ne/linkedin-posts)`;
 
     default:
       // Exhaustive check
