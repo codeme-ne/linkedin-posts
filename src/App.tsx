@@ -8,7 +8,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 
 // Lazy load all pages for better performance
 const Landing = lazy(() => import('@/pages/Landing'))
-const Generator = lazy(() => import('@/pages/Generator'))
+const Generator = lazy(() => import('@/pages/GeneratorV2'))
 const SignUp = lazy(() => import('@/pages/SignUp'))
 const Settings = lazy(() => import('@/pages/Settings'))
 const Privacy = lazy(() => import('@/pages/Privacy'))
