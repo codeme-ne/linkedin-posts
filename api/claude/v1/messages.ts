@@ -1,35 +1,14 @@
+import { getCorsHeaders } from '../../utils/cors';
+
 export const config = {
   runtime: 'edge',
   regions: ['fra1'], // Frankfurt für niedrige Latenz in Europa
 };
 
-// CORS Origin validation
-function getAllowedOrigins(): string[] {
-  const prod = ['https://linkedin-posts-one.vercel.app'];
-  const dev = ['http://localhost:5173', 'http://localhost:5174'];
-  return process.env.NODE_ENV === 'production' ? prod : [...prod, ...dev];
-}
-
-function validateOrigin(origin: string | null): string | null {
-  if (!origin) return null;
-  const allowedOrigins = getAllowedOrigins();
-  return allowedOrigins.includes(origin) ? origin : null;
-}
-
 export default async function handler(req: Request) {
-  // Validate origin for CORS
+  // Get CORS headers
   const origin = req.headers.get('origin');
-  const allowedOrigin = validateOrigin(origin);
-  
-  const headers: Record<string, string> = {
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-api-key, anthropic-version, anthropic-dangerous-direct-browser-access',
-  };
-  
-  // Only add CORS header if origin is allowed
-  if (allowedOrigin) {
-    headers['Access-Control-Allow-Origin'] = allowedOrigin;
-  }
+  const headers = getCorsHeaders(origin);
 
   // Handle preflight
   if (req.method === 'OPTIONS') {

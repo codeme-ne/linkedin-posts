@@ -11,57 +11,77 @@ export function buildSinglePostPrompt(
 
   switch (platform) {
     case "linkedin":
-      return `Du bist ein Social-Media-Experte für LinkedIn im DACH-Markt.
+      return `Du bist ein Social-Media-Experte und Ghostwriter für LinkedIn im DACH-Markt.
 Erstelle GENAU EINEN hochwertigen LinkedIn-Post aus folgendem Inhalt.
 
 WICHTIG (Ausgabeformat – strikt befolgen):
 - Gib AUSSCHLIESSLICH den reinen Post-Text zurück.
 - KEINE Labels, KEINE Überschriften, KEINE Nummerierung, KEINE Varianten.
 - KEINE Einleitung/Erklärung vor oder nach dem Post.
+- Beginne mit dem Präfix "LINKEDIN:" (genau so) in der ersten Zeile
 
 Format- und Stilregeln:
-- Beginne direkt mit dem Post-Text (kein Präfix)
-- Sehr kurze Sätze mit Leerzeilen dazwischen  
+- Sehr kurze Sätze mit Leerzeilen dazwischen
 - Die ersten zwei Sätze sind der Hook (~80% der Aussage)
 - Keine Hashtags, keine Emojis
-- Gesprächiger, klarer Ton in Du-Form
-- Struktur: Hook → Kernidee → Takeaway → Engagement-Frage
-- Maximum 300 Wörter${regenerationPrompt}
+- Gesprächiger, klarer, autoritativer Ton in Du-Form
+- Struktur: starker Hook → Kernidee(n) → klare Erkenntnis/Takeaway → dezente Engagement-Frage
+- Bleibe deutlich unter dem LinkedIn-Limit; lieber prägnant als lang
+
+Best Practices:
+- Mini-Fallbeispiel/Erfahrung für Glaubwürdigkeit
+- Konkrete, umsetzbare Hinweise
+- Zahlen/Signale nutzen, wenn vorhanden${regenerationPrompt}
 
 Inhalt: ${content}`;
 
     case "x":
-      return `Erstelle GENAU EINEN prägnanten X/Twitter-Post aus folgendem Inhalt.
+      return `Du bist ein Twitter-Experte mit authentischer Stimme.
+Erstelle GENAU EINEN natürlichen, menschlichen Tweet aus folgendem Inhalt.
 
 WICHTIG (Ausgabeformat – strikt befolgen):
-- Gib NUR EINE einzige Zeile mit dem Post-Text zurück.
-- KEINE Labels, KEINE Nummerierung, KEINE Varianten, KEINE zusätzlichen Zeilen.
-- KEINE Einleitung/Erklärung.
+- Gib NUR den Tweet-Text zurück, ohne Einleitung oder Erklärung.
+- KEINE Labels, KEINE Nummerierung, KEINE Varianten.
+- Eigenständig verständlich (kein Thread)
 
-Regeln:
-- Maximal 280 Zeichen
-- Kein Hashtag, keine Emojis  
-- Direkter, persönlicher Ton
-- Eine zentrale Aussage oder Erkenntnis
-- Call-to-Action oder Denkanstoß${regenerationPrompt}
+STILREGELN:
+- Authentisch und persönlich (wie ein echter Mensch, nicht wie eine Marke)
+- Kurz und prägnant (ideal: 70-100 Zeichen, maximal 280)
+- Emotionen oder Persönlichkeit zeigen
+- Mehrwert bieten: nützliche Info, überraschende Erkenntnis oder kluger Gedanke
+- Call-to-Action wo sinnvoll ("Was denkt ihr?", "Teilt eure Erfahrung")
+- KEINE Hashtags, KEINE Emojis
+
+VERMEIDEN:
+- Marketing-Sprache und Werbeton
+- Generische Business-Floskeln
+- Überladene, unauthentische Posts${regenerationPrompt}
 
 Inhalt: ${content}`;
 
     case "instagram":
-      return `Erstelle GENAU EINE ansprechende Instagram-Beschreibung aus folgendem Inhalt.
+      return `Du bist ein erfahrener Social-Media-Content-Creator.
+Erstelle GENAU EINE ansprechende Instagram-Beschreibung aus folgendem Inhalt.
 
 WICHTIG (Ausgabeformat – strikt befolgen):
 - Gib AUSSCHLIESSLICH den reinen Post-Text zurück.
 - KEINE Labels, KEINE Nummerierung, KEINE Varianten.
 - KEINE Einleitung/Erklärung.
+- Beginne mit dem Präfix "INSTAGRAM:" (genau so) in der ersten Zeile
 
 Anforderungen:
-- Hook in den ersten 125 Zeichen für Preview
-- 3-5 Sätze, persönlich und authentisch
-- Du-Ansprache
-- 3-5 relevante Hashtags am Ende  
-- Call-to-Action oder Frage
-- Maximum 500 Zeichen${regenerationPrompt}
+- Starker Hook in den ersten 125 Zeichen für Preview
+- Prägnant (3-5 Sätze) und ansprechend
+- Du-Ansprache (nicht "ihr")
+- 3-5 relevante Hashtags am Ende
+- Call-to-Action oder Frage am Ende
+- Nutze die maximalen 2.200 Zeichen effektiv (aber bleibe prägnant)
+
+Best Practices:
+- Storytelling für Emotionen und Mehrwert
+- Emojis sparsam für visuellen Reiz
+- Kürzere Absätze für bessere Lesbarkeit
+- Authentizität und Konsistenz mit der Stimme des Autors${regenerationPrompt}
 
 Inhalt: ${content}`;
 

@@ -60,10 +60,10 @@ export const useUrlExtraction = () => {
         // Standard extraction with Jina
         const extractResult = await extractFromUrl(sourceUrl)
         result = {
-          title: extractResult.title || "Ohne Titel",
+          title: extractResult.title || "",  // Don't default to "Ohne Titel"
           content: extractResult.content || ""
         }
-        toast.success(`Inhalt importiert - ${result.title || sourceUrl}`)
+        toast.success(`Inhalt importiert - ${extractResult.title || sourceUrl}`)
       }
       
       return result
