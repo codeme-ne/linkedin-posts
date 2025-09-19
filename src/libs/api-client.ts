@@ -270,6 +270,15 @@ export const createCustomerPortal = async (returnUrl: string): Promise<{ url: st
   return post('/api/stripe/create-portal', { returnUrl });
 };
 
+export const createCheckoutSession = async (data: {
+  priceId: string;
+  mode: 'payment' | 'subscription';
+  successUrl: string;
+  cancelUrl: string;
+}): Promise<{ url: string }> => {
+  return post('/api/stripe/create-checkout', data);
+};
+
 export default apiClient;
 
 // === Anthropic Claude helper with timeout ===

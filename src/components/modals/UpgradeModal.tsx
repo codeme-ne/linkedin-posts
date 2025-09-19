@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -24,8 +23,7 @@ interface UpgradeModalProps {
   trigger?: 'usage_limit' | 'feature_locked' | 'manual';
 }
 
-export function UpgradeModal({ isOpen, onClose, remainingUsage = 0, trigger = 'usage_limit' }: UpgradeModalProps) {
-  const navigate = useNavigate();
+export function UpgradeModal({ isOpen, onClose, trigger = 'usage_limit' }: UpgradeModalProps) {
   const { dailyUsage } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
 
