@@ -1,4 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk';
 import {
   buildStructuredPostPrompt,
   parseStructuredResponse,
@@ -6,13 +5,6 @@ import {
   type PostGenerationResponse
 } from '@/libs/promptBuilder.v2';
 import { generateClaudeMessage } from '@/libs/api-client';
-
-// Enhanced API using structured prompts for high-quality, single-post generation
-const anthropic = new Anthropic({
-  apiKey: 'not-needed', // Dummy value, handled by Edge Function
-  dangerouslyAllowBrowser: true,
-  baseURL: `${window.location.origin}/api/claude`
-});
 
 /**
  * Core generation logic shared by all platform-specific functions

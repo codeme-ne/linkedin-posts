@@ -37,7 +37,6 @@ export const EnhancedGenerator: React.FC = () => {
     regenerateEnhancedPost,
     generatePostComparison,
     changePostGoal,
-    getGenerationMetadata,
     updateEnhancedPost,
     isEnhancedGenerating,
     clearEnhancedPosts
