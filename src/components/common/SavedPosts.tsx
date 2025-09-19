@@ -219,10 +219,9 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
         </div>
       </div>
 
-      {/* Desktop: Side panel (full right edge, below header) */}
+      {/* Desktop: Side panel - now relative positioned within layout */}
       <div
-        className={`hidden md:block fixed right-0 top-16 h-[calc(100vh-4rem)] bg-white shadow-lg transition-transform duration-300 z-20 ${isCollapsed ? 'translate-x-[calc(100%-3rem)]' : 'translate-x-0'}`}
-        style={{ width: '22rem' }}
+        className={`hidden md:block h-full bg-white transition-transform duration-300 ${isCollapsed ? 'translate-x-[calc(100%-3rem)]' : 'translate-x-0'}`}
       >
         <div className="h-full flex flex-col">
           {/* Header with collapse button */}

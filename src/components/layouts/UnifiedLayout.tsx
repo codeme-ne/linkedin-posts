@@ -61,47 +61,48 @@ export function UnifiedLayout({
 
         {/* Main Content Area */}
         <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-12 gap-6">
-            {/* Input Column (60%) */}
-            <div className="col-span-7">
-              <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
-                {inputArea}
+          <div className="flex gap-6">
+            {/* Main Content - Flexible width */}
+            <div className="flex-1 max-w-4xl">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Input Column */}
+                <div className="lg:col-span-1">
+                  {inputArea}
+                </div>
+
+                {/* Output Column */}
+                <div className="lg:col-span-1">
+                  {outputArea}
+                </div>
               </div>
             </div>
 
-            {/* Output Column (40%) */}
-            <div className="col-span-5">
-              <div className="space-y-4">
-                {outputArea}
+            {/* Sidebar - Fixed width, not fixed position */}
+            {sidebarArea && (
+              <div className={cn(
+                "hidden lg:block transition-all duration-300",
+                sidebarCollapsed ? "w-12" : "w-80"
+              )}>
+                <div className="sticky top-20 h-[calc(100vh-5rem)] overflow-hidden border-l bg-background">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    className="absolute left-2 top-4 z-10"
+                  >
+                    {sidebarCollapsed ? <ChevronLeft /> : <ChevronRight />}
+                  </Button>
+                  <div className={cn(
+                    "h-full overflow-y-auto",
+                    sidebarCollapsed && "hidden"
+                  )}>
+                    {sidebarArea}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
-
-        {/* Sidebar (if provided) */}
-        {sidebarArea && (
-          <div
-            className={cn(
-              "fixed right-0 top-0 h-full z-30 transition-all duration-300 bg-background border-l",
-              sidebarCollapsed ? "w-12" : "w-80"
-            )}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="absolute left-2 top-4"
-            >
-              {sidebarCollapsed ? <ChevronLeft /> : <ChevronRight />}
-            </Button>
-            <div className={cn(
-              "pt-16 h-full overflow-y-auto",
-              sidebarCollapsed && "hidden"
-            )}>
-              {sidebarArea}
-            </div>
-          </div>
-        )}
 
         {children}
       </div>
