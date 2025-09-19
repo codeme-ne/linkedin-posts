@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, memo } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { useContentGeneration } from '@/hooks/useContentGeneration'
@@ -137,4 +137,4 @@ export function PlatformGenerators({ content, onPostGenerated }: PlatformGenerat
   )
 }
 
-export default PlatformGenerators
+export default memo(PlatformGenerators)

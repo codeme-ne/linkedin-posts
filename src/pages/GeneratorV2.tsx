@@ -33,9 +33,7 @@ import {
 // Hooks
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useContentGeneration } from "@/hooks/useContentGeneration";
 import { useUrlExtraction } from "@/hooks/useUrlExtraction";
-import { usePostEditing } from "@/hooks/usePostEditing";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 import { usePostGeneratorState, type GeneratedPost } from "@/hooks/usePostGeneratorState";
 
@@ -50,6 +48,8 @@ import { createLinkedInShareUrl } from "@/api/linkedin";
 
 // Import existing Generator for fallback
 import GeneratorV1 from "./Generator";
+import { MobileBottomSheet, useMobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
+import { Bookmark } from "lucide-react";
 
 export default function GeneratorV2() {
   // Feature flag check
@@ -74,6 +74,7 @@ export default function GeneratorV2() {
   // Local UI state only
   const [refreshKey, setRefreshKey] = useState(0);
   const [, setIsSidebarCollapsed] = useState(false);
+  const bottomSheet = useMobileBottomSheet();
 
   // Custom hooks
   const { userEmail, loginOpen, setLoginOpen, searchParams } = useAuth();
@@ -86,9 +87,7 @@ export default function GeneratorV2() {
 
   // const canExtract = () => isPremium || canGenerate; // Reserved for future use
   const isPro = hasAccess || isPremium;
-  const { postsByPlatform, setPostsByPlatform } = useContentGeneration();
   const { extractionUsage, extractContent } = useUrlExtraction();
-  const { editing, editedContent, setEditedContent, startEdit, cancelEdit, isEditing } = usePostEditing();
 
   // Fix Magic Link auth state synchronization
   useEffect(() => {
@@ -111,7 +110,7 @@ export default function GeneratorV2() {
       }
     }
 
-    const hasGeneratedPosts = Object.values(postsByPlatform).some(posts => posts.length > 0);
+    const hasGeneratedPosts = Object.values(state.postsByPlatform).some(posts => posts.length > 0);
     if (hasGeneratedPosts) {
       if (!state.completedSteps.includes('generate')) {
         actions.completeStep('generate');
@@ -119,7 +118,24 @@ export default function GeneratorV2() {
         perfMonitor.mark(PERF_MARKS.FIRST_POST_RENDERED);
       }
     }
-  }, [state.inputText, postsByPlatform, state.completedSteps, actions]);
+  }, [state.inputText, state.postsByPlatform, state.completedSteps, actions]);
+
+  // Display errors with toasts
+  useEffect(() => {
+    // Handle extraction errors
+    if (state.errors.extraction) {
+      toast.error(`Extraktionsfehler: ${state.errors.extraction}`);
+    }
+
+    // Handle generation errors
+    if (state.errors.generation) {
+      Object.entries(state.errors.generation).forEach(([platform, error]) => {
+        if (error) {
+          toast.error(`${PLATFORM_LABEL[platform as Platform]} Generierungsfehler: ${error}`);
+        }
+      });
+    }
+  }, [state.errors]);
 
   // Enhanced extraction handler
   const handleExtract = useCallback(async (url: string, usePremium: boolean = false) => {
@@ -169,10 +185,7 @@ export default function GeneratorV2() {
   };
 
   const handleSaveEdit = () => {
-    if (!editing) return;
-    const { platform } = editing;
-    actions.updatePost(platform, editedContent);
-    cancelEdit();
+    actions.saveEdit();
   };
 
   // Handle step navigation
@@ -182,7 +195,7 @@ export default function GeneratorV2() {
     }
   };
 
-  // Render Input Area
+  // Memoized Input Area component
   const InputArea = useMemo(() => (
     <div className="space-y-6">
       <EnhancedUrlExtractor
@@ -216,10 +229,6 @@ export default function GeneratorV2() {
                   characterCount: post.length
                 };
                 actions.completeGeneration(platform, generatedPost);
-                setPostsByPlatform((prev: Record<Platform, string[]>) => ({
-                  ...prev,
-                  [platform]: [...(prev[platform] || []), post]
-                }));
                 toast.success(`${PLATFORM_LABEL[platform]} Post generiert!`);
               }}
             />
@@ -245,7 +254,7 @@ export default function GeneratorV2() {
     return (
       <div className="space-y-6">
         {(["linkedin", "x", "instagram"] as Platform[]).map((platform) => {
-          const items = postsByPlatform[platform] || [];
+          const items = state.postsByPlatform[platform] || [];
           if (items.length === 0) return null;
 
           return (
@@ -256,19 +265,21 @@ export default function GeneratorV2() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 gap-6">
-                  {items.map((post, index) => (
+                  {items.map((post, index) => {
+                  const postContent = typeof post === 'string' ? post : post.content;
+                  return (
                     <Card key={index} className="border-muted/50 hover:shadow-lg transition-all duration-200 hover:border-primary/20">
                       <CardContent className="p-6">
-                        {isEditing(platform, index) ? (
+                        {computed.isEditing && computed.editingPlatform === platform && computed.editingIndex === index ? (
                           <div className="space-y-4">
                             <CharacterCounterTextarea
-                              value={editedContent}
-                              onChange={setEditedContent}
+                              value={state.editingPost?.content || ''}
+                              onChange={(value) => actions.updateEditingContent(value)}
                               platform={platform}
                               rows={8}
                             />
                             <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="sm" onClick={cancelEdit}>
+                              <Button variant="ghost" size="sm" onClick={actions.cancelEdit}>
                                 Abbrechen
                               </Button>
                               <SaveButton size="sm" onClick={handleSaveEdit} />
@@ -276,27 +287,27 @@ export default function GeneratorV2() {
                           </div>
                         ) : (
                           <>
-                            <p className="text-foreground whitespace-pre-wrap leading-relaxed mb-4">{post}</p>
+                            <p className="text-foreground whitespace-pre-wrap leading-relaxed mb-4">{postContent}</p>
                             <div className="flex justify-between items-center pt-4 border-t border-muted/30">
                               <Badge variant="outline" className="text-xs">
                                 {PLATFORM_LABEL[platform]} · Post #{index + 1}
                               </Badge>
                               <div className="flex gap-2">
                                 <CopyButton
-                                  text={post}
+                                  text={postContent}
                                   size="sm"
                                   variant="ghost"
                                   onCopy={() => toast.success('Beitrag kopiert!')}
                                 />
                                 <EditButton
                                   size="sm"
-                                  onClick={() => startEdit(platform, index, post)}
+                                  onClick={() => actions.startEdit(platform, index, postContent)}
                                   text=""
                                   title="Beitrag bearbeiten"
                                 />
                                 <SaveButton
                                   size="sm"
-                                  onClick={() => handleSavePost(post, platform)}
+                                  onClick={() => handleSavePost(postContent, platform)}
                                   text=""
                                   title="Beitrag speichern"
                                 />
@@ -317,7 +328,7 @@ export default function GeneratorV2() {
                                               'Authorization': `Bearer ${localStorage.getItem('sb-access-token') || ''}`
                                             } : {})
                                           },
-                                          body: JSON.stringify({ content: post })
+                                          body: JSON.stringify({ content: postContent })
                                         });
 
                                         const result = await response.json();
@@ -330,14 +341,14 @@ export default function GeneratorV2() {
                                           }
                                         } else if (result.fallback) {
                                           // Use share dialog as fallback
-                                          const linkedinUrl = createLinkedInShareUrl(post);
+                                          const linkedinUrl = createLinkedInShareUrl(postContent);
                                           window.open(linkedinUrl, "_blank");
                                         } else {
                                           throw new Error(result.error || 'Unknown error');
                                         }
                                       } catch (error) {
                                         // Always fallback to share dialog on error
-                                        const linkedinUrl = createLinkedInShareUrl(post);
+                                        const linkedinUrl = createLinkedInShareUrl(postContent);
                                         window.open(linkedinUrl, "_blank");
                                       }
                                     }}
@@ -348,7 +359,7 @@ export default function GeneratorV2() {
                                   <XShareButton
                                     size="sm"
                                     text=""
-                                    tweetContent={post}
+                                    tweetContent={postContent}
                                     title="Auf X teilen"
                                   />
                                 )}
@@ -356,7 +367,7 @@ export default function GeneratorV2() {
                                   <InstagramShareButton
                                     size="sm"
                                     text=""
-                                    postContent={post}
+                                    postContent={postContent}
                                     title="Auf Instagram teilen"
                                   />
                                 )}
@@ -366,7 +377,8 @@ export default function GeneratorV2() {
                         )}
                       </CardContent>
                     </Card>
-                  ))}
+                  );
+                })}
                 </div>
               </CardContent>
             </Card>
@@ -374,7 +386,7 @@ export default function GeneratorV2() {
         })}
 
         {/* Placeholder when no posts */}
-        {Object.values(postsByPlatform).every(posts => posts.length === 0) && (
+        {Object.values(state.postsByPlatform).every(posts => posts.length === 0) && (
           <div className="text-center py-12 text-muted-foreground">
             <p>Noch keine Posts generiert</p>
             <p className="text-sm mt-2">Füge Content hinzu und generiere Posts</p>
@@ -382,11 +394,13 @@ export default function GeneratorV2() {
         )}
       </div>
     );
-  }, [state.isExtracting, state.extractionProgress, state.generationProgress, computed.isGeneratingAny, postsByPlatform, isEditing, editedContent, setEditedContent,
-      cancelEdit, handleSaveEdit, startEdit, handleSavePost, actions]);
+  }, [state.isExtracting, state.extractionProgress, state.generationProgress, state.postsByPlatform, state.editingPost,
+      computed.isGeneratingAny, computed.isEditing, computed.editingPlatform, computed.editingIndex,
+      handleSaveEdit, handleSavePost, actions]);
 
   // Main render with UnifiedLayout
   return (
+    <>
     <UnifiedLayout
       header={
         <div className="space-y-4">
@@ -434,5 +448,34 @@ export default function GeneratorV2() {
         />
       }
     />
+
+    {/* Mobile FAB for saved posts */}
+    <button
+      onClick={bottomSheet.open}
+      className="fixed bottom-6 right-6 md:hidden z-50 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:shadow-xl transition-all"
+      aria-label="Gespeicherte Beiträge öffnen"
+    >
+      <Bookmark className="h-6 w-6" />
+    </button>
+
+    {/* Mobile Bottom Sheet */}
+    <MobileBottomSheet
+      isOpen={bottomSheet.isOpen}
+      onClose={bottomSheet.close}
+      title="Gespeicherte Beiträge"
+      snapPoints={[0.5, 0.95]}
+      defaultSnapPoint={0}
+    >
+      <SavedPosts
+        onCollapse={() => {}}
+        refreshKey={refreshKey}
+        isAuthenticated={!!userEmail}
+        onLoginClick={() => {
+          bottomSheet.close();
+          setLoginOpen(true);
+        }}
+      />
+    </MobileBottomSheet>
+    </>
   );
 }

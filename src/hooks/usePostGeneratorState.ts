@@ -25,8 +25,17 @@ export interface PostGeneratorState {
   // Platform Selection
   selectedPlatforms: Platform[];
 
-  // Generated Content
+  // Generated Content - Now supports multiple posts per platform
   generatedPosts: Partial<Record<Platform, GeneratedPost>>;
+  postsByPlatform: Record<Platform, GeneratedPost[]>;
+
+  // Editing State
+  editingPost: {
+    platform: Platform;
+    index: number;
+    content: string;
+    originalContent: string;
+  } | null;
 
   // Loading States
   isExtracting: boolean;
@@ -69,7 +78,14 @@ type PostGeneratorAction =
   | { type: 'SET_EXTRACTION_PROGRESS'; progress: number }
   | { type: 'MARK_SAVED' }
   | { type: 'RESET_WORKFLOW' }
-  | { type: 'CLEAR_ERRORS' };
+  | { type: 'CLEAR_ERRORS' }
+  // New editing actions
+  | { type: 'START_EDIT'; platform: Platform; index: number; content: string }
+  | { type: 'UPDATE_EDITING_CONTENT'; content: string }
+  | { type: 'SAVE_EDIT' }
+  | { type: 'CANCEL_EDIT' }
+  | { type: 'DELETE_POST'; platform: Platform; index: number }
+  | { type: 'REGENERATE_POST'; platform: Platform; index: number };
 
 // Initial State
 const initialState: PostGeneratorState = {
@@ -80,6 +96,12 @@ const initialState: PostGeneratorState = {
   usePremiumExtraction: false,
   selectedPlatforms: ['linkedin'],
   generatedPosts: {},
+  postsByPlatform: {
+    linkedin: [],
+    x: [],
+    instagram: [],
+  },
+  editingPost: null,
   isExtracting: false,
   isGenerating: new Set(),
   extractionProgress: 0,
@@ -193,6 +215,13 @@ function postGeneratorReducer(
       const updatedGenerating = new Set(state.isGenerating);
       updatedGenerating.delete(action.platform);
 
+      // Add the new post to postsByPlatform
+      const existingPosts = state.postsByPlatform[action.platform] || [];
+      const updatedPostsByPlatform = {
+        ...state.postsByPlatform,
+        [action.platform]: [...existingPosts, action.post],
+      };
+
       // Check if all selected platforms have been generated
       const allGenerated = state.selectedPlatforms.every(
         p => state.generatedPosts[p] || p === action.platform
@@ -204,6 +233,7 @@ function postGeneratorReducer(
           ...state.generatedPosts,
           [action.platform]: action.post,
         },
+        postsByPlatform: updatedPostsByPlatform,
         isGenerating: updatedGenerating,
         completedSteps: allGenerated
           ? [...new Set([...state.completedSteps, 'generate'])] as WorkflowStep[]
@@ -281,6 +311,87 @@ function postGeneratorReducer(
       return {
         ...state,
         errors: {},
+      };
+
+    case 'START_EDIT':
+      return {
+        ...state,
+        editingPost: {
+          platform: action.platform,
+          index: action.index,
+          content: action.content,
+          originalContent: action.content,
+        },
+      };
+
+    case 'UPDATE_EDITING_CONTENT':
+      if (!state.editingPost) return state;
+      return {
+        ...state,
+        editingPost: {
+          ...state.editingPost,
+          content: action.content,
+        },
+      };
+
+    case 'SAVE_EDIT':
+      if (!state.editingPost) return state;
+      const { platform, index, content } = state.editingPost;
+      const updatedPosts = [...(state.postsByPlatform[platform] || [])];
+
+      if (updatedPosts[index]) {
+        updatedPosts[index] = {
+          ...updatedPosts[index],
+          content,
+          isEdited: true,
+          characterCount: content.length,
+        };
+      }
+
+      return {
+        ...state,
+        postsByPlatform: {
+          ...state.postsByPlatform,
+          [platform]: updatedPosts,
+        },
+        editingPost: null,
+        isDirty: true,
+      };
+
+    case 'CANCEL_EDIT':
+      return {
+        ...state,
+        editingPost: null,
+      };
+
+    case 'DELETE_POST':
+      const postsAfterDelete = [...(state.postsByPlatform[action.platform] || [])];
+      postsAfterDelete.splice(action.index, 1);
+
+      return {
+        ...state,
+        postsByPlatform: {
+          ...state.postsByPlatform,
+          [action.platform]: postsAfterDelete,
+        },
+        isDirty: true,
+      };
+
+    case 'REGENERATE_POST':
+      const postsToRegenerate = [...(state.postsByPlatform[action.platform] || [])];
+      if (postsToRegenerate[action.index]) {
+        postsToRegenerate[action.index] = {
+          ...postsToRegenerate[action.index],
+          regenerationCount: postsToRegenerate[action.index].regenerationCount + 1,
+        };
+      }
+
+      return {
+        ...state,
+        postsByPlatform: {
+          ...state.postsByPlatform,
+          [action.platform]: postsToRegenerate,
+        },
       };
 
     default:
@@ -402,6 +513,31 @@ export function usePostGeneratorState() {
     clearErrors: useCallback(() => {
       dispatch({ type: 'CLEAR_ERRORS' });
     }, []),
+
+    // Editing actions
+    startEdit: useCallback((platform: Platform, index: number, content: string) => {
+      dispatch({ type: 'START_EDIT', platform, index, content });
+    }, []),
+
+    updateEditingContent: useCallback((content: string) => {
+      dispatch({ type: 'UPDATE_EDITING_CONTENT', content });
+    }, []),
+
+    saveEdit: useCallback(() => {
+      dispatch({ type: 'SAVE_EDIT' });
+    }, []),
+
+    cancelEdit: useCallback(() => {
+      dispatch({ type: 'CANCEL_EDIT' });
+    }, []),
+
+    deletePost: useCallback((platform: Platform, index: number) => {
+      dispatch({ type: 'DELETE_POST', platform, index });
+    }, []),
+
+    regeneratePost: useCallback((platform: Platform, index: number) => {
+      dispatch({ type: 'REGENERATE_POST', platform, index });
+    }, []),
   };
 
   // Computed values
@@ -411,6 +547,11 @@ export function usePostGeneratorState() {
     hasGeneratedPosts: Object.keys(state.generatedPosts).length > 0,
     isGeneratingAny: state.isGenerating.size > 0,
     allPlatformsGenerated: state.selectedPlatforms.every(p => state.generatedPosts[p]),
+    isEditing: state.editingPost !== null,
+    editingPlatform: state.editingPost?.platform,
+    editingIndex: state.editingPost?.index,
+    hasPostsForPlatform: (platform: Platform) => (state.postsByPlatform[platform]?.length ?? 0) > 0,
+    totalPostsCount: Object.values(state.postsByPlatform).reduce((acc, posts) => acc + posts.length, 0),
   };
 
   return {

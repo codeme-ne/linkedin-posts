@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +31,7 @@ interface EnhancedUrlExtractorProps {
   className?: string;
 }
 
-export function EnhancedUrlExtractor({
+const EnhancedUrlExtractorComponent = ({
   value,
   onContentExtracted,
   onTextInput,
@@ -41,7 +41,7 @@ export function EnhancedUrlExtractor({
   usePremiumExtraction = false,
   onPremiumToggle,
   className,
-}: EnhancedUrlExtractorProps) {
+}: EnhancedUrlExtractorProps) => {
   const [url, setUrl] = useState('');
   const [activeTab, setActiveTab] = useState<'url' | 'text'>('url');
 
@@ -237,3 +237,5 @@ export function EnhancedUrlExtractor({
     </Card>
   );
 }
+
+export const EnhancedUrlExtractor = memo(EnhancedUrlExtractorComponent);
