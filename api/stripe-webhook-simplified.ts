@@ -118,6 +118,12 @@ export default async function handler(req: Request) {
         const monthlyPriceId = process.env.STRIPE_MONTHLY_PRICE_ID;
         const yearlyPriceId = process.env.STRIPE_YEARLY_PRICE_ID;
 
+        // Define correct prices (in cents) for validation
+        const CORRECT_PRICES = {
+          monthly: 2900, // 29 EUR
+          yearly: 29900, // 299 EUR
+        };
+
         switch (priceId) {
           case monthlyPriceId:
             interval = 'monthly';
@@ -131,6 +137,16 @@ export default async function handler(req: Request) {
             interval = session.mode === 'subscription' ? 'monthly' : 'yearly';
             break;
         }
+
+        // Validate and use config price for data integrity
+        const expectedAmount = CORRECT_PRICES[interval as keyof typeof CORRECT_PRICES];
+        if (amount !== expectedAmount) {
+          console.warn(`⚠️ Price mismatch detected!`);
+          console.warn(`   Received: ${amount} (${amount / 100} EUR)`);
+          console.warn(`   Expected: ${expectedAmount} (${expectedAmount / 100} EUR)`);
+          console.warn(`   Using config price for database storage`);
+        }
+        const validatedAmount = expectedAmount; // Always use config price
         
         // Create or update subscription record (simplified)
         const subscriptionData = {
@@ -140,7 +156,7 @@ export default async function handler(req: Request) {
           stripe_subscription_id: session.subscription as string || null,
           status: 'active',
           is_active: true, // ShipFast-style hasAccess equivalent
-          amount: amount,
+          amount: validatedAmount, // Use validated amount from config
           currency: currency || 'eur',
           interval,
           stripe_price_id: priceId,

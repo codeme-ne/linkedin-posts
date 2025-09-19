@@ -1,14 +1,17 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useSubscription, Subscription } from "@/hooks/useSubscription";
 import { UpgradeButton } from "@/components/common/UpgradeButton";
-import { getSession, signOut } from "@/api/supabase";
+import { signOut } from "@/api/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { env } from "@/config/env.config";
+import { getStripePlan } from "@/config/app.config";
 import {
   User,
   CreditCard,
@@ -80,15 +83,15 @@ const getSubscriptionStatusDetails = (subscription: Subscription | null, isPro: 
 };
 
 export default function Settings() {
-  const { subscription, loading, openCustomerPortal } = useSubscription();
-  const [email, setEmail] = useState<string | null>(null);
+  const { user, loading: authLoading } = useAuth();
+  const { subscription, loading: subscriptionLoading, openCustomerPortal } = useSubscription();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    getSession().then(({ data }) => setEmail(data.session?.user.email ?? null));
-  }, []);
+  // Get email from auth context
+  const email = user?.email ?? null;
+  const loading = authLoading || subscriptionLoading;
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -169,27 +172,42 @@ export default function Settings() {
                 </div>
               </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                  <span className="text-muted-foreground">E-Mail:</span>
-                </div>
-                <div className="font-medium truncate" role="text" aria-label={`E-Mail-Adresse: ${email ?? "Nicht eingeloggt"}`}>
-                  {email ?? "Nicht eingeloggt"}
-                </div>
-              </div>
-              
-              {email && (
-                <Button
-                  variant="outline"
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                  className="w-full gap-2"
-                  aria-label={isLoggingOut ? "Abmeldung läuft..." : "Vom Konto abmelden"}
-                >
-                  <LogOut className="h-4 w-4" aria-hidden="true" />
-                  {isLoggingOut ? "Abmelden..." : "Abmelden"}
-                </Button>
+              {authLoading ? (
+                <>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      <span className="text-muted-foreground">E-Mail:</span>
+                    </div>
+                    <Skeleton className="h-5 w-48" />
+                  </div>
+                  <Skeleton className="h-10 w-full" />
+                </>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      <span className="text-muted-foreground">E-Mail:</span>
+                    </div>
+                    <div className="font-medium truncate" role="text" aria-label={`E-Mail-Adresse: ${email ?? "Nicht eingeloggt"}`}>
+                      {email ?? "Nicht eingeloggt"}
+                    </div>
+                  </div>
+
+                  {email && (
+                    <Button
+                      variant="outline"
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="w-full gap-2"
+                      aria-label={isLoggingOut ? "Abmeldung läuft..." : "Vom Konto abmelden"}
+                    >
+                      <LogOut className="h-4 w-4" aria-hidden="true" />
+                      {isLoggingOut ? "Abmelden..." : "Abmelden"}
+                    </Button>
+                  )}
+                </>
               )}
             </CardContent>
             </Card>
@@ -210,17 +228,24 @@ export default function Settings() {
                 </div>
               </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className={cn("p-3 rounded-lg border", statusDetails.bgColor)}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Aktueller Plan:</span>
-                    <div className="flex items-center gap-2">
-                      {isPro && <Crown className="h-4 w-4 text-yellow-500" />}
-                      <span className={cn("font-semibold", statusDetails.color)}>{planLabel}</span>
+              {loading ? (
+                <>
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </>
+              ) : (
+                <div className="space-y-3">
+                  <div className={cn("p-3 rounded-lg border", statusDetails.bgColor)}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">Aktueller Plan:</span>
+                      <div className="flex items-center gap-2">
+                        {isPro && <Crown className="h-4 w-4 text-yellow-500" />}
+                        <span className={cn("font-semibold", statusDetails.color)}>{planLabel}</span>
+                      </div>
                     </div>
+                    <p className="text-xs text-muted-foreground">{statusDetails.description}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">{statusDetails.description}</p>
-                </div>
 
                 {/* Show subscription details for Pro users */}
                 {subscription && isPro && (
@@ -231,18 +256,25 @@ export default function Settings() {
                         {subscription.interval === 'yearly' ? 'Pro Jährlich' : 'Pro Monatlich'}
                       </span>
                     </div>
-                    {subscription.amount && subscription.currency && (
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Preis:</span>
-                        <span className="font-medium">
-                          {new Intl.NumberFormat('de-DE', {
-                            style: 'currency',
-                            currency: subscription.currency.toUpperCase()
-                          }).format(subscription.amount / 100)}
-                          {subscription.interval === 'monthly' ? ' / Monat' : ' / Jahr'}
-                        </span>
-                      </div>
-                    )}
+                    {(() => {
+                      // Use config prices as source of truth, database amount as fallback
+                      const configPlan = subscription.interval ? getStripePlan(subscription.interval) : null;
+                      const displayAmount = configPlan ? configPlan.price : (subscription.amount || 0) / 100;
+                      const displayCurrency = configPlan ? configPlan.currency : (subscription.currency || 'EUR');
+
+                      return (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Preis:</span>
+                          <span className="font-medium">
+                            {new Intl.NumberFormat('de-DE', {
+                              style: 'currency',
+                              currency: displayCurrency.toUpperCase()
+                            }).format(displayAmount)}
+                            {subscription.interval === 'monthly' ? ' / Monat' : ' / Jahr'}
+                          </span>
+                        </div>
+                      );
+                    })()}
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">Status:</span>
                       <span className={cn(
@@ -300,7 +332,8 @@ export default function Settings() {
                     {isOpeningPortal ? 'Portal wird geöffnet...' : 'Abonnement verwalten'}
                   </Button>
                 )}
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
           </section>

@@ -30,6 +30,7 @@ export const useContentGeneration = () => {
     totalPlatforms: 0,
     completedPlatforms: 0,
   })
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   // Free tier usage from subscription
   const { decrementUsage, hasUsageRemaining } = useSubscription()
 
@@ -123,7 +124,7 @@ export const useContentGeneration = () => {
     }
 
     if (!isRegeneration && !hasUsageRemaining()) {
-      toast.error('Tageslimit erreicht. Upgrade für unbegrenzte Generierung.')
+      setShowUpgradeModal(true)
       throw new Error('Usage limit reached')
     }
 
@@ -233,5 +234,8 @@ export const useContentGeneration = () => {
     isGenerating,
     updatePost,
     clearPosts,
+    // Upgrade modal state
+    showUpgradeModal,
+    setShowUpgradeModal,
   }
 }

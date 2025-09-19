@@ -2,6 +2,8 @@ import { useEffect, useState, memo } from 'react'
 import { SavedPost, getSavedPosts, deleteSavedPost, updateSavedPost } from '@/api/supabase'
 import { SaveButton, EditButton, DeleteButton, LinkedInShareButton, XShareButton, InstagramShareButton } from '@/design-system/components/ActionButtons'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -26,6 +28,7 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
   const [savedPosts, setSavedPosts] = useState<SavedPost[]>([])
   const [isCollapsed, setIsCollapsed] = useState(!initialExpanded)
   const [editingPost, setEditingPost] = useState<{ id: number, content: string } | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -46,11 +49,15 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
   }, [initialExpanded])
 
   const loadSavedPosts = async () => {
+    setIsLoading(true)
     try {
       const posts = await getSavedPosts()
       setSavedPosts(posts)
     } catch (error) {
-      // Silent failure - user will see empty state
+      console.error('Failed to load saved posts:', error)
+      toast.error('Gespeicherte Beiträge konnten nicht geladen werden.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -104,6 +111,12 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
               {onLoginClick && (
                 <Button onClick={onLoginClick} variant="default" size="sm">Login</Button>
               )}
+            </div>
+          ) : isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-24 w-full" />
             </div>
           ) : savedPosts.length === 0 ? (
             <div className="p-4 rounded-lg border border-gray-200 bg-white text-center">
@@ -242,6 +255,12 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
               {onLoginClick && (
                 <Button onClick={onLoginClick} variant="default" size="sm">Login</Button>
               )}
+            </div>
+          ) : isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
             </div>
           ) : savedPosts.length === 0 ? (
             <div className="p-4 rounded-lg border border-gray-200 bg-white text-center">
