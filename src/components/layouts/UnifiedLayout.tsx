@@ -95,7 +95,7 @@ export function UnifiedLayout({
                       {sidebarCollapsed ? <ChevronLeft /> : <ChevronRight />}
                     </Button>
                     {!sidebarCollapsed && (
-                      <h3 className="text-sm font-semibold px-2">Saved Posts</h3>
+                      <h3 className="text-sm font-semibold px-2">Gespeicherte Beiträge</h3>
                     )}
                   </div>
                   {/* Sidebar Content */}

@@ -90,8 +90,7 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
     <div className={`md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg transition-transform duration-300 z-40 ${isCollapsed ? 'translate-y-[calc(100%-3rem)]' : 'translate-y-0'}`} style={{ maxHeight: '60vh', paddingBottom: 'env(safe-area-inset-bottom)' }}>
   <div className="flex items-center justify-between p-3 border-b">
           <h2 className="text-lg font-bold text-gray-800">Gespeicherte Beiträge</h2>
-          <div className="flex items-center gap-1">
-            <button
+          <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="p-2 hover:bg-gray-100 rounded-lg"
           >
@@ -104,7 +103,6 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
             </svg>
           </button>
-          </div>
         </div>
   <div className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: 'calc(50vh - 4rem)' }}>
           {!isAuthenticated ? (
