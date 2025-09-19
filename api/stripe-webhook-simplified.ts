@@ -115,18 +115,21 @@ export default async function handler(req: Request) {
         // Map known price IDs to intervals - both monthly and yearly use subscription mode
         let interval = 'monthly' // default fallback
 
-        // Monthly plan price ID
-        if (priceId === 'price_1QVhCaGswqzOWBWTAu9e4Hrw') {
-          interval = 'monthly'
-        }
-        // Yearly plan price ID
-        else if (priceId === 'price_1S8oxtA9XtHmOZg4bCHR14fG') {
-          interval = 'yearly'
-        }
-        // For unknown price IDs, log and use session mode as fallback
-        else {
-          console.warn(`Unknown price ID: ${priceId}, using session mode fallback`)
-          interval = session.mode === 'subscription' ? 'monthly' : 'yearly'
+        const monthlyPriceId = process.env.STRIPE_MONTHLY_PRICE_ID;
+        const yearlyPriceId = process.env.STRIPE_YEARLY_PRICE_ID;
+
+        switch (priceId) {
+          case monthlyPriceId:
+            interval = 'monthly';
+            break;
+          case yearlyPriceId:
+            interval = 'yearly';
+            break;
+          default:
+            console.warn(`Unknown price ID: ${priceId}, using session mode as fallback`);
+            // Fallback for safety, but should not be hit with correct config
+            interval = session.mode === 'subscription' ? 'monthly' : 'yearly';
+            break;
         }
         
         // Create or update subscription record (simplified)

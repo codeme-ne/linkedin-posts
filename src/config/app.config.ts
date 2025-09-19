@@ -131,9 +131,7 @@ const config: AppConfig = {
         currency: "EUR",
         interval: "monthly",
         // ShipFast pattern: priceId for dynamic checkout sessions
-        priceId: import.meta.env.DEV 
-          ? "price_1QVhCaGswqzOWBWTAu9e4Hrw" // Development price ID
-          : "price_1QVhCaGswqzOWBWTAu9e4Hrw", // Production price ID - update when available
+        priceId: import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID || "",
         paymentLink: import.meta.env.VITE_STRIPE_PAYMENT_LINK_MONTHLY || "", // Fallback
         features: [
           "Unbegrenzte Posts",
@@ -151,9 +149,7 @@ const config: AppConfig = {
         currency: "EUR",
         interval: "yearly",
         // ShipFast pattern: priceId for dynamic checkout sessions
-        priceId: import.meta.env.DEV
-          ? "price_1S8oxtA9XtHmOZg4bCHR14fG" // Development price ID
-          : "price_1S8oxtA9XtHmOZg4bCHR14fG", // Production price ID - update when available
+        priceId: import.meta.env.VITE_STRIPE_YEARLY_PRICE_ID || "",
         paymentLink: import.meta.env.VITE_STRIPE_PAYMENT_LINK_YEARLY || "", // Fallback
         features: [
           "Unbegrenzte Posts",
