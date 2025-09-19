@@ -220,6 +220,19 @@ export const useContentGeneration = () => {
     setPostsByPlatform({ linkedin: [], x: [], instagram: [] })
   }
 
+  // Security fix: Clear all content states (posts, generated content, etc.)
+  const clearAllContent = () => {
+    setPostsByPlatform({ linkedin: [], x: [], instagram: [] })
+    setGeneratedPosts({})
+    setActiveGenerations(new Set())
+    setGenerationProgress({
+      progress: 0,
+      currentPlatform: "",
+      totalPlatforms: 0,
+      completedPlatforms: 0,
+    })
+  }
+
   return {
     postsByPlatform,
     setPostsByPlatform,
@@ -234,6 +247,7 @@ export const useContentGeneration = () => {
     isGenerating,
     updatePost,
     clearPosts,
+    clearAllContent, // Security fix: Export cleanup function
     // Upgrade modal state
     showUpgradeModal,
     setShowUpgradeModal,

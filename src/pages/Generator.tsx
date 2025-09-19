@@ -53,7 +53,7 @@ export default function Generator() {
   const [usePremiumExtraction, setUsePremiumExtraction] = useState(false);
 
   // Custom hooks
-  const { userEmail, loginOpen, setLoginOpen, searchParams } = useAuth();
+  const { userEmail, loginOpen, setLoginOpen, searchParams, registerCleanupCallback } = useAuth();
   const { hasAccess } = useSubscription();
 
   // Use secure backend tracking instead of localStorage
@@ -66,11 +66,34 @@ export default function Generator() {
   // Access control using secure tracking
   const canExtract = () => isPremium || canGenerate;
   const isPro = hasAccess || isPremium;
-  const { postsByPlatform, setPostsByPlatform, updatePost, showUpgradeModal, setShowUpgradeModal } = useContentGeneration();
+  const {
+    postsByPlatform,
+    setPostsByPlatform,
+    updatePost,
+    showUpgradeModal,
+    setShowUpgradeModal,
+    clearAllContent
+  } = useContentGeneration();
   const { isExtracting, extractionUsage, extractContent } = useUrlExtraction();
   const { editing, editedContent, setEditedContent, startEdit, cancelEdit, isEditing } = usePostEditing();
 
   // No longer need to save to localStorage - handled by useUsageTracking hook
+
+  // SECURITY FIX: Clear all content when user changes or logs out
+  useEffect(() => {
+    // Register cleanup callback with auth hook
+    const unregister = registerCleanupCallback(() => {
+      // Clear all content states
+      clearAllContent();
+      setInputText("");
+      setSourceUrl("");
+      setEditedContent("");
+      cancelEdit();
+    });
+
+    // Cleanup on unmount
+    return unregister;
+  }, [registerCleanupCallback, clearAllContent, cancelEdit]);
 
   // Fix Magic Link auth state synchronization
   useEffect(() => {
