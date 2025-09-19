@@ -46,10 +46,7 @@ import { perfMonitor, PERF_MARKS, PERF_MEASURES } from "@/utils/performance";
 import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";
 import { savePost } from "@/api/supabase";
-import {
-  createLinkedInDraftPost,
-  createLinkedInShareUrl
-} from "@/api/linkedin";
+import { createLinkedInShareUrl } from "@/api/linkedin";
 
 // Import existing Generator for fallback
 import GeneratorV1 from "./Generator";
@@ -310,23 +307,36 @@ export default function GeneratorV2() {
                                     text=""
                                     onClick={async () => {
                                       try {
-                                        const accessToken = import.meta.env.VITE_LINKEDIN_ACCESS_TOKEN;
-                                        const authorUrn = import.meta.env.VITE_LINKEDIN_AUTHOR_URN;
-                                        const hasValidCredentials =
-                                          accessToken &&
-                                          authorUrn &&
-                                          !accessToken.includes('YOUR_') &&
-                                          !authorUrn.includes('YOUR_');
+                                        // Call our secure backend endpoint instead of exposing credentials
+                                        const response = await fetch('/api/share/linkedin', {
+                                          method: 'POST',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                            // Optional: Add auth token if user is logged in
+                                            ...(userEmail ? {
+                                              'Authorization': `Bearer ${localStorage.getItem('sb-access-token') || ''}`
+                                            } : {})
+                                          },
+                                          body: JSON.stringify({ content: post })
+                                        });
 
-                                        if (hasValidCredentials) {
-                                          const result = await createLinkedInDraftPost(post, { accessToken, authorUrn });
-                                          window.open(result.draftUrl, "_blank");
+                                        const result = await response.json();
+
+                                        if (result.success) {
                                           toast.success("LinkedIn Draft erstellt! 🚀");
-                                        } else {
+                                          // Open LinkedIn posts page
+                                          if (result.linkedinUrl) {
+                                            window.open(result.linkedinUrl, "_blank");
+                                          }
+                                        } else if (result.fallback) {
+                                          // Use share dialog as fallback
                                           const linkedinUrl = createLinkedInShareUrl(post);
                                           window.open(linkedinUrl, "_blank");
+                                        } else {
+                                          throw new Error(result.error || 'Unknown error');
                                         }
                                       } catch (error) {
+                                        // Always fallback to share dialog on error
                                         const linkedinUrl = createLinkedInShareUrl(post);
                                         window.open(linkedinUrl, "_blank");
                                       }
