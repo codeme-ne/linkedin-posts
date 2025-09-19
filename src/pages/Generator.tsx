@@ -8,6 +8,7 @@ import {
   LinkedInAPIError,
 } from "@/api/linkedin";
 import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
 import {
   SaveButton,
   EditButton,
@@ -40,6 +41,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useContentGeneration } from "@/hooks/useContentGeneration";
 import { useUrlExtraction } from "@/hooks/useUrlExtraction";
 import { usePostEditing } from "@/hooks/usePostEditing";
+import { useUsageTracking } from "@/hooks/useUsageTracking";
 import PlatformGenerators from "@/components/common/PlatformGenerators";
 
 export default function Generator() {
@@ -50,76 +52,81 @@ export default function Generator() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sourceUrl, setSourceUrl] = useState("");
   const [usePremiumExtraction, setUsePremiumExtraction] = useState(false);
-  
-  // ShipFast pattern: localStorage-based free tier tracking
-  const [freeGenerations, setFreeGenerations] = useState(() => {
-    return parseInt(localStorage.getItem('freeGenerationsCount') || '0', 10);
-  });
 
   // Custom hooks
   const { userEmail, loginOpen, setLoginOpen, searchParams } = useAuth();
   const { hasAccess } = useSubscription();
-  
-  // ShipFast pattern: Simple access control
-  const canTransform = () => hasAccess || freeGenerations < FREE_LIMIT;
-  const canExtract = () => hasAccess || freeGenerations < FREE_LIMIT;
-  const isPro = hasAccess;
+
+  // Use secure backend tracking instead of localStorage
+  const {
+    canGenerate,
+    isPremium,
+    used: freeGenerations,
+    remaining,
+    checkAndIncrementUsage,
+    isLoading: usageLoading
+  } = useUsageTracking();
+
+  // Access control using secure tracking
+  const canTransform = () => isPremium || canGenerate;
+  const canExtract = () => isPremium || canGenerate;
+  const isPro = hasAccess || isPremium;
   const { postsByPlatform, isLoading, generationProgress, generateContent, updatePost } = useContentGeneration();
   const { isExtracting, extractionUsage, extractContent } = useUrlExtraction();
   const { editing, editedContent, setEditedContent, startEdit, cancelEdit, isEditing } = usePostEditing();
 
-  // ShipFast pattern: Save free generations count to localStorage
-  useEffect(() => {
-    localStorage.setItem('freeGenerationsCount', freeGenerations.toString());
-  }, [freeGenerations]);
+  // No longer need to save to localStorage - handled by useUsageTracking hook
 
   // Fix Magic Link auth state synchronization
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('type') === 'magiclink' || urlParams.get('type') === 'recovery') {
-      // Clean redirect to refresh auth state and remove URL parameters
-      window.location.href = '/app';
+    const authType = urlParams.get('type');
+
+    // Only redirect once after successful auth, then clean URL
+    if (authType === 'magiclink' || authType === 'recovery') {
+      // Use replaceState to clean URL without causing redirect loop
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+
+      // Optionally show success message
+      toast.success("Erfolgreich eingeloggt!");
     }
-  }, []);
+  }, []); // Empty dependency array ensures this only runs once on mount
 
   // Event handlers with free tier limits
   const FREE_LIMIT = 3;
   
   const handleRemix = async () => {
-    // ShipFast pattern: Check limit before generation
-    if (!hasAccess && freeGenerations >= FREE_LIMIT) {
-      toast.error("Dein kostenloses Limit ist erreicht. Upgrade zu Premium für unlimitierte Generierungen.");
-      return;
+    // Use secure backend tracking
+    const canProceed = await checkAndIncrementUsage();
+    if (!canProceed) {
+      return; // Error message already shown by checkAndIncrementUsage
     }
 
     const success = await generateContent(inputText, selectedPlatforms);
-    
-    // Increment counter only on successful generation for free users
-    if (success && !hasAccess) {
-      setFreeGenerations(count => count + 1);
+
+    // If generation failed, we might want to restore the usage count
+    // But for simplicity, we keep the increment to prevent abuse
+    if (!success) {
+      toast.error("Generierung fehlgeschlagen. Bitte versuche es erneut.");
     }
   };
 
   const handleExtract = async () => {
     if (!sourceUrl) return;
-    
-    // ShipFast pattern: Check limit before extraction
-    if (!hasAccess && freeGenerations >= FREE_LIMIT) {
-      toast.error("Dein kostenloses Limit ist erreicht. Upgrade zu Premium für unlimitierte Extraktionen.");
-      return;
+
+    // Use secure backend tracking for extractions too
+    const canProceed = await checkAndIncrementUsage();
+    if (!canProceed) {
+      return; // Error message already shown by checkAndIncrementUsage
     }
-    
+
     const result = await extractContent(sourceUrl, usePremiumExtraction, isPro);
     if (result) {
       const prefill = [result.title, result.content]
         .filter(Boolean)
         .join("\n\n");
       setInputText(prefill);
-      
-      // Increment counter only on successful extraction for free users
-      if (!hasAccess) {
-        setFreeGenerations(count => count + 1);
-      }
     }
   };
 
@@ -177,7 +184,9 @@ export default function Generator() {
       </header>
       
   <div className="p-4 md:p-8 pt-6 md:pt-8">
-  <div className={`max-w-4xl mx-auto space-y-8 ${isSidebarCollapsed ? 'md:pr-[3rem]' : 'md:pr-[22rem]'}`}>
+  <div className={`max-w-4xl mx-auto space-y-8 transition-all duration-300 ${
+    isSidebarCollapsed ? 'md:pr-[3rem]' : 'md:pr-[22rem]'
+  } ${!isSidebarCollapsed && 'lg:pr-[24rem]'}`}>
           <div className="text-center space-y-4 pt-8">
           <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
             Vom Newsletter zu viralen Posts
@@ -208,8 +217,13 @@ export default function Generator() {
                   className="flex-1 h-10 px-3 rounded-md border bg-background"
                   aria-label="Quelle-URL"
                 />
-{((!usePremiumExtraction && canExtract()) || (usePremiumExtraction && isPro)) ? (
-                  <Button onClick={handleExtract} disabled={!sourceUrl || isExtracting || (!hasAccess && freeGenerations >= FREE_LIMIT)} className="md:w-48">
+{/* Fixed logic: Standard extraction for all, premium extraction only for Pro users */}
+                {(!usePremiumExtraction || (usePremiumExtraction && isPro)) ? (
+                  <Button
+                    onClick={handleExtract}
+                    disabled={!sourceUrl || isExtracting || (!canExtract() && !isPro)}
+                    className="md:w-48"
+                  >
                     {isExtracting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importiere…
@@ -219,7 +233,7 @@ export default function Generator() {
                     )}
                   </Button>
                 ) : (
-                  <PaywallGuard feature={usePremiumExtraction ? "Premium URL-Extraktion" : "Standard URL-Extraktion"}>
+                  <PaywallGuard feature="Premium URL-Extraktion">
                     <Button disabled className="md:w-48 opacity-50">
                       Von URL importieren (Pro Feature)
                     </Button>
@@ -328,7 +342,7 @@ export default function Generator() {
             </Card>
           )}
           {/* Extra spacing for mobile to prevent content being covered by bottom drawer + safe area */}
-          <div className="md:hidden" style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }} aria-hidden="true" />
+          <div className="md:hidden h-24 pb-safe" aria-hidden="true" />
           
           {(["linkedin", "x", "instagram"] as Platform[]).map((platform) => {
           const items = postsByPlatform[platform] || [];
@@ -367,6 +381,12 @@ export default function Generator() {
                                 {PLATFORM_LABEL[platform]} · Post #{index + 1}
                               </Badge>
                               <div className="flex gap-2">
+                                <CopyButton
+                                  text={post}
+                                  size="sm"
+                                  variant="ghost"
+                                  onCopy={() => toast.success('Beitrag kopiert!')}
+                                />
                                 <EditButton
                                   size="sm"
                                   onClick={() => startEdit(platform, index, post)}
@@ -380,23 +400,35 @@ export default function Generator() {
                                     text=""
                                     onClick={async () => {
                                       try {
+                                        // Only use LinkedIn API if credentials are properly configured
                                         const accessToken = import.meta.env.VITE_LINKEDIN_ACCESS_TOKEN;
                                         const authorUrn = import.meta.env.VITE_LINKEDIN_AUTHOR_URN;
-                                        if (accessToken && authorUrn) {
+
+                                        // Check if credentials are valid (not placeholders or empty)
+                                        const hasValidCredentials =
+                                          accessToken &&
+                                          authorUrn &&
+                                          accessToken !== '' &&
+                                          authorUrn !== '' &&
+                                          !accessToken.includes('YOUR_') &&
+                                          !authorUrn.includes('YOUR_');
+
+                                        if (hasValidCredentials) {
                                           const result = await createLinkedInDraftPost(post, { accessToken, authorUrn });
                                           window.open(result.draftUrl, "_blank");
-                                          toast.success("LinkedIn Draft erstellt! 🚀 - Der Draft wurde erfolgreich erstellt.");
+                                          toast.success("LinkedIn Draft erstellt! 🚀");
                                         } else {
+                                          // Fallback to share dialog (no API needed)
                                           const linkedinUrl = createLinkedInShareUrl(post);
                                           window.open(linkedinUrl, "_blank");
                                         }
                                       } catch (error) {
+                                        // Always fallback to share dialog on error
                                         if (error instanceof LinkedInAPIError) {
-                                          toast.error(`LinkedIn API Fehler - ${error.message}`);
-                                        } else {
-                                          const linkedinUrl = createLinkedInShareUrl(post);
-                                          window.open(linkedinUrl, "_blank");
+                                          console.error('LinkedIn API error:', error);
                                         }
+                                        const linkedinUrl = createLinkedInShareUrl(post);
+                                        window.open(linkedinUrl, "_blank");
                                       }
                                     }}
                                     title="Auf LinkedIn teilen"

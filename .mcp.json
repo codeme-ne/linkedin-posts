@@ -3,6 +3,10 @@
     "serena": {
       "type": "sse",
       "url": "http://localhost:9121/sse"
+    },
+    "puppeteer": {
+      "command": "mcp-server-puppeteer",
+      "args": []
     }
   }
 }

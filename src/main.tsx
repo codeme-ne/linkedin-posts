@@ -4,6 +4,33 @@ import './index.css'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { supabase } from './api/supabase.ts'
+import { validateClientEnvironment } from '@/lib/env-validation'
+
+// Validate environment variables on startup
+const envValidation = validateClientEnvironment();
+if (!envValidation.success) {
+  console.error('Configuration Error:', envValidation.error);
+
+  // Create error display for missing configuration
+  const errorDiv = document.createElement('div');
+  errorDiv.innerHTML = `
+    <div style="
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: #fee; color: #900;
+      padding: 2rem; font-family: monospace;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; z-index: 9999;
+    ">
+      <h1 style="margin-bottom: 1rem;">⚠️ Configuration Error</h1>
+      <pre style="background: #fff; padding: 1rem; border-radius: 4px; max-width: 800px; overflow: auto;">
+${envValidation.error}
+      </pre>
+      <p style="margin-top: 1rem;">Please check your .env file and ensure all required variables are set.</p>
+    </div>
+  `;
+  document.body.appendChild(errorDiv);
+  throw new Error('Environment validation failed');
+}
 
 // Handles Supabase email confirmation links (hash in URL),
 // reconciles pending subscriptions immediately, cleans URL, and redirects.
