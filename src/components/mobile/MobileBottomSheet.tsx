@@ -135,6 +135,9 @@ export function MobileBottomSheet({
           "flex flex-col",
           className
         )}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title || "Bottom sheet"}
       >
         {/* Handle */}
         {showHandle && (

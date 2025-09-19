@@ -26,7 +26,6 @@ export interface PostGeneratorState {
   selectedPlatforms: Platform[];
 
   // Generated Content - Now supports multiple posts per platform
-  generatedPosts: Partial<Record<Platform, GeneratedPost>>;
   postsByPlatform: Record<Platform, GeneratedPost[]>;
 
   // Editing State
@@ -73,7 +72,6 @@ type PostGeneratorAction =
   | { type: 'START_GENERATION'; platform: Platform }
   | { type: 'COMPLETE_GENERATION'; platform: Platform; post: GeneratedPost }
   | { type: 'FAIL_GENERATION'; platform: Platform; error: string }
-  | { type: 'UPDATE_POST'; platform: Platform; content: string }
   | { type: 'SET_GENERATION_PROGRESS'; current: Platform | null; completed: number; total: number }
   | { type: 'SET_EXTRACTION_PROGRESS'; progress: number }
   | { type: 'MARK_SAVED' }
@@ -95,7 +93,6 @@ const initialState: PostGeneratorState = {
   inputText: '',
   usePremiumExtraction: false,
   selectedPlatforms: ['linkedin'],
-  generatedPosts: {},
   postsByPlatform: {
     linkedin: [],
     x: [],
@@ -224,15 +221,11 @@ function postGeneratorReducer(
 
       // Check if all selected platforms have been generated
       const allGenerated = state.selectedPlatforms.every(
-        p => state.generatedPosts[p] || p === action.platform
+        p => (state.postsByPlatform[p]?.length ?? 0) > 0 || p === action.platform
       );
 
       return {
         ...state,
-        generatedPosts: {
-          ...state.generatedPosts,
-          [action.platform]: action.post,
-        },
         postsByPlatform: updatedPostsByPlatform,
         isGenerating: updatedGenerating,
         completedSteps: allGenerated
@@ -261,24 +254,6 @@ function postGeneratorReducer(
             [action.platform]: action.error,
           },
         },
-      };
-
-    case 'UPDATE_POST':
-      const post = state.generatedPosts[action.platform];
-      if (!post) return state;
-
-      return {
-        ...state,
-        generatedPosts: {
-          ...state.generatedPosts,
-          [action.platform]: {
-            ...post,
-            content: action.content,
-            isEdited: true,
-            characterCount: action.content.length,
-          },
-        },
-        isDirty: true,
       };
 
     case 'SET_GENERATION_PROGRESS':
@@ -486,10 +461,6 @@ export function usePostGeneratorState() {
       dispatch({ type: 'FAIL_GENERATION', platform, error });
     }, []),
 
-    updatePost: useCallback((platform: Platform, content: string) => {
-      dispatch({ type: 'UPDATE_POST', platform, content });
-    }, []),
-
     setGenerationProgress: useCallback(
       (current: Platform | null, completed: number, total: number) => {
         dispatch({ type: 'SET_GENERATION_PROGRESS', current, completed, total });
@@ -544,9 +515,9 @@ export function usePostGeneratorState() {
   const computed = {
     canExtract: state.sourceUrl.trim().length > 0,
     canGenerate: state.inputText.trim().length > 0 && state.selectedPlatforms.length > 0,
-    hasGeneratedPosts: Object.keys(state.generatedPosts).length > 0,
+    hasGeneratedPosts: Object.values(state.postsByPlatform).some(posts => posts.length > 0),
     isGeneratingAny: state.isGenerating.size > 0,
-    allPlatformsGenerated: state.selectedPlatforms.every(p => state.generatedPosts[p]),
+    allPlatformsGenerated: state.selectedPlatforms.every(p => (state.postsByPlatform[p]?.length ?? 0) > 0),
     isEditing: state.editingPost !== null,
     editingPlatform: state.editingPost?.platform,
     editingIndex: state.editingPost?.index,

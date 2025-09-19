@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface UnifiedLayoutProps {
   header?: ReactNode;
@@ -25,7 +25,6 @@ export function UnifiedLayout({
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('two-column');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileTab, setMobileTab] = useState<'input' | 'output'>('input');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Determine layout mode based on viewport
   useEffect(() => {
@@ -140,40 +139,6 @@ export function UnifiedLayout({
         </div>
 
         {/* Sidebar as overlay on tablet */}
-        {sidebarArea && (
-          <>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="fixed bottom-4 right-4 z-40 shadow-lg"
-            >
-              <Menu />
-            </Button>
-
-            {isMobileMenuOpen && (
-              <div className="fixed inset-0 z-50">
-                <div
-                  className="absolute inset-0 bg-black/50"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                />
-                <div className="absolute right-0 top-0 h-full w-80 bg-background shadow-xl">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="absolute left-2 top-2"
-                  >
-                    <X />
-                  </Button>
-                  <div className="pt-12 p-4 h-full overflow-y-auto">
-                    {sidebarArea}
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
 
         {children}
       </div>
@@ -232,46 +197,6 @@ export function UnifiedLayout({
           </button>
         </div>
       </div>
-
-      {/* Mobile Menu Button for Sidebar */}
-      {sidebarArea && (
-        <>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="fixed top-4 right-4 z-50 shadow-lg"
-          >
-            <Menu className="h-4 w-4" />
-          </Button>
-
-          {/* Mobile Sidebar Overlay */}
-          {isMobileMenuOpen && (
-            <div className="fixed inset-0 z-50">
-              <div
-                className="absolute inset-0 bg-black/50"
-                onClick={() => setIsMobileMenuOpen(false)}
-              />
-              <div className="absolute inset-x-0 bottom-0 max-h-[80vh] bg-background rounded-t-xl shadow-xl">
-                <div className="p-4">
-                  <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-4" />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="absolute right-2 top-2"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                  <div className="overflow-y-auto max-h-[60vh]">
-                    {sidebarArea}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </>
-      )}
 
       {children}
     </div>
