@@ -6,14 +6,18 @@ interface EditButtonProps extends Omit<ButtonProps, 'variant' | 'leftIcon' | 'ch
   text?: string
 }
 
-export const EditButton: React.FC<EditButtonProps> = ({ 
+export const EditButton: React.FC<EditButtonProps> = ({
   text = 'Bearbeiten',
-  ...props 
+  ...props
 }) => {
+  const hasText = text && text.length > 0;
+
   return (
     <Button
       variant="secondary"
-      leftIcon={<Edit2 size={16} />}
+      leftIcon={<Edit2 size={16} aria-hidden="true" />}
+      aria-label={hasText ? undefined : 'Bearbeiten'}
+      title={hasText ? undefined : 'Bearbeiten'}
       {...props}
     >
       {text}

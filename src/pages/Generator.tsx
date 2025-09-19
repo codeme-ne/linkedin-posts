@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { savePost } from "@/api/supabase";
+import { formatCount } from "@/utils/pluralize";
 import { SavedPosts } from "@/components/common/SavedPosts";
 import { AccountButton } from "@/components/common/AccountButton";
 import {
@@ -284,7 +285,7 @@ export default function Generator() {
           return (
             <Card key={platform} className="shadow-xl border-0 bg-card/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>{PLATFORM_LABEL[platform]} – {items.length} Beiträge</CardTitle>
+                <CardTitle>{PLATFORM_LABEL[platform]} – {formatCount(items.length, 'Beitrag', 'Beiträge')}</CardTitle>
                 <CardDescription>Plattformspezifische Vorschau und Bearbeitung</CardDescription>
               </CardHeader>
               <CardContent>

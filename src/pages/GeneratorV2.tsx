@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
+import { formatCount } from "@/utils/pluralize";
 
 // Feature flag and layout components
 import { useFeatureFlag } from "@/hooks/useFeatureFlag";
@@ -43,13 +44,13 @@ import { perfMonitor, PERF_MARKS, PERF_MEASURES } from "@/utils/performance";
 // Types
 import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";
-import { savePost } from "@/api/supabase";
+import { savePost, getSession } from "@/api/supabase";
 import { createLinkedInShareUrl } from "@/api/linkedin";
 
 // Import existing Generator for fallback
 import GeneratorV1 from "./Generator";
 import { MobileBottomSheet, useMobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
-import { Bookmark } from "lucide-react";
+import { Bookmark, Sparkles } from "lucide-react";
 
 export default function GeneratorV2() {
   // Feature flag check
@@ -260,7 +261,7 @@ export default function GeneratorV2() {
           return (
             <Card key={platform} className="shadow-xl border-0 bg-card/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>{PLATFORM_LABEL[platform]} – {items.length} Beiträge</CardTitle>
+                <CardTitle>{PLATFORM_LABEL[platform]} – {formatCount(items.length, 'Beitrag', 'Beiträge')}</CardTitle>
                 <CardDescription>Plattformspezifische Vorschau und Bearbeitung</CardDescription>
               </CardHeader>
               <CardContent>
@@ -318,14 +319,21 @@ export default function GeneratorV2() {
                                     text=""
                                     onClick={async () => {
                                       try {
+                                        // Get auth token securely from Supabase
+                                        let authToken = '';
+                                        if (userEmail) {
+                                          const { data: { session } } = await getSession();
+                                          authToken = session?.access_token || '';
+                                        }
+
                                         // Call our secure backend endpoint instead of exposing credentials
                                         const response = await fetch('/api/share/linkedin', {
                                           method: 'POST',
                                           headers: {
                                             'Content-Type': 'application/json',
-                                            // Optional: Add auth token if user is logged in
-                                            ...(userEmail ? {
-                                              'Authorization': `Bearer ${localStorage.getItem('sb-access-token') || ''}`
+                                            // Add auth token if user is logged in
+                                            ...(authToken ? {
+                                              'Authorization': `Bearer ${authToken}`
                                             } : {})
                                           },
                                           body: JSON.stringify({ content: postContent })
@@ -387,9 +395,27 @@ export default function GeneratorV2() {
 
         {/* Placeholder when no posts */}
         {Object.values(state.postsByPlatform).every(posts => posts.length === 0) && (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>Noch keine Posts generiert</p>
-            <p className="text-sm mt-2">Füge Content hinzu und generiere Posts</p>
+          <div className="text-center py-12">
+            <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Noch keine Posts generiert</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Importiere deinen Content und verwandle ihn in virale Social Media Posts
+            </p>
+            <Button
+              onClick={() => {
+                // Scroll to input area or focus first input
+                const inputArea = document.querySelector('[data-workflow-step="input"]');
+                if (inputArea) {
+                  inputArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                  // Fallback: scroll to top where input is likely to be
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
+              size="lg"
+            >
+              Jetzt starten
+            </Button>
           </div>
         )}
       </div>

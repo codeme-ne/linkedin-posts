@@ -16,7 +16,8 @@ import {
   ArrowRight,
   CheckCircle2,
   AlertCircle,
-  TrendingUp
+  TrendingUp,
+  Info
 } from 'lucide-react';
 
 interface EnhancedUrlExtractorProps {
@@ -149,17 +150,36 @@ const EnhancedUrlExtractorComponent = ({
                       <Zap className="h-4 w-4 text-yellow-500" />
                       <span className="font-medium">Premium-Extraktion</span>
                       {!isPro && <Badge variant="secondary">Pro</Badge>}
+                      <span
+                        title="Premium-Extraktion bietet: JavaScript-Rendering, PDF-Support, vollständige Artikel-Extraktion, Screenshots und bessere Qualität"
+                        className="cursor-help"
+                      >
+                        <Info className="h-3 w-3 text-muted-foreground" />
+                      </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Bessere Qualität • JavaScript-Support • Screenshots
                     </p>
+                    {isPro ? (
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-muted-foreground">
+                          Nutzung: {usageRemaining !== undefined ? usageRemaining : '?'}/20 diesen Monat
+                        </span>
+                        {usageRemaining !== undefined && usageRemaining <= 5 && (
+                          <Badge variant="outline" className="text-xs">
+                            Nur noch {usageRemaining} übrig
+                          </Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-yellow-600">
+                          Upgrade für Premium-Features (ab 29€/Monat)
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </label>
-                {isPro && usageRemaining !== undefined && (
-                  <Badge variant="outline" className="ml-2">
-                    {usageRemaining}/20
-                  </Badge>
-                )}
               </div>
 
               {/* Main CTA Button */}

@@ -6,14 +6,18 @@ interface SaveButtonProps extends Omit<ButtonProps, 'variant' | 'leftIcon' | 'ch
   text?: string
 }
 
-export const SaveButton: React.FC<SaveButtonProps> = ({ 
+export const SaveButton: React.FC<SaveButtonProps> = ({
   text = 'Speichern',
-  ...props 
+  ...props
 }) => {
+  const hasText = text && text.length > 0;
+
   return (
     <Button
       variant="default"
-      leftIcon={<Save size={16} />}
+      leftIcon={<Save size={16} aria-hidden="true" />}
+      aria-label={hasText ? undefined : 'Speichern'}
+      title={hasText ? undefined : 'Speichern'}
       {...props}
     >
       {text}

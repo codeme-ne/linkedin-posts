@@ -7,12 +7,14 @@ interface LinkedInShareButtonProps extends Omit<ButtonProps, 'variant' | 'leftIc
   postContent?: string
 }
 
-export const LinkedInShareButton: React.FC<LinkedInShareButtonProps> = ({ 
+export const LinkedInShareButton: React.FC<LinkedInShareButtonProps> = ({
   text = 'Auf LinkedIn teilen',
   postContent = '',
   onClick,
-  ...props 
+  ...props
 }) => {
+  const hasText = text && text.length > 0;
+
   const handleLinkedInShare = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (postContent) {
       const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(postContent)}`
@@ -24,8 +26,10 @@ export const LinkedInShareButton: React.FC<LinkedInShareButtonProps> = ({
   return (
     <Button
       variant="linkedin"
-      leftIcon={<Linkedin size={16} />}
+      leftIcon={<Linkedin size={16} aria-hidden="true" />}
       onClick={handleLinkedInShare}
+      aria-label={hasText ? undefined : 'Auf LinkedIn teilen'}
+      title={hasText ? undefined : 'Auf LinkedIn teilen'}
       {...props}
     >
       {text}

@@ -237,7 +237,7 @@ export function ExtractingContent({
 
 export function GeneratingPosts({
   platform,
-  message = "Generiere Posts...",
+  message = "Generiere Beiträge...",
   subMessage,
   className
 }: LoadingStateProps & { platform?: string }) {

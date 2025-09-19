@@ -1,8 +1,10 @@
-import { useMemo, memo } from 'react'
+import { useMemo, memo, type KeyboardEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { useContentGeneration } from '@/hooks/useContentGeneration'
 import type { Platform } from '@/config/platforms'
+import config from '@/config/app.config'
+import { cn } from '@/lib/utils'
 
 interface PlatformGeneratorsProps {
   content: string
@@ -66,7 +68,7 @@ export function PlatformGenerators({ content, onPostGenerated }: PlatformGenerat
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Posts generieren</h3>
+      <h3 className="text-lg font-semibold">Beiträge generieren</h3>
 
       <div className="grid gap-4 md:grid-cols-3">
         {platforms.map(({ key, name, icon, variant }) => {
@@ -74,6 +76,28 @@ export function PlatformGenerators({ content, onPostGenerated }: PlatformGenerat
           const currentPost = generatedPosts[k]
           const hasPost = !!currentPost?.post
           const loading = isGenerating(k)
+
+          const limit = config.limits.maxPostLength[k]
+          const isOverLimit = currentPost ? currentPost.post.length > limit : false
+          const isNearLimit = currentPost ? currentPost.post.length > limit * 0.9 : false
+
+          const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+            // Ctrl/Cmd + Enter: Copy to clipboard
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+              e.preventDefault()
+              if (currentPost?.post) {
+                navigator.clipboard.writeText(currentPost.post)
+                toast.success('In Zwischenablage kopiert')
+              }
+            }
+            // Escape: Clear post with confirmation
+            if (e.key === 'Escape') {
+              e.preventDefault()
+              if (currentPost?.post && confirm('Post-Inhalt löschen?')) {
+                handlePostEdit(k, '')
+              }
+            }
+          }
 
           return (
             <div key={key} className="border rounded-lg p-4 space-y-4">
@@ -94,8 +118,9 @@ export function PlatformGenerators({ content, onPostGenerated }: PlatformGenerat
                 isLoading={loading}
                 variant={variant}
                 fullWidth
+                disabled={loading || (hasPost && isOverLimit)}
               >
-                {hasPost ? '🔄 Regenerieren' : '✨ Generieren'}
+                {hasPost ? '🔄 Neu generieren' : '✨ Generieren'}
               </Button>
 
               {hasPost && (
@@ -103,26 +128,46 @@ export function PlatformGenerators({ content, onPostGenerated }: PlatformGenerat
                   <textarea
                     value={currentPost!.post}
                     onChange={(e) => handlePostEdit(k, e.target.value)}
-                    className="w-full p-3 border rounded-md text-sm resize-none bg-background"
+                    onKeyDown={handleKeyDown}
+                    className={cn(
+                      "w-full p-3 border rounded-md text-sm resize-none bg-background",
+                      isOverLimit && "border-red-500 focus:ring-red-500"
+                    )}
                     rows={6}
                     placeholder={`${name} Post...`}
+                    maxLength={limit + 100} // Soft limit to allow some overflow for editing
+                    title="Shortcuts: Ctrl+Enter = Kopieren, Esc = Löschen"
                   />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{currentPost!.isEdited && '✏️ Bearbeitet'}</span>
-                    <span>
-                      {currentPost!.post.length}
-                      {k === 'x' && '/280'}
-                      {k === 'instagram' && '/2200'}
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="flex gap-2">
+                      {currentPost!.isEdited && '✏️ Bearbeitet'}
+                      <span className="hidden sm:inline opacity-60">
+                        Ctrl+↵ Kopieren · Esc Löschen
+                      </span>
+                    </span>
+                    <span className={cn(
+                      isOverLimit ? "text-red-500 font-semibold" :
+                      isNearLimit ? "text-yellow-600" :
+                      "text-muted-foreground"
+                    )}>
+                      {currentPost!.post.length}/{limit}
                     </span>
                   </div>
+                  {isOverLimit && (
+                    <p className="text-xs text-red-500">
+                      ⚠️ Zeichenlimit überschritten ({limit} max)
+                    </p>
+                  )}
                   <div className="flex gap-2">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={async () => {
                         await navigator.clipboard.writeText(currentPost!.post)
-                        toast.success('Post in Zwischenablage kopiert.')
+                        toast.success('Beitrag in Zwischenablage kopiert.')
                       }}
+                      aria-label="In Zwischenablage kopieren"
+                      title="In Zwischenablage kopieren"
                     >
                       📋 Kopieren
                     </Button>

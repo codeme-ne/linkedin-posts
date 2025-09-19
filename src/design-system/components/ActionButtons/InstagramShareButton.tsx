@@ -14,6 +14,7 @@ export const InstagramShareButton: React.FC<InstagramShareButtonProps> = ({
   onClick,
   ...props
 }) => {
+  const hasText = text && text.length > 0;
   const handleInstagramShare = (e: React.MouseEvent<HTMLButtonElement>) => {
     // Strategy:
     // 1) Mobile: try native share (opens system sheet incl. Instagram)
@@ -75,8 +76,10 @@ export const InstagramShareButton: React.FC<InstagramShareButtonProps> = ({
   return (
     <Button
       variant="instagram"
-      leftIcon={<InstagramLogo size={16} className="text-white" />}
+      leftIcon={<InstagramLogo size={16} className="text-white" aria-hidden="true" />}
       onClick={handleInstagramShare}
+      aria-label={hasText ? undefined : 'Auf Instagram teilen'}
+      title={hasText ? undefined : 'Auf Instagram teilen'}
       {...props}
     >
       {text}

@@ -13,13 +13,13 @@ interface WorkflowStepperProps {
 const steps = [
   {
     id: 'input' as WorkflowStep,
-    label: 'Import Content',
+    label: 'Inhalte importieren',
     description: 'URL oder Text eingeben',
     icon: FileText,
   },
   {
     id: 'generate' as WorkflowStep,
-    label: 'Posts generieren',
+    label: 'Beiträge generieren',
     description: 'KI erstellt Beiträge',
     icon: Sparkles,
   },
