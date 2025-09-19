@@ -61,8 +61,6 @@ export default function Generator() {
   const {
     canGenerate,
     isPremium,
-    used: freeGenerations,
-    remaining,
     checkAndIncrementUsage,
     isLoading: usageLoading
   } = useUsageTracking();
@@ -94,7 +92,6 @@ export default function Generator() {
   }, []); // Empty dependency array ensures this only runs once on mount
 
   // Event handlers with free tier limits
-  const FREE_LIMIT = 3;
   
   const handleRemix = async () => {
     // Use secure backend tracking

@@ -38,7 +38,7 @@ export function validateClientEnvironment() {
     return { success: true, env };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errors = error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join('\n');
+      const errors = error.issues.map((err: any) => `${err.path.join('.')}: ${err.message}`).join('\n');
       console.error('❌ Environment validation failed (client):\n', errors);
       return {
         success: false,
@@ -57,7 +57,7 @@ export function validateServerEnvironment() {
     return { success: true, env };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errors = error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join('\n');
+      const errors = error.issues.map((err: any) => `${err.path.join('.')}: ${err.message}`).join('\n');
       console.error('❌ Environment validation failed (server):\n', errors);
       return {
         success: false,
