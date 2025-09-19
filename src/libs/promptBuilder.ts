@@ -125,18 +125,23 @@ export function normalizeSinglePostResponse(text: string, platform: Platform): s
     .trim();
 
   if (platform === 'x') {
-    // For X, take only the first non-empty line
-    const firstLine = t.split(/\r?\n/).map(l => l.trim()).find(l => l.length > 0) || '';
-    return firstLine.slice(0, 280);
+    // For X/Twitter, respect the 280 character limit but preserve the full text
+    // Don't truncate to just the first line - that destroys the content!
+    return t.slice(0, 280);
   }
 
-  // If multiple variants are separated by blank lines, take the first block
-  const blocks = t.split(/\n\s*\n+/).map(b => b.trim()).filter(Boolean);
-  if (blocks.length > 1) {
-    t = blocks[0];
+  // For LinkedIn and Instagram, preserve the full formatted content
+  // The prompts specifically ask for line breaks and formatting
+  // Don't truncate at double line breaks - that's intended formatting!
+
+  // Only check if there are multiple numbered variants (e.g., "1. Post one\n\n2. Post two")
+  // In that case, take the first variant
+  const numberedVariants = t.match(/^\s*\d+\.\s+.+?(?=\n\s*\d+\.\s+|$)/gms);
+  if (numberedVariants && numberedVariants.length > 1) {
+    // Multiple numbered posts detected, take the first one
+    t = numberedVariants[0].replace(/^\s*\d+\.\s*/, '').trim();
   }
 
-  // If the block still contains multiple lines that look like separate items, keep as is;
-  // the validatePost will ensure limits. Just return trimmed.
+  // Return the full content, validatePost will check the length limits
   return t.trim();
 }
