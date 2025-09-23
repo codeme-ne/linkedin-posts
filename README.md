@@ -1,144 +1,357 @@
-# Social Transformer
+# 🚀 Social Transformer
 
-Transform newsletters and blog posts into platform-optimized social media content using AI.
+<div align="center">
 
-## Features
+**Transform newsletters and blog posts into platform-optimized social media content using AI**
 
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-tranformer.social-blue?style=for-the-badge)](https://www.tranformer.social/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
 
-### Neu: Single-Post-Generierung pro Plattform
+</div>
 
-Zusätzlich zur bestehenden Batch-Generierung gibt es nun eine Single-Post-Generierung:
+## 🎯 What is Social Transformer?
 
-- Hook: `useContentGeneration` enthält `generateSinglePost`, `regeneratePost`, `isGenerating` und `generatedPosts`
-- UI: `PlatformGenerators` rendert pro Plattform eine eigene Kachel mit Generieren/Regenerieren und Inline-Editor
-- Prompting: `src/libs/promptBuilder.ts` kapselt plattformspezifische Prompts und `validatePost`
+Social Transformer is an AI-powered SaaS platform that converts long-form content (newsletters, blog posts, articles) into engaging, platform-optimized social media posts for LinkedIn, X (Twitter), and Instagram.
 
-Einbindung auf der Seite `src/pages/Generator.tsx` unterhalb des Haupt-Formulars.
+### ✨ Key Features
 
-## Tech Stack
+- **🤖 AI-Powered Transformation**: Uses Claude API to intelligently adapt content tone and style
+- **🎯 Platform Optimization**: Creates tailored posts for LinkedIn, X, and Instagram
+- **⚡ Single & Batch Generation**: Generate one post at a time or multiple posts simultaneously
+- **💾 Save & Organize**: Store and manage your transformed posts
+- **📱 Mobile-First Design**: Fully responsive interface with PWA capabilities
+- **💳 Flexible Pricing**: Free tier + Pro subscriptions (monthly/yearly)
+- **🔒 Privacy-First**: Secure authentication with Supabase
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: TailwindCSS + shadcn/ui components
-- **Backend**: Vercel Edge Functions
-- **Database**: Supabase (PostgreSQL)
-- **AI**: Anthropic Claude API
-- **Payments**: Stripe (webhooks + payment links)
-- **Auth**: Supabase Auth
+### 🎬 How it Works
 
-## Setup
+1. **Paste Content**: Add your newsletter or blog post content
+2. **Select Platforms**: Choose LinkedIn, X, Instagram, or all three
+3. **AI Magic**: Claude transforms your content with platform-specific optimization
+4. **Edit & Polish**: Fine-tune the generated posts with built-in editor
+5. **Save & Share**: Store posts for later or share directly
+
+---
+
+## 🛠️ Tech Stack
+
+| Category | Technology | Purpose |
+|----------|------------|----------|
+| **Frontend** | React 18 + TypeScript + Vite | Modern, fast development experience |
+| **Styling** | TailwindCSS + shadcn/ui | Beautiful, accessible components |
+| **Backend** | Vercel Edge Functions | Serverless API routes |
+| **Database** | Supabase (PostgreSQL) | User management & data storage |
+| **AI** | Anthropic Claude API | Content transformation |
+| **Payments** | Stripe | Subscription management |
+| **Auth** | Supabase Auth | Secure user authentication |
+| **Deployment** | Vercel | Edge-optimized hosting |
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
-- Supabase account
-- Stripe account (for payments)
-- Anthropic API key (for Claude)
+- **Node.js** 18+ ([Download](https://nodejs.org/))
+- **npm** or **yarn** package manager
+- **Git** for version control
 
-### Installation
+### 1. Clone & Install
 
-1. **Clone and install dependencies:**
 ```bash
-git clone https://github.com/your-username/linkedin-posts.git
+# Clone the repository
+git clone https://github.com/codeme-ne/linkedin-posts.git
 cd linkedin-posts
+
+# Install dependencies
 npm install
 ```
 
-2. **Set up environment variables:**
+### 2. Environment Setup
+
 ```bash
+# Copy environment template
 cp .env.example .env
 ```
 
-3. **Configure `.env` file:**
+**Fill in your `.env` file** with the required API keys:
 
-#### Client-side variables (VITE_ prefix):
-- `VITE_SUPABASE_URL` — Your Supabase project URL
-- `VITE_SUPABASE_ANON_KEY` — Supabase anon key (public)
-- `VITE_STRIPE_PAYMENT_LINK` — Stripe payment link URL
+```env
+# Required: Supabase (Database & Auth)
+VITE_SUPABASE_URL="https://your-project.supabase.co"
+VITE_SUPABASE_ANON_KEY="your-anon-key"
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 
-#### Server-side variables (for Vercel deployment):
-- `CLAUDE_API_KEY` — Anthropic Claude API key
-- `SUPABASE_URL` — Same as VITE_SUPABASE_URL (without prefix)
-- `SUPABASE_SERVICE_ROLE_KEY` — Supabase service role key (secret)
-- `STRIPE_WEBHOOK_SECRET` — Stripe webhook signing secret
+# Required: Claude AI
+CLAUDE_API_KEY="sk-ant-api03-your-key"
 
-#### Optional:
-- `VITE_LINKEDIN_ACCESS_TOKEN` — LinkedIn API token with `w_member_social` scope
-- `VITE_LINKEDIN_AUTHOR_URN` — LinkedIn author URN (e.g., `urn:li:person:XXX`)
+# Required: Stripe (Payments)
+VITE_STRIPE_PAYMENT_LINK_MONTHLY="https://buy.stripe.com/monthly"
+VITE_STRIPE_PAYMENT_LINK_YEARLY="https://buy.stripe.com/yearly"
+STRIPE_WEBHOOK_SECRET="whsec_your-webhook-secret"
 
-4. **Set up Supabase database:**
+# Optional: LinkedIn API
+LINKEDIN_ACCESS_TOKEN="your-linkedin-token"
+LINKEDIN_AUTHOR_URN="urn:li:person:your-id"
+```
 
-Run the migrations in `/supabase/migrations/` in your Supabase SQL editor.
+### 3. Database Setup
 
-5. **Start development server:**
+1. Create a [Supabase](https://supabase.com/) project
+2. Run the SQL migrations in `/supabase/migrations/`
+3. Configure authentication providers if needed
+
+### 4. Payment Setup (Optional)
+
+1. Create [Stripe](https://stripe.com/) account
+2. Set up products and payment links
+3. Configure webhook endpoint: `your-domain/api/stripe-webhook`
+4. Add webhook events: `payment_intent.succeeded`, `checkout.session.completed`
+
+### 5. Start Development
+
 ```bash
+# Start the development server
+npm run dev
+
+# Visit your app
+open http://localhost:5173
+```
+
+---
+
+## 📁 Project Structure
+
+```
+linkedin-posts/
+├── src/
+│   ├── components/          # Reusable UI components
+│   │   ├── ui/             # shadcn/ui components
+│   │   └── forms/          # Form components
+│   ├── pages/              # Route components
+│   ├── hooks/              # Custom React hooks
+│   ├── libs/               # Utility libraries
+│   ├── types/              # TypeScript definitions
+│   └── styles/             # Global styles
+├── api/                    # Vercel serverless functions
+│   ├── claude/            # Claude AI proxy
+│   └── stripe-webhook/    # Payment webhooks
+├── supabase/
+│   └── migrations/        # Database schema
+├── public/                # Static assets
+└── docs/                  # Documentation
+```
+
+---
+
+## 🎨 Key Features Deep Dive
+
+### Single-Post Generation
+
+New feature allowing platform-specific post generation:
+
+- **Hook**: `useContentGeneration` with `generateSinglePost`, `regeneratePost`
+- **UI**: `PlatformGenerators` renders individual platform cards
+- **Prompting**: `src/libs/promptBuilder.ts` handles platform-specific prompts
+- **Location**: Integrated in `src/pages/Generator.tsx`
+
+### AI Content Transformation
+
+- **Smart Context**: Analyzes content type and audience
+- **Platform Adaptation**: Adjusts tone, length, and hashtags per platform
+- **Quality Validation**: Built-in content validation with `validatePost`
+- **Regeneration**: Easy one-click regeneration with different variations
+
+### User Management
+
+- **Free Tier**: 2 transformations per day
+- **Pro Monthly**: €29/month - unlimited transformations
+- **Pro Yearly**: €299/year - unlimited transformations + savings
+- **Automatic Billing**: Stripe handles all payment processing
+
+---
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+1. **Connect Repository**
+   - Import project to [Vercel](https://vercel.com/)
+   - Connect your GitHub repository
+
+2. **Environment Variables**
+   - Add all variables from `.env.example`
+   - Use Vercel dashboard: Settings → Environment Variables
+
+3. **Domain Setup**
+   - Configure custom domain
+   - Update CORS origins in environment
+
+### Manual Deployment
+
+```bash
+# Build for production
+npm run build
+
+# Preview build locally
+npm run preview
+
+# Deploy to your preferred hosting
+# (Netlify, Railway, DigitalOcean, etc.)
+```
+
+---
+
+## 🧪 Development
+
+### Available Scripts
+
+```bash
+# Development
+npm run dev                 # Start dev server (port 5173)
+npm run dev:frontend        # Frontend only
+npm run dev:api            # API only (port 3001)
+npm run dev:full           # Both frontend + API
+
+# Production
+npm run build              # Build for production
+npm run preview            # Preview production build
+
+# Code Quality
+npm run lint               # Run ESLint
+npm run type-check         # TypeScript checking
+npm run test               # Run tests (when implemented)
+```
+
+### Code Style
+
+- **TypeScript**: Strict mode enabled
+- **ESLint**: Extended React/TypeScript rules
+- **Prettier**: Code formatting (configure in your editor)
+- **Conventions**: Functional components, custom hooks, clean architecture
+
+---
+
+## 📊 API Endpoints
+
+| Endpoint | Method | Purpose | Auth Required |
+|----------|--------|---------|---------------|
+| `/api/claude/v1/messages` | POST | Claude AI proxy | ✅ |
+| `/api/stripe-webhook` | POST | Payment webhooks | ❌ |
+| `/api/linkedin/post` | POST | LinkedIn posting | ✅ |
+
+### Example API Usage
+
+```typescript
+// Transform content with Claude
+const response = await fetch('/api/claude/v1/messages', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${userToken}`
+  },
+  body: JSON.stringify({
+    content: 'Your newsletter content...',
+    platform: 'linkedin',
+    tone: 'professional'
+  })
+});
+```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how to get started:
+
+### Setup Development Environment
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Follow the setup instructions above
+4. Make your changes
+5. Add tests if applicable
+6. Commit with clear messages: `git commit -m "Add amazing feature"`
+7. Push and create a Pull Request
+
+### Contribution Guidelines
+
+- **Code Quality**: Follow existing patterns and ESLint rules
+- **Testing**: Add tests for new features
+- **Documentation**: Update README and add inline comments
+- **Performance**: Consider impact on bundle size and runtime
+- **Accessibility**: Ensure components are accessible
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Environment Variables Not Loading**
+```bash
+# Check file name and location
+ls -la .env
+# Restart dev server after changes
 npm run dev
 ```
 
-## Stripe Setup
-
-### Test Mode (Development)
-
-1. **Create Test Payment Link:**
-   - Go to Stripe Dashboard → Switch to TEST mode
-   - Create product: "Beta Lifetime Deal" - €49 one-time
-   - Create payment link with email collection enabled
-   - Add to `.env`: `VITE_STRIPE_PAYMENT_LINK`
-
-2. **Configure Webhook:**
-   - Go to Developers → Webhooks → Add endpoint
-   - URL: `https://your-domain.vercel.app/api/stripe-webhook`
-   - Events: `payment_intent.succeeded`, `checkout.session.completed`
-   - Copy signing secret to `STRIPE_WEBHOOK_SECRET`
-
-3. **Test with card:** `4242 4242 4242 4242`
-
-### Production Mode
-
-Replace test credentials with live ones when ready to accept real payments.
-
-## Deployment
-
-### Vercel Deployment
-
-1. **Push to GitHub**
-
-2. **Import to Vercel:**
-   - Connect GitHub repository
-   - Configure environment variables (all from `.env` plus server-side ones)
-
-3. **Environment Variables in Vercel:**
-   - All `VITE_*` variables from `.env`
-   - `CLAUDE_API_KEY` (server-side)
-   - `SUPABASE_URL` (without VITE_ prefix)
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `STRIPE_WEBHOOK_SECRET`
-
-## Usage
-
-### For Users
-
-1. **Free Tier:** 2 transformations per day
-2. **Pro Tier:** €29/month or €299/year, unlimited transformations
-3. **Workflow:**
-   - Paste newsletter/blog content
-   - Select target platforms (LinkedIn, X, Instagram)
-   - Click "Transform"
-   - Edit, save, or share generated posts
-
-### API Routes
-
-- `/api/claude/v1/messages` - Claude AI proxy endpoint
-- `/api/stripe-webhook` - Stripe payment webhook handler
-
-## Commands
-
+**Supabase Connection Issues**
 ```bash
-npm run dev        # Start development server
-npm run build      # Build for production
-npm run preview    # Preview production build
-npm run lint       # Run ESLint
+# Verify URLs and keys in Supabase dashboard
+# Check network connectivity
+# Ensure anon key has correct permissions
 ```
 
-## License
+**Claude API Errors**
+```bash
+# Verify API key format: sk-ant-api03-...
+# Check API quota and billing
+# Ensure CORS is configured properly
+```
 
-Private repository - All rights reserved
+**Build Failures**
+```bash
+# Clear cache and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Check TypeScript errors
+npm run type-check
+```
+
+### Getting Help
+
+- 📧 **Email**: [Your contact email]
+- 🐛 **Issues**: [GitHub Issues](https://github.com/codeme-ne/linkedin-posts/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/codeme-ne/linkedin-posts/discussions)
+
+---
+
+## 📄 License
+
+**Private Repository** - All rights reserved.
+
+This is proprietary software. See license terms for usage rights.
+
+---
+
+## 🙏 Acknowledgments
+
+- **[Anthropic](https://anthropic.com/)** - Claude AI API
+- **[Supabase](https://supabase.com/)** - Backend infrastructure
+- **[Vercel](https://vercel.com/)** - Deployment platform
+- **[shadcn/ui](https://ui.shadcn.com/)** - Beautiful UI components
+- **[Stripe](https://stripe.com/)** - Payment processing
+
+---
+
+<div align="center">
+
+**Made with ❤️ by [Lukas Zangerl](https://github.com/codeme-ne)**
+
+[Live Demo](https://www.tranformer.social/) • [Issues](https://github.com/codeme-ne/linkedin-posts/issues) • [Discussions](https://github.com/codeme-ne/linkedin-posts/discussions)
+
+</div>
