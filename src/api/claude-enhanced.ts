@@ -75,9 +75,10 @@ export async function generateEnhancedPost(options: PostGenerationOptions): Prom
       return generateEnhancedTwitterPost(options);
     case 'instagram':
       return generateEnhancedInstagramPost(options);
-    default:
+    default: {
       const _exhaustive: never = options.platform;
       throw new Error(`Unknown platform: ${_exhaustive}`);
+    }
   }
 }
 

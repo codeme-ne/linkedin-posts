@@ -6,6 +6,8 @@ import { PLATFORM_LABEL } from '@/config/platforms'
 import { buildSinglePostPrompt, validatePost, normalizeSinglePostResponse } from '@/libs/promptBuilder'
 import { useSubscription } from '@/hooks/useSubscription'
 import { generateClaudeMessage } from '@/libs/api-client'
+import type { VoiceTone } from '@/config/voice-tones'
+import { DEFAULT_VOICE_TONE } from '@/config/voice-tones'
 
 interface GenerationProgress {
   progress: number // 0-100
@@ -117,6 +119,7 @@ export const useContentGeneration = () => {
     content: string,
     platform: Platform,
     isRegeneration = false,
+    voiceTone?: VoiceTone
   ): Promise<string> => {
     if (!content.trim()) {
       toast.error('Bitte gib einen Text ein')
@@ -138,6 +141,7 @@ export const useContentGeneration = () => {
         content,
         platform,
         isRegeneration ? regenerationCount + 1 : undefined,
+        voiceTone || DEFAULT_VOICE_TONE
       )
 
       const maxTokens = platform === 'x' ? 1024 : 2048
@@ -195,13 +199,13 @@ export const useContentGeneration = () => {
     }
   }
 
-  const regeneratePost = async (content: string, platform: Platform) => {
+  const regeneratePost = async (content: string, platform: Platform, voiceTone?: VoiceTone) => {
     const current = generatedPosts[platform]
     if (current?.isEdited) {
       const proceed = window.confirm('Das Regenerieren überschreibt Ihre Änderungen. Fortfahren?')
       if (!proceed) return null
     }
-    return generateSinglePost(content, platform, true)
+    return generateSinglePost(content, platform, true, voiceTone)
   }
 
   const isGenerating = (platform: Platform) =>

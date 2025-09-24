@@ -44,9 +44,10 @@ export function buildStructuredPostPrompt(options: PostGenerationOptions): strin
       return buildTwitterPrompt(content, postGoal, regenerationPrompt);
     case "instagram":
       return buildInstagramPrompt(content, postGoal, regenerationPrompt);
-    default:
+    default: {
       const _exhaustive: never = platform;
       throw new Error(`Unknown platform: ${_exhaustive}`);
+    }
   }
 }
 

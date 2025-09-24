@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Use edge runtime for better performance
 export const config = {
@@ -41,7 +40,7 @@ export default async function handler(req: Request) {
   try {
     // Check for authorization (optional - for user tracking)
     const authHeader = req.headers.get('authorization');
-    const hasAuth = authHeader?.startsWith('Bearer ');
+    const _hasAuth = authHeader?.startsWith('Bearer ');
 
     // Parse request body
     const { content } = await req.json();

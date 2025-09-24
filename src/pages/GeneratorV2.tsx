@@ -52,17 +52,6 @@ import { MobileBottomSheet, useMobileBottomSheet } from "@/components/mobile/Mob
 import { Bookmark } from "lucide-react";
 
 export default function GeneratorV2() {
-  // Feature flag check
-  const newUxEnabled = useFeatureFlag('NEW_UX', {
-    rolloutPercentage: 100,
-    analyticsEnabled: true
-  });
-
-  // If feature flag is disabled, use existing Generator
-  if (!newUxEnabled) {
-    return <GeneratorV1 />;
-  }
-
   // Mark app initialization
   useEffect(() => {
     perfMonitor.mark(PERF_MARKS.APP_INIT);
@@ -88,6 +77,17 @@ export default function GeneratorV2() {
   // const canExtract = () => isPremium || canGenerate; // Reserved for future use
   const isPro = hasAccess || isPremium;
   const { extractionUsage, extractContent } = useUrlExtraction();
+
+  // Feature flag check
+  const newUxEnabled = useFeatureFlag('NEW_UX', {
+    rolloutPercentage: 100,
+    analyticsEnabled: true
+  });
+
+  // If feature flag is disabled, use existing Generator
+  if (!newUxEnabled) {
+    return <GeneratorV1 />;
+  }
 
   // Fix Magic Link auth state synchronization
   useEffect(() => {
@@ -238,165 +238,178 @@ export default function GeneratorV2() {
     </div>
   ), [state.inputText, state.isExtracting, state.usePremiumExtraction, handleExtract, actions, isPro, extractionUsage?.remaining]);
 
-  // Render Output Area with loading states
+  // Stable Output Area - prevents layout jumping by maintaining consistent container
   const OutputArea = useMemo(() => {
-    // Show extraction loading state
-    if (state.isExtracting) {
-      return <ExtractingContent progress={state.extractionProgress} />;
-    }
+    const hasContent = Object.values(state.postsByPlatform).some(posts => posts.length > 0);
+    const isLoading = state.isExtracting || computed.isGeneratingAny;
 
-    // Show generation loading state
-    if (computed.isGeneratingAny && state.generationProgress.current) {
-      return <GeneratingPosts platform={state.generationProgress.current} />;
-    }
-
-    // Show generated posts
     return (
-      <div className="space-y-6">
-        {(["linkedin", "x", "instagram"] as Platform[]).map((platform) => {
-          const items = state.postsByPlatform[platform] || [];
-          if (items.length === 0) return null;
-
-          return (
-            <Card key={platform} className="shadow-xl border-0 bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>{PLATFORM_LABEL[platform]} – {items.length} Beiträge</CardTitle>
-                <CardDescription>Plattformspezifische Vorschau und Bearbeitung</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-6">
-                  {items.map((post, index) => {
-                  const postContent = typeof post === 'string' ? post : post.content;
-                  return (
-                    <Card key={index} className="border-muted/50 hover:shadow-lg transition-all duration-200 hover:border-primary/20">
-                      <CardContent className="p-6">
-                        {computed.isEditing && computed.editingPlatform === platform && computed.editingIndex === index ? (
-                          <div className="space-y-4">
-                            <CharacterCounterTextarea
-                              value={state.editingPost?.content || ''}
-                              onChange={(value) => actions.updateEditingContent(value)}
-                              platform={platform}
-                              rows={8}
-                            />
-                            <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="sm" onClick={actions.cancelEdit}>
-                                Abbrechen
-                              </Button>
-                              <SaveButton size="sm" onClick={handleSaveEdit} />
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-foreground whitespace-pre-wrap leading-relaxed mb-4">{postContent}</p>
-                            <div className="flex justify-between items-center pt-4 border-t border-muted/30">
-                              <Badge variant="outline" className="text-xs">
-                                {PLATFORM_LABEL[platform]} · Post #{index + 1}
-                              </Badge>
-                              <div className="flex gap-2">
-                                <CopyButton
-                                  text={postContent}
-                                  size="sm"
-                                  variant="ghost"
-                                  onCopy={() => toast.success('Beitrag kopiert!')}
-                                />
-                                <EditButton
-                                  size="sm"
-                                  onClick={() => actions.startEdit(platform, index, postContent)}
-                                  text=""
-                                  title="Beitrag bearbeiten"
-                                />
-                                <SaveButton
-                                  size="sm"
-                                  onClick={() => handleSavePost(postContent, platform)}
-                                  text=""
-                                  title="Beitrag speichern"
-                                />
-                                {/* Platform-specific share buttons */}
-                                {platform === "linkedin" && (
-                                  <LinkedInShareButton
-                                    size="sm"
-                                    text=""
-                                    onClick={async () => {
-                                      try {
-                                        // Call our secure backend endpoint instead of exposing credentials
-                                        const response = await fetch('/api/share/linkedin', {
-                                          method: 'POST',
-                                          headers: {
-                                            'Content-Type': 'application/json',
-                                            // Optional: Add auth token if user is logged in
-                                            ...(userEmail ? {
-                                              'Authorization': `Bearer ${localStorage.getItem('sb-access-token') || ''}`
-                                            } : {})
-                                          },
-                                          body: JSON.stringify({ content: postContent })
-                                        });
-
-                                        const result = await response.json();
-
-                                        if (result.success) {
-                                          toast.success("LinkedIn Draft erstellt! 🚀");
-                                          // Open LinkedIn posts page
-                                          if (result.linkedinUrl) {
-                                            window.open(result.linkedinUrl, "_blank");
-                                          }
-                                        } else if (result.fallback) {
-                                          // Use share dialog as fallback
-                                          const linkedinUrl = createLinkedInShareUrl(postContent);
-                                          window.open(linkedinUrl, "_blank");
-                                        } else {
-                                          throw new Error(result.error || 'Unknown error');
-                                        }
-                                      } catch (error) {
-                                        // Always fallback to share dialog on error
-                                        const linkedinUrl = createLinkedInShareUrl(postContent);
-                                        window.open(linkedinUrl, "_blank");
-                                      }
-                                    }}
-                                    title="Auf LinkedIn teilen"
-                                  />
-                                )}
-                                {platform === "x" && (
-                                  <XShareButton
-                                    size="sm"
-                                    text=""
-                                    tweetContent={postContent}
-                                    title="Auf X teilen"
-                                  />
-                                )}
-                                {platform === "instagram" && (
-                                  <InstagramShareButton
-                                    size="sm"
-                                    text=""
-                                    postContent={postContent}
-                                    title="Auf Instagram teilen"
-                                  />
-                                )}
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-
-        {/* Placeholder when no posts */}
-        {Object.values(state.postsByPlatform).every(posts => posts.length === 0) && (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>Noch keine Posts generiert</p>
-            <p className="text-sm mt-2">Füge Content hinzu und generiere Posts</p>
+      <div className="relative min-h-[400px] w-full">
+        {/* Loading Overlays - Absolutely positioned to prevent layout shifts */}
+        {state.isExtracting && (
+          <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-sm rounded-lg border border-border/50 flex items-center justify-center">
+            <ExtractingContent progress={state.extractionProgress} />
           </div>
         )}
+
+        {computed.isGeneratingAny && state.generationProgress.current && !state.isExtracting && (
+          <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-sm rounded-lg border border-border/50 flex items-center justify-center">
+            <GeneratingPosts platform={state.generationProgress.current} />
+          </div>
+        )}
+
+        {/* Main Content Area - Always present, prevents jumping */}
+        <div className={`space-y-6 transition-opacity duration-300 ${isLoading ? 'opacity-30' : 'opacity-100'}`}>
+          {(["linkedin", "x", "instagram"] as Platform[]).map((platform) => {
+            const items = state.postsByPlatform[platform] || [];
+            if (items.length === 0) return null;
+
+            return (
+              <Card key={platform} className="shadow-xl border-0 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle>{PLATFORM_LABEL[platform]} – {items.length} Beiträge</CardTitle>
+                  <CardDescription>Plattformspezifische Vorschau und Bearbeitung</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-6">
+                    {items.map((post, index) => {
+                    const postContent = typeof post === 'string' ? post : post.content;
+                    return (
+                      <Card key={index} className="border-muted/50 hover:shadow-lg transition-all duration-200 hover:border-primary/20">
+                        <CardContent className="p-6">
+                          {computed.isEditing && computed.editingPlatform === platform && computed.editingIndex === index ? (
+                            <div className="space-y-4">
+                              <CharacterCounterTextarea
+                                value={state.editingPost?.content || ''}
+                                onChange={(value) => actions.updateEditingContent(value)}
+                                platform={platform}
+                                rows={8}
+                              />
+                              <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="sm" onClick={actions.cancelEdit}>
+                                  Abbrechen
+                                </Button>
+                                <SaveButton size="sm" onClick={handleSaveEdit} />
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="text-foreground whitespace-pre-wrap leading-relaxed mb-4">{postContent}</p>
+                              <div className="flex justify-between items-center pt-4 border-t border-muted/30">
+                                <Badge variant="outline" className="text-xs">
+                                  {PLATFORM_LABEL[platform]} · Post #{index + 1}
+                                </Badge>
+                                <div className="flex gap-2">
+                                  <CopyButton
+                                    text={postContent}
+                                    size="sm"
+                                    variant="ghost"
+                                    onCopy={() => toast.success('Beitrag kopiert!')}
+                                  />
+                                  <EditButton
+                                    size="sm"
+                                    onClick={() => actions.startEdit(platform, index, postContent)}
+                                    text=""
+                                    title="Beitrag bearbeiten"
+                                  />
+                                  <SaveButton
+                                    size="sm"
+                                    onClick={() => handleSavePost(postContent, platform)}
+                                    text=""
+                                    title="Beitrag speichern"
+                                  />
+                                  {/* Platform-specific share buttons */}
+                                  {platform === "linkedin" && (
+                                    <LinkedInShareButton
+                                      size="sm"
+                                      text=""
+                                      onClick={async () => {
+                                        try {
+                                          // Call our secure backend endpoint instead of exposing credentials
+                                          const response = await fetch('/api/share/linkedin', {
+                                            method: 'POST',
+                                            headers: {
+                                              'Content-Type': 'application/json',
+                                              // Optional: Add auth token if user is logged in
+                                              ...(userEmail ? {
+                                                'Authorization': `Bearer ${localStorage.getItem('sb-access-token') || ''}`
+                                              } : {})
+                                            },
+                                            body: JSON.stringify({ content: postContent })
+                                          });
+
+                                          const result = await response.json();
+
+                                          if (result.success) {
+                                            toast.success("LinkedIn Draft erstellt! 🚀");
+                                            // Open LinkedIn posts page
+                                            if (result.linkedinUrl) {
+                                              window.open(result.linkedinUrl, "_blank");
+                                            }
+                                          } else if (result.fallback) {
+                                            // Use share dialog as fallback
+                                            const linkedinUrl = createLinkedInShareUrl(postContent);
+                                            window.open(linkedinUrl, "_blank");
+                                          } else {
+                                            throw new Error(result.error || 'Unknown error');
+                                          }
+                                        } catch (error) {
+                                          // Always fallback to share dialog on error
+                                          const linkedinUrl = createLinkedInShareUrl(postContent);
+                                          window.open(linkedinUrl, "_blank");
+                                        }
+                                      }}
+                                      title="Auf LinkedIn teilen"
+                                    />
+                                  )}
+                                  {platform === "x" && (
+                                    <XShareButton
+                                      size="sm"
+                                      text=""
+                                      tweetContent={postContent}
+                                      title="Auf X teilen"
+                                    />
+                                  )}
+                                  {platform === "instagram" && (
+                                    <InstagramShareButton
+                                      size="sm"
+                                      text=""
+                                      postContent={postContent}
+                                      title="Auf Instagram teilen"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          {/* Stable Empty State Placeholder */}
+          {!hasContent && (
+            <div className="text-center py-16 text-muted-foreground">
+              <div className="max-w-md mx-auto space-y-3">
+                <div className="w-16 h-16 mx-auto bg-muted/30 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl">✨</span>
+                </div>
+                <h3 className="text-lg font-medium text-foreground">Bereit für deinen ersten Post</h3>
+                <p className="text-sm">Füge Content hinzu und wähle eine Plattform aus</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   }, [state.isExtracting, state.extractionProgress, state.generationProgress, state.postsByPlatform, state.editingPost,
       computed.isGeneratingAny, computed.isEditing, computed.editingPlatform, computed.editingIndex,
-      handleSaveEdit, handleSavePost, actions]);
+      handleSaveEdit, handleSavePost, actions, userEmail]);
 
   // Main render with UnifiedLayout
   return (
