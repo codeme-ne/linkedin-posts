@@ -48,6 +48,21 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
     }
   }, [initialExpanded])
 
+  // Load collapse status from localStorage on mount and save on change
+  useEffect(() => {
+    const savedCollapsed = localStorage.getItem('savedPostsSidebarCollapsed')
+    if (savedCollapsed !== null) {
+      const isCollapsedFromStorage = JSON.parse(savedCollapsed)
+      setIsCollapsed(isCollapsedFromStorage)
+      onCollapse(isCollapsedFromStorage)
+    }
+  }, [onCollapse])
+
+  // Save collapse status to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('savedPostsSidebarCollapsed', JSON.stringify(isCollapsed))
+  }, [isCollapsed])
+
   const loadSavedPosts = async () => {
     setIsLoading(true)
     try {
@@ -221,7 +236,7 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
 
       {/* Desktop: Side panel (full right edge, below header) */}
       <div
-        className={`hidden md:block fixed right-0 top-16 h-[calc(100vh-4rem)] bg-white shadow-lg transition-transform duration-300 z-20 ${isCollapsed ? 'translate-x-[calc(100%-3rem)]' : 'translate-x-0'}`}
+        className={`hidden md:block fixed right-0 top-20 h-[calc(100vh-5rem)] bg-white shadow-lg transition-transform duration-300 z-30 ${isCollapsed ? 'translate-x-[calc(100%-3rem)]' : 'translate-x-0'}`}
         style={{ width: '22rem' }}
       >
         <div className="h-full flex flex-col">
