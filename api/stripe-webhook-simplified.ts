@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 // Fix TypeScript definition issue - invoice.subscription exists in API but not in types
 declare module 'stripe' {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Stripe {
     interface Invoice {
       subscription?: string | Stripe.Subscription | null;
@@ -199,7 +200,7 @@ export default async function handler(req: Request) {
         const subscription = event.data.object as Stripe.Subscription
         
         // In API version 2025-08-27.basil, current_period_start/end moved to subscription items
-        const firstItem = subscription.items?.data?.[0] as any
+        const firstItem = subscription.items?.data?.[0] as { current_period_start?: number; current_period_end?: number } | undefined
         const periodStart = firstItem?.current_period_start || Math.floor(Date.now() / 1000)
         const periodEnd = firstItem?.current_period_end || Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000)
         
@@ -287,9 +288,10 @@ export default async function handler(req: Request) {
       default:
         console.log(`Unhandled event type: ${event.type}`)
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
     console.error(`Webhook processing error for ${event.type}:`, error)
-    return new Response(`Webhook error: ${error.message}`, { status: 500 })
+    return new Response(`Webhook error: ${message}`, { status: 500 })
   }
 
   return new Response(JSON.stringify({ received: true }), { 
