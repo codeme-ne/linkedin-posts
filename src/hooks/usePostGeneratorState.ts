@@ -149,7 +149,7 @@ function postGeneratorReducer(
         usePremiumExtraction: action.enabled,
       };
 
-    case 'TOGGLE_PLATFORM':
+    case 'TOGGLE_PLATFORM': {
       const platforms = state.selectedPlatforms.includes(action.platform)
         ? state.selectedPlatforms.filter(p => p !== action.platform)
         : [...state.selectedPlatforms, action.platform];
@@ -158,6 +158,7 @@ function postGeneratorReducer(
         selectedPlatforms: platforms,
         isDirty: true,
       };
+    }
 
     case 'SET_PLATFORMS':
       return {
@@ -193,7 +194,7 @@ function postGeneratorReducer(
         errors: { ...state.errors, extraction: action.error },
       };
 
-    case 'START_GENERATION':
+    case 'START_GENERATION': {
       const newGenerating = new Set(state.isGenerating);
       newGenerating.add(action.platform);
       return {
@@ -207,8 +208,9 @@ function postGeneratorReducer(
           },
         },
       };
+    }
 
-    case 'COMPLETE_GENERATION':
+    case 'COMPLETE_GENERATION': {
       const updatedGenerating = new Set(state.isGenerating);
       updatedGenerating.delete(action.platform);
 
@@ -240,8 +242,9 @@ function postGeneratorReducer(
           },
         },
       };
+    }
 
-    case 'FAIL_GENERATION':
+    case 'FAIL_GENERATION': {
       const failGenerating = new Set(state.isGenerating);
       failGenerating.delete(action.platform);
       return {
@@ -255,6 +258,7 @@ function postGeneratorReducer(
           },
         },
       };
+    }
 
     case 'SET_GENERATION_PROGRESS':
       return {
@@ -309,7 +313,7 @@ function postGeneratorReducer(
         },
       };
 
-    case 'SAVE_EDIT':
+    case 'SAVE_EDIT': {
       if (!state.editingPost) return state;
       const { platform, index, content } = state.editingPost;
       const updatedPosts = [...(state.postsByPlatform[platform] || [])];
@@ -332,6 +336,7 @@ function postGeneratorReducer(
         editingPost: null,
         isDirty: true,
       };
+    }
 
     case 'CANCEL_EDIT':
       return {
@@ -339,7 +344,7 @@ function postGeneratorReducer(
         editingPost: null,
       };
 
-    case 'DELETE_POST':
+    case 'DELETE_POST': {
       const postsAfterDelete = [...(state.postsByPlatform[action.platform] || [])];
       postsAfterDelete.splice(action.index, 1);
 
@@ -351,8 +356,9 @@ function postGeneratorReducer(
         },
         isDirty: true,
       };
+    }
 
-    case 'REGENERATE_POST':
+    case 'REGENERATE_POST': {
       const postsToRegenerate = [...(state.postsByPlatform[action.platform] || [])];
       if (postsToRegenerate[action.index]) {
         postsToRegenerate[action.index] = {
@@ -368,6 +374,7 @@ function postGeneratorReducer(
           [action.platform]: postsToRegenerate,
         },
       };
+    }
 
     default:
       return state;
