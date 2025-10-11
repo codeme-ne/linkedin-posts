@@ -46,8 +46,6 @@ import { PLATFORM_LABEL } from "@/config/platforms";
 import { savePost } from "@/api/supabase";
 import { createLinkedInShareUrl } from "@/api/linkedin";
 
-// Import existing Generator for fallback
-import GeneratorV1 from "./Generator";
 import { MobileBottomSheet, useMobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
 import { Bookmark } from "lucide-react";
 
@@ -84,9 +82,19 @@ export default function GeneratorV2() {
     analyticsEnabled: true
   });
 
-  // If feature flag is disabled, use existing Generator
+  // If feature flag is disabled, show maintenance notice
   if (!newUxEnabled) {
-    return <GeneratorV1 />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-secondary flex items-center justify-center px-4">
+        <div className="max-w-xl w-full space-y-4 rounded-2xl border border-border/50 bg-background/80 backdrop-blur-sm p-8 text-center shadow-lg">
+          <h1 className="text-2xl font-semibold">Generator vorübergehend deaktiviert</h1>
+          <p className="text-muted-foreground">
+            Die klassische Version des Generators wurde entfernt. Bitte aktiviere das neue UX-Flag oder
+            wende dich an den Support, falls du weiterhin Zugriff auf den Generator benötigst.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   // Fix Magic Link auth state synchronization

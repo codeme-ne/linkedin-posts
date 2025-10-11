@@ -86,7 +86,7 @@ export const useContentGeneration = () => {
             progress: Math.round((completed / selectedPlatforms.length) * 100),
           }))
 
-          // Usage tracking now handled in Generator.tsx
+          // Usage tracking now handled in GeneratorV2.tsx
         } catch (platformError) {
           toast.error(`Fehler bei ${platformName}: ${platformError instanceof Error ? platformError.message : String(platformError)}`)
         }
