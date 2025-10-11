@@ -1,4 +1,4 @@
-import { getCorsHeaders, createCorsResponse, handlePreflight } from '../../utils/cors.js';
+import { createCorsResponse, handlePreflight } from '../../utils/cors.js';
 
 export const config = {
   runtime: 'edge',
