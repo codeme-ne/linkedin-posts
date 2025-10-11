@@ -235,8 +235,8 @@ function getCurrentUserGroup(): string {
  */
 function trackFeatureFlagUsage(event: FeatureFlagEvent): void {
   // Send to your analytics service
-  if (typeof window !== 'undefined' && (window as any).analytics) {
-    (window as any).analytics.track('Feature Flag Used', event);
+  if (typeof window !== 'undefined' && (window as { analytics?: { track: (name: string, data: unknown) => void } }).analytics) {
+    (window as { analytics?: { track: (name: string, data: unknown) => void } }).analytics?.track('Feature Flag Used', event);
   }
 
   // Log to console in development
@@ -250,8 +250,8 @@ function trackFeatureFlagUsage(event: FeatureFlagEvent): void {
  */
 function trackABTestAssignment(testName: string, variant: string): void {
   // Send to your analytics service
-  if (typeof window !== 'undefined' && (window as any).analytics) {
-    (window as any).analytics.track('A/B Test Assignment', {
+  if (typeof window !== 'undefined' && (window as { analytics?: { track: (name: string, data: unknown) => void } }).analytics) {
+    (window as { analytics?: { track: (name: string, data: unknown) => void } }).analytics?.track('A/B Test Assignment', {
       test: testName,
       variant,
       timestamp: Date.now(),

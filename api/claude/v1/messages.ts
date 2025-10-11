@@ -8,7 +8,6 @@ export const config = {
 export default async function handler(req: Request) {
   // Get CORS headers
   const origin = req.headers.get('origin');
-  const headers = getCorsHeaders(origin);
 
   // Handle preflight
   if (req.method === 'OPTIONS') {
@@ -29,7 +28,7 @@ export default async function handler(req: Request) {
     let body;
     try {
       body = await req.json();
-    } catch (parseError) {
+    } catch {
       return createCorsResponse({
         error: 'Invalid JSON in request body',
         code: 'INVALID_JSON'
