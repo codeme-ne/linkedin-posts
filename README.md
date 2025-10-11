@@ -155,7 +155,7 @@ New feature allowing platform-specific post generation:
 - **Hook**: `useContentGeneration` with `generateSinglePost`, `regeneratePost`
 - **UI**: `PlatformGenerators` renders individual platform cards
 - **Prompting**: `src/libs/promptBuilder.ts` handles platform-specific prompts
-- **Location**: Integrated in `src/pages/Generator.tsx`
+- **Location**: Integrated in `src/pages/GeneratorV2.tsx`
 
 ### AI Content Transformation
 
