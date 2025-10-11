@@ -84,11 +84,6 @@ export default function GeneratorV2() {
     analyticsEnabled: true
   });
 
-  // If feature flag is disabled, use existing Generator
-  if (!newUxEnabled) {
-    return <GeneratorV1 />;
-  }
-
   // Fix Magic Link auth state synchronization
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -410,6 +405,11 @@ export default function GeneratorV2() {
   }, [state.isExtracting, state.extractionProgress, state.generationProgress, state.postsByPlatform, state.editingPost,
       computed.isGeneratingAny, computed.isEditing, computed.editingPlatform, computed.editingIndex,
       handleSaveEdit, handleSavePost, actions, userEmail]);
+
+  // If feature flag is disabled, use existing Generator
+  if (!newUxEnabled) {
+    return <GeneratorV1 />;
+  }
 
   // Main render with UnifiedLayout
   return (

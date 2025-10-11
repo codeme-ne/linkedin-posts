@@ -38,7 +38,7 @@ export async function linkedInPostsFromNewsletter(content: string) {
    // Fallback: if no LINKEDIN: prefix found, take the whole text
    const cleanText = text.replace(/^\s*LINKEDIN:\s*/, '').trim();
    return cleanText ? [cleanText] : [];
-  } catch (error) {
+  } catch {
     throw new Error('Failed to remix content');
   }
 } 
@@ -110,7 +110,7 @@ export async function xTweetsFromBlog(content: string) {
 
     // Return array with single tweet
     return cleanedTweet ? [cleanedTweet] : [];
-  } catch (error) {
+  } catch {
     throw new Error('Failed to generate X tweets');
   }
 }
@@ -158,7 +158,7 @@ export async function instagramPostsFromBlog(content: string) {
     // Last fallback: if no INSTAGRAM: prefix found, take the whole text
     const cleanText = text.replace(/^\s*INSTAGRAM:\s*/, '').trim();
     return cleanText ? [cleanText] : [];
-  } catch (error) {
+  } catch {
     throw new Error('Failed to generate Instagram posts');
   }
 }
