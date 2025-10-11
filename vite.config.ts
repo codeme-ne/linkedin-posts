@@ -53,9 +53,9 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
         secure: false,
-        configure: (proxy: any) => {
+        configure: (proxy: unknown) => {
           // Fallback falls Vercel nicht läuft - bessere Error Messages
-          proxy.on('error', (_err: any, _req: any, res: any) => {
+          (proxy as { on: (event: string, handler: (...args: unknown[]) => void) => void }).on('error', (_err: unknown, _req: unknown, res: unknown) => {
             console.log('\n🚨 API Proxy Error: Vercel dev server nicht erreichbar auf Port 3001')
             console.log('💡 Tipp: Starte "vercel dev --port 3001" in einem separaten Terminal')
             if ('writeHead' in res) {

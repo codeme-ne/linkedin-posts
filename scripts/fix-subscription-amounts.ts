@@ -9,7 +9,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import _config from '../src/config/app.config';
+// import config from '../src/config/app.config';
 import dotenv from 'dotenv';
 
 // Load environment variables

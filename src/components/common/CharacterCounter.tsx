@@ -27,7 +27,7 @@ export function CharacterCounter({
   showWarnings = true,
   className,
   position = 'inline',
-  onChange: _onChange, // Not used in display component
+  // onChange not used in display component
 }: CharacterCounterProps) {
   const [isAnimating, setIsAnimating] = useState(false);
 

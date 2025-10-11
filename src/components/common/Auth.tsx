@@ -21,7 +21,7 @@ export function Auth() {
 
   // Safely reconcile pending subscription on the server (service role)
   // Instead of writing from the client (RLS-safe and avoids duplication)
-  const checkPendingSubscription = async (_userEmail: string, _userId: string) => {
+  const checkPendingSubscription = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.access_token) return
@@ -34,7 +34,7 @@ export function Auth() {
       if (json?.activated) {
         toast.success('🎉 Ihr Pro-Abo wurde aktiviert! - Sie haben jetzt Zugang zu allen Pro-Features.')
       }
-    } catch (err) {
+    } catch {
       // Silent failure for subscription reconciliation
     }
   }
@@ -80,7 +80,7 @@ export function Auth() {
           
           // Check for pending subscription
           if (data.user) {
-            await checkPendingSubscription(email, data.user.id)
+            await checkPendingSubscription()
           }
         }
       } else {
@@ -99,7 +99,7 @@ export function Auth() {
           
           // Check for pending subscription on login too
           if (data.user) {
-            await checkPendingSubscription(data.user.email || email, data.user.id)
+            await checkPendingSubscription()
           }
         }
       }

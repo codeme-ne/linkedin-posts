@@ -59,7 +59,7 @@ export default async function handler(req: Request) {
       .from('subscriptions')
       .select('id, stripe_customer_id')
       .eq('user_id', user.id)
-      .single() as { data: SubscriptionRow | null; error: any };
+      .single() as { data: SubscriptionRow | null; error: unknown };
 
     if (subscriptionError || !subscription) {
       console.error('Subscription fetch error:', subscriptionError);
