@@ -6,7 +6,9 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // @ts-expect-error - Vitest config is valid but TypeScript doesn't recognize it in base vite config
+  // @ts-expect-error - Vitest extends Vite's config with a 'test' property.
+  // Using 'vitest/config' would cause plugin type conflicts with @vitejs/plugin-react.
+  // This is the recommended approach per Vitest docs when using Vite plugins.
   test: {
     globals: true,
     environment: 'jsdom',
