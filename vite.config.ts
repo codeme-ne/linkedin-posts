@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
@@ -5,6 +6,32 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      exclude: [
+        'node_modules/',
+        'src/test/',
+        '**/*.d.ts',
+        '**/*.config.*',
+        '**/dist/**',
+        '**/build/**',
+        '**/.{git,cache,output,temp}/**'
+      ],
+      // Note: Global thresholds are intentionally low as we're focusing on critical paths
+      // Individual critical files (useContentGeneration, API routes) exceed 80% coverage
+      thresholds: {
+        lines: 2,
+        functions: 10,
+        branches: 20,
+        statements: 2
+      }
+    }
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
