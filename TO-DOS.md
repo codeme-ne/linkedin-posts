@@ -2,7 +2,7 @@
 
 ## Resolved - 2025-11-26
 
-All critical and medium priority items from code review have been resolved in commit `672be42`.
+All critical and medium priority items from code review have been resolved.
 
 ### Critical Fixes (All Resolved)
 - ✅ **Move LinkedIn token to server-side** - Removed VITE_ prefix exposure, token now server-only
@@ -18,15 +18,11 @@ All critical and medium priority items from code review have been resolved in co
 - ✅ **Fix state accumulation memory leak** - Added cleanup effect on unmount
 - ✅ **Clean up localStorage usage tracking** - Added cleanup of stale `usage_*` keys
 
-## Manual Action Required
+### Database (All Applied via Supabase CLI)
+- ✅ **Database indexes** - Already present from migration 007
+- ✅ **get_user_id_by_email function** - Applied via `20251126_add_get_user_id_by_email_function.sql`
+- ✅ **processed_webhooks table** - Applied via `20250126_create_processed_webhooks.sql`
 
-- ⚠️ **Add database indexes** - Run the following SQL in Supabase:
-  ```sql
-  CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
-  CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_subscription_id ON subscriptions(stripe_subscription_id);
-  CREATE INDEX IF NOT EXISTS idx_subscriptions_is_active ON subscriptions(is_active);
-  ```
-
-- ⚠️ **Run database migrations** - Apply migrations from `supabase/migrations/`:
-  - `20251126_add_get_user_id_by_email_function.sql`
-  - `20250126_create_processed_webhooks.sql`
+## Commits
+- `672be42` - fix: resolve critical security, performance, and code quality issues
+- `88c8d05` - docs: update TO-DOS.md with resolved items
