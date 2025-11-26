@@ -94,3 +94,18 @@ All tables have Row‑Level Security (RLS) enabled.
         Service role can manage pending subscriptions – ALL – condition auth.role() = 'service_role'
 
 All policies are permissive (the default for Supabase) and apply to the public role, which is what the client‑side anon and authenticated roles are mapped to after authentication.
+## Webhook Idempotency
+
+The `processed_webhooks` table enables replay protection for Stripe webhooks:
+
+- Every webhook event is checked against this table before processing
+- If `event_id` exists, the webhook is skipped (200 response with `duplicate: true`)
+- After successful processing, the event is recorded with timestamp
+- RLS policies restrict access to service role only (server-side only)
+
+Migration: `supabase/migrations/20250126_create_processed_webhooks.sql`
+
+Implementation in `api/stripe-webhook-simplified.ts`:
+- Line 56: Timestamp tolerance (300s) prevents replay attacks
+- Lines 72-85: Idempotency check before processing
+- Lines 321-328: Mark event as processed after successful handling

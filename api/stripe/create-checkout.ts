@@ -1,5 +1,6 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { parseJsonSafely } from '../utils/safeJson'
 
 export const config = {
   runtime: 'edge',
@@ -22,8 +23,22 @@ export default async function handler(req: Request) {
   }
 
   try {
-    const body = await req.json()
-    const { priceId, mode = 'payment', successUrl, cancelUrl } = body
+    // Parse with size limit (10KB is plenty for checkout requests)
+    const parseResult = await parseJsonSafely<{
+      priceId?: string;
+      mode?: 'payment' | 'subscription';
+      successUrl?: string;
+      cancelUrl?: string;
+    }>(req, 10 * 1024);
+
+    if (!parseResult.success) {
+      return new Response(
+        JSON.stringify({ error: parseResult.error }),
+        { status: parseResult.error.includes('too large') ? 413 : 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { priceId, mode = 'payment', successUrl, cancelUrl } = parseResult.data
 
     if (!priceId) {
       return new Response(JSON.stringify({ error: 'Price ID is required' }), { 

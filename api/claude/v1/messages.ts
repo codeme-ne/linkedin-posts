@@ -1,4 +1,5 @@
 import { getCorsHeaders, createCorsResponse, handlePreflight } from '../../utils/cors';
+import { parseJsonSafely } from '../../utils/safeJson';
 
 export const config = {
   runtime: 'edge',
@@ -25,16 +26,15 @@ export default async function handler(req: Request) {
   }
 
   try {
-    // Validate and parse request body
-    let body;
-    try {
-      body = await req.json();
-    } catch (parseError) {
+    // Validate and parse request body with size limit (100KB for AI prompts)
+    const parseResult = await parseJsonSafely<{ messages?: unknown[]; [key: string]: unknown }>(req, 100 * 1024);
+    if (!parseResult.success) {
       return createCorsResponse({
-        error: 'Invalid JSON in request body',
-        code: 'INVALID_JSON'
-      }, { status: 400, origin });
+        error: parseResult.error,
+        code: parseResult.error.includes('too large') ? 'PAYLOAD_TOO_LARGE' : 'INVALID_JSON'
+      }, { status: parseResult.error.includes('too large') ? 413 : 400, origin });
     }
+    const body = parseResult.data;
     
     // Validate required fields
     if (!body.messages || !Array.isArray(body.messages)) {

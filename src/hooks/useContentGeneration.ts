@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { linkedInPostsFromNewsletter, xTweetsFromBlog, instagramPostsFromBlog } from '@/api/claude'
 import type { Platform } from '@/config/platforms'
@@ -36,6 +36,15 @@ export const useContentGeneration = () => {
   // Free tier usage from subscription
   const { decrementUsage, hasUsageRemaining } = useSubscription()
 
+  // Cleanup on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      setGeneratedPosts({})
+      setActiveGenerations(new Set())
+      setPostsByPlatform({ linkedin: [], x: [], instagram: [] })
+    }
+  }, [])
+
   const generateContent = async (inputText: string, selectedPlatforms: Platform[]) => {
     if (!inputText.trim()) {
       toast.error("Bitte gib einen Text ein")
@@ -52,19 +61,19 @@ export const useContentGeneration = () => {
 
     try {
       const newPosts: Record<Platform, string[]> = { linkedin: [], x: [], instagram: [] }
-      let completed = 0
 
-      for (const platform of selectedPlatforms) {
+      // Show progress for parallel generation
+      setGenerationProgress(prev => ({
+        ...prev,
+        currentPlatform: "Alle Plattformen",
+        progress: 10,
+      }))
+
+      // Create parallel promise array for all platforms
+      const platformPromises = selectedPlatforms.map(async (platform) => {
         const platformName = PLATFORM_LABEL[platform]
-        setGenerationProgress(prev => ({
-          ...prev,
-          currentPlatform: platformName,
-          progress: Math.round((completed / selectedPlatforms.length) * 100),
-        }))
-
         try {
           let posts: string[] = []
-          
           switch (platform) {
             case 'linkedin':
               posts = await linkedInPostsFromNewsletter(inputText)
@@ -76,21 +85,38 @@ export const useContentGeneration = () => {
               posts = await instagramPostsFromBlog(inputText)
               break
           }
+          return { platform, posts, success: true, platformName }
+        } catch (error) {
+          return { platform, posts: [] as string[], success: false, error, platformName }
+        }
+      })
 
-          newPosts[platform] = posts
-          completed++
-          
-          setGenerationProgress(prev => ({
-            ...prev,
-            completedPlatforms: completed,
-            progress: Math.round((completed / selectedPlatforms.length) * 100),
-          }))
+      // Execute all in parallel
+      const results = await Promise.allSettled(platformPromises)
 
-          // Usage tracking now handled in GeneratorV2.tsx
-        } catch (platformError) {
-          toast.error(`Fehler bei ${platformName}: ${platformError instanceof Error ? platformError.message : String(platformError)}`)
+      // Process results and handle errors gracefully
+      let completed = 0
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          const { platform, posts, success, platformName, error } = result.value
+          if (success) {
+            newPosts[platform] = posts
+            completed++
+          } else {
+            toast.error(`Fehler bei ${platformName}: ${error instanceof Error ? error.message : String(error)}`)
+          }
+        } else {
+          // Handle rejected promise (shouldn't happen with our try-catch, but be safe)
+          toast.error(`Unerwarteter Fehler bei der Generierung`)
         }
       }
+
+      // Update progress after all complete
+      setGenerationProgress(prev => ({
+        ...prev,
+        completedPlatforms: completed,
+        progress: 100,
+      }))
 
       setPostsByPlatform(prev => ({ ...prev, ...newPosts }))
       
@@ -222,7 +248,22 @@ export const useContentGeneration = () => {
 
   const clearPosts = () => {
     setPostsByPlatform({ linkedin: [], x: [], instagram: [] })
+    setGeneratedPosts({})
+    setActiveGenerations(new Set())
   }
+
+  // Full session reset for memory management
+  const resetSession = useCallback(() => {
+    setPostsByPlatform({ linkedin: [], x: [], instagram: [] })
+    setGeneratedPosts({})
+    setActiveGenerations(new Set())
+    setGenerationProgress({
+      progress: 0,
+      currentPlatform: "",
+      totalPlatforms: 0,
+      completedPlatforms: 0,
+    })
+  }, [])
 
   return {
     postsByPlatform,
@@ -238,6 +279,7 @@ export const useContentGeneration = () => {
     isGenerating,
     updatePost,
     clearPosts,
+    resetSession,
     // Upgrade modal state
     showUpgradeModal,
     setShowUpgradeModal,

@@ -10,9 +10,7 @@ const clientSchema = z.object({
   VITE_STRIPE_PAYMENT_LINK: z.string().url().optional(),
   VITE_STRIPE_PAYMENT_LINK_YEARLY: z.string().url().optional(),
   VITE_STRIPE_PAYMENT_LINK_MONTHLY: z.string().url().optional(),
-  // LinkedIn optional
-  VITE_LINKEDIN_ACCESS_TOKEN: z.string().optional(),
-  VITE_LINKEDIN_AUTHOR_URN: z.string().optional(),
+  // LinkedIn moved to server-side for security (no longer VITE_ prefixed)
 });
 
 // Schema for server-side environment variables (for Edge functions)
@@ -26,6 +24,10 @@ const serverSchema = z.object({
   // Optional services
   FIRECRAWL_API_KEY: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
+
+  // LinkedIn (optional, server-side only)
+  LINKEDIN_ACCESS_TOKEN: z.string().optional(),
+  LINKEDIN_AUTHOR_URN: z.string().optional(),
 
   // Supabase URL fallback for server-side (can use VITE_ version)
   SUPABASE_URL: z.string().url().optional(),

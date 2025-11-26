@@ -19,9 +19,9 @@ export interface EnvironmentVariables {
   STRIPE_WEBHOOK_SECRET?: string;
   STRIPE_SECRET_KEY?: string;
   
-  // LinkedIn (optional)
-  VITE_LINKEDIN_ACCESS_TOKEN?: string;
-  VITE_LINKEDIN_AUTHOR_URN?: string;
+  // LinkedIn (server-side only for security, no VITE_ prefix)
+  LINKEDIN_ACCESS_TOKEN?: string;
+  LINKEDIN_AUTHOR_URN?: string;
   
   // Firecrawl (optional)
   FIRECRAWL_API_KEY?: string;
@@ -174,13 +174,24 @@ export function getSupabaseConfig() {
 }
 
 /**
- * Get LinkedIn configuration
+ * Get LinkedIn configuration (server-side only)
+ * Client should call /api/share/linkedin which handles credentials securely
  */
 export function getLinkedInConfig() {
+  // Only available server-side (without VITE_ prefix)
+  if (typeof process !== 'undefined' && process.env) {
+    return {
+      accessToken: process.env.LINKEDIN_ACCESS_TOKEN,
+      authorUrn: process.env.LINKEDIN_AUTHOR_URN,
+      isEnabled: !!(process.env.LINKEDIN_ACCESS_TOKEN && process.env.LINKEDIN_AUTHOR_URN)
+    };
+  }
+
+  // Client-side: credentials not available (security)
   return {
-    accessToken: getEnvVar('VITE_LINKEDIN_ACCESS_TOKEN'),
-    authorUrn: getEnvVar('VITE_LINKEDIN_AUTHOR_URN'),
-    isEnabled: !!(getEnvVar('VITE_LINKEDIN_ACCESS_TOKEN') && getEnvVar('VITE_LINKEDIN_AUTHOR_URN'))
+    accessToken: undefined,
+    authorUrn: undefined,
+    isEnabled: false
   };
 }
 

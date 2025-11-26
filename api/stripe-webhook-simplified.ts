@@ -51,11 +51,37 @@ export default async function handler(req: Request) {
   let event: Stripe.Event
 
   try {
-    // Verify webhook signature
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
+    // Verify webhook signature with 5-minute timestamp tolerance (300 seconds)
+    // This prevents replay attacks by rejecting events older than 5 minutes
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret, 300)
   } catch (err: any) {
     console.error(`Webhook signature verification failed: ${err.message}`)
     return new Response(`Webhook signature verification failed: ${err.message}`, { status: 400 })
+  }
+
+  // Check for duplicate webhook (idempotency protection)
+  // Prevents processing the same event multiple times if Stripe retries
+  // NOTE: Requires Supabase migration:
+  // CREATE TABLE processed_webhooks (
+  //   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  //   event_id TEXT UNIQUE NOT NULL,
+  //   event_type TEXT NOT NULL,
+  //   processed_at TIMESTAMPTZ DEFAULT NOW()
+  // );
+  // CREATE INDEX idx_processed_webhooks_event_id ON processed_webhooks(event_id);
+  const eventId = event.id
+  const { data: existingEvent } = await supabase
+    .from('processed_webhooks')
+    .select('id')
+    .eq('event_id', eventId)
+    .single()
+
+  if (existingEvent) {
+    console.log(`Duplicate webhook event ${eventId}, skipping`)
+    return new Response(JSON.stringify({ received: true, duplicate: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    })
   }
 
   console.log(`Processing Stripe event: ${event.type}`)
@@ -84,24 +110,24 @@ export default async function handler(req: Request) {
         
         // If no user ID, find/create user by email (ShipFast pattern)
         if (!userId && customer.email) {
-          // Try to find existing user
-          const { data: existingUser } = await supabase.auth.admin.listUsers()
-          const user = existingUser.users.find(u => u.email === customer.email)
-          
-          if (user) {
-            userId = user.id
+          // Try to find existing user using RPC function (O(1) query instead of O(n))
+          const { data: existingUserId, error: rpcError } = await supabase
+            .rpc('get_user_id_by_email', { user_email: customer.email })
+
+          if (!rpcError && existingUserId) {
+            userId = existingUserId
           } else {
             // Create new user
             const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
               email: customer.email,
               email_confirm: true,
             })
-            
+
             if (createError) {
               console.error('Failed to create user:', createError)
               break
             }
-            
+
             userId = newUser.user?.id
           }
         }
@@ -291,7 +317,17 @@ export default async function handler(req: Request) {
     return new Response(`Webhook error: ${error.message}`, { status: 500 })
   }
 
-  return new Response(JSON.stringify({ received: true }), { 
+  // Mark webhook as processed to prevent duplicate handling
+  const { error: recordError } = await supabase.from('processed_webhooks').insert({
+    event_id: event.id,
+    event_type: event.type,
+    processed_at: new Date().toISOString()
+  })
+  if (recordError) {
+    console.error('Failed to record webhook:', recordError)
+  }
+
+  return new Response(JSON.stringify({ received: true }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' }
   })

@@ -116,8 +116,25 @@ export function useSubscription() {
 
   // === Single-Post usage helpers (free tier) ===
   const [usageCount, setUsageCount] = useState<number>(() => {
-    const today = new Date().toDateString();
-    return parseInt(localStorage.getItem(`usage_${today}`) || '0', 10);
+    const today = new Date().toDateString()
+    const todayKey = `usage_${today}`
+
+    // Cleanup old usage entries (keep only today's)
+    try {
+      const keysToRemove: string[] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.startsWith('usage_') && key !== todayKey) {
+          keysToRemove.push(key)
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key))
+    } catch (e) {
+      // localStorage might be unavailable in some contexts
+      console.warn('Failed to cleanup localStorage:', e)
+    }
+
+    return parseInt(localStorage.getItem(todayKey) || '0', 10)
   })
 
   const decrementUsage = useCallback(() => {

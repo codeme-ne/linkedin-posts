@@ -3,7 +3,16 @@
  * Handles origin validation and header generation for API routes
  */
 
-const ALLOWED_ORIGINS_PROD = (process.env.ALLOWED_ORIGINS_PROD || '').split(',').filter(Boolean);
+// Production fallback domains if ALLOWED_ORIGINS_PROD is not set
+const PRODUCTION_FALLBACK_ORIGINS = [
+  'https://linkedin-posts-one.vercel.app',
+  'https://transformer.social'
+];
+
+const ALLOWED_ORIGINS_PROD = process.env.ALLOWED_ORIGINS_PROD
+  ? process.env.ALLOWED_ORIGINS_PROD.split(',').filter(Boolean)
+  : PRODUCTION_FALLBACK_ORIGINS;
+
 const ALLOWED_ORIGINS_DEV = (process.env.ALLOWED_ORIGINS_DEV || 'http://localhost:5173,http://localhost:5174,http://localhost:3000').split(',').filter(Boolean);
 
 const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
@@ -22,10 +31,19 @@ export function getCorsHeaders(origin: string | null): Record<string, string> {
     'Vary': 'Origin', // Important for caching
   };
 
-  // Allow all origins in development for easier local development
+  // Development mode: validate origin is localhost before allowing credentials
   if (isDevelopment) {
-    headers['Access-Control-Allow-Origin'] = origin || '*';
-    headers['Access-Control-Allow-Credentials'] = 'true';
+    // Validate origin is localhost before allowing credentials
+    if (origin && /^http:\/\/localhost:\d+$/.test(origin)) {
+      headers['Access-Control-Allow-Origin'] = origin;
+      headers['Access-Control-Allow-Credentials'] = 'true';
+    } else if (origin) {
+      // Non-localhost origin in dev - allow without credentials
+      headers['Access-Control-Allow-Origin'] = origin;
+    } else {
+      // No origin - default to localhost:5173
+      headers['Access-Control-Allow-Origin'] = 'http://localhost:5173';
+    }
     return headers;
   }
 
@@ -118,6 +136,11 @@ export function validateCorsConfig(): void {
     console.log('🔒 CORS Development Mode - All origins allowed');
     console.log('📝 Dev origins:', ALLOWED_ORIGINS_DEV.join(', '));
     return;
+  }
+
+  if (!process.env.ALLOWED_ORIGINS_PROD) {
+    console.warn('⚠️  CORS: ALLOWED_ORIGINS_PROD not set, using fallback domains');
+    console.warn('📝 Fallback origins:', PRODUCTION_FALLBACK_ORIGINS.join(', '));
   }
 
   if (ALLOWED_ORIGINS_PROD.length === 0) {

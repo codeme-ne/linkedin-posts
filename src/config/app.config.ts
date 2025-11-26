@@ -184,7 +184,8 @@ const config: AppConfig = {
     linkedinPosting: {
       name: "LinkedIn Direct Posting",
       description: "Direkt zu LinkedIn posten",
-      enabled: !!import.meta.env.VITE_LINKEDIN_ACCESS_TOKEN,
+      // Feature controlled server-side - token never exposed to client
+      enabled: false,
       requiresAuth: true,
       requiresSubscription: true
     },
@@ -336,10 +337,8 @@ export function getEnvironmentConfig() {
         legacy: import.meta.env.VITE_STRIPE_PAYMENT_LINK
       }
     },
-    linkedin: {
-      accessToken: import.meta.env.VITE_LINKEDIN_ACCESS_TOKEN,
-      authorUrn: import.meta.env.VITE_LINKEDIN_AUTHOR_URN
-    },
+    // LinkedIn credentials removed from client-side config for security
+    // Server-side API at /api/share/linkedin.ts uses LINKEDIN_ACCESS_TOKEN (without VITE_ prefix)
     tracking: {
       opikApiKey: import.meta.env.VITE_OPIK_API_KEY
     }

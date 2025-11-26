@@ -2,6 +2,8 @@
 // Unbegrenzter Zugang für Premium-Nutzer (ShipFast-Pattern)
 
 import { createClient } from '@supabase/supabase-js';
+import { isUrlSafe } from './utils/urlValidation';
+import { parseJsonSafely } from './utils/safeJson';
 
 export const config = {
   runtime: 'edge',
@@ -62,33 +64,6 @@ async function getUserFromAuth(authHeader: string, supabase: ReturnType<typeof g
   }
 }
 
-// ShipFast Pattern: Simple Premium Access Check
-async function checkPremiumAccess(
-  supabase: ReturnType<typeof getSupabaseClient>, 
-  userId: string
-): Promise<{ hasAccess: boolean; error?: string }> {
-  try {
-    const { data: subscription, error } = await supabase
-      .from('subscriptions')
-      .select('is_active')
-      .eq('user_id', userId)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // No subscription found - user is not premium
-        return { hasAccess: false };
-      }
-      console.error('Subscription check error:', error);
-      return { hasAccess: false, error: 'Subscription check failed' };
-    }
-
-    return { hasAccess: subscription?.is_active === true };
-  } catch (error) {
-    console.error('Premium access check error:', error);
-    return { hasAccess: false, error: 'Internal error during access check' };
-  }
-}
 
 // CORS Origin validation
 function getAllowedOrigins(): string[] {
@@ -152,16 +127,17 @@ export default async function handler(req: Request) {
       );
     }
 
-    // 2. Subscription prüfen
+    // 2. Subscription prüfen (single query for both status and access)
     const { data: subscription, error: subError } = await supabase
       .from('subscriptions')
-      .select('*')
+      .select('status, is_active')
       .eq('user_id', user.id)
       .single();
 
-    if (subError || subscription?.status !== 'active') {
+    // Check subscription exists and is active
+    if (subError || !subscription) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: 'Premium-Abo erforderlich',
           details: 'Diese Funktion ist nur für Nutzer mit aktivem Premium-Abo verfügbar.'
         }),
@@ -169,9 +145,26 @@ export default async function handler(req: Request) {
       );
     }
 
-    // 3. Request-Body parsen
-    const { url } = (await req.json()) as ExtractPremiumRequest;
-    
+    // ShipFast pattern: is_active is the Single Source of Truth
+    if (!subscription.is_active) {
+      return new Response(
+        JSON.stringify({
+          error: 'Premium-Zugang erforderlich. Upgrade zu Premium für unbegrenzte Extraktionen.',
+        }),
+        { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 3. Request-Body parsen with size limit (10KB for URL extraction requests)
+    const parseResult = await parseJsonSafely<ExtractPremiumRequest>(req, 10 * 1024);
+    if (!parseResult.success) {
+      return new Response(
+        JSON.stringify({ error: parseResult.error }),
+        { status: parseResult.error.includes('too large') ? 413 : 400, headers: { ...cors, 'Content-Type': 'application/json' } }
+      );
+    }
+    const { url } = parseResult.data;
+
     if (!url || typeof url !== 'string') {
       return new Response(
         JSON.stringify({ error: 'URL-Parameter fehlt' }),
@@ -179,32 +172,16 @@ export default async function handler(req: Request) {
       );
     }
 
-    // URL validieren
-    try {
-      const urlObj = new URL(url);
-      if (!/^https?:$/.test(urlObj.protocol)) {
-        throw new Error('Ungültiges Protokoll');
-      }
-    } catch {
+    // SSRF Protection: Validate URL safety
+    const validation = isUrlSafe(url);
+    if (!validation.safe) {
       return new Response(
-        JSON.stringify({ error: 'Ungültiges URL-Format' }),
+        JSON.stringify({ error: validation.error }),
         { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } }
       );
     }
 
-    // 4. Premium-Zugang prüfen
-    const { hasAccess, error: accessError } = await checkPremiumAccess(supabase, user.id);
-    
-    if (!hasAccess) {
-      return new Response(
-        JSON.stringify({ 
-          error: accessError || 'Premium-Zugang erforderlich. Upgrade zu Premium für unbegrenzte Extraktionen.',
-        }),
-        { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // 5. Firecrawl API aufrufen
+    // 4. Firecrawl API aufrufen
     const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
     if (!firecrawlApiKey) {
       console.error('FIRECRAWL_API_KEY nicht konfiguriert');

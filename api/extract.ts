@@ -107,6 +107,7 @@ function truncateContent(content: string): string {
 }
 
 import { getCorsHeaders } from './utils/cors';
+import { isUrlSafe } from './utils/urlValidation';
 
 export default async function handler(req: Request) {
   // Get CORS headers
@@ -135,14 +136,10 @@ export default async function handler(req: Request) {
       });
     }
 
-    // Basic URL validation
-    try {
-      const u = new URL(url);
-      if (!/^https?:$/.test(u.protocol)) {
-        throw new Error('Invalid protocol');
-      }
-    } catch {
-      return new Response(JSON.stringify({ error: 'Invalid URL format' }), {
+    // SSRF Protection: Validate URL safety
+    const validation = isUrlSafe(url);
+    if (!validation.safe) {
+      return new Response(JSON.stringify({ error: validation.error }), {
         status: 400,
         headers: { ...cors, 'Content-Type': 'application/json' },
       });
