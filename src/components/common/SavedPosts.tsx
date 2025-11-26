@@ -24,6 +24,119 @@ interface SavedPostsProps {
   initialExpanded?: boolean;
 }
 
+interface PostCardProps {
+  post: SavedPost;
+  editingPost: { id: number; content: string } | null;
+  onEdit: (id: number, content: string) => void;
+  onDelete: (id: number) => void;
+  onStartEdit: (id: number, content: string) => void;
+  onCancelEdit: () => void;
+  onEditContentChange: (content: string) => void;
+}
+
+/**
+ * Memoized post card component for both mobile and desktop layouts.
+ * Uses responsive Tailwind classes to adapt padding, text size, and spacing.
+ */
+const PostCard = memo(({ post, editingPost, onEdit, onDelete, onStartEdit, onCancelEdit, onEditContentChange }: PostCardProps) => {
+  const isEditing = editingPost?.id === post.id
+
+  return (
+    <div className="p-3 md:p-4 rounded-lg border border-gray-200 bg-white">
+      {isEditing ? (
+        <div className="space-y-2">
+          <textarea
+            value={editingPost.content}
+            onChange={(e) => onEditContentChange(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg text-sm md:text-base resize-y"
+            rows={Math.max(8, editingPost.content.split('\n').length + 2)}
+            style={{ minHeight: '150px' }}
+          />
+          <div className="flex justify-end space-x-2">
+            <Button
+              onClick={onCancelEdit}
+              variant="ghost"
+              size="sm"
+            >
+              Abbrechen
+            </Button>
+            <SaveButton
+              onClick={() => onEdit(post.id, editingPost.content)}
+              size="sm"
+            />
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="text-gray-800 whitespace-pre-wrap text-sm md:text-base">{post.content}</p>
+          <div className="mt-3 md:mt-4 flex justify-end">
+            <div className="flex gap-1 md:gap-2">
+              <EditButton
+                onClick={() => onStartEdit(post.id, post.content)}
+                size="sm"
+                text=""
+                title="Beitrag bearbeiten"
+              />
+              {post.platform === 'x' ? (
+                <XShareButton
+                  tweetContent={post.content}
+                  size="sm"
+                  text=""
+                  title="Auf X teilen"
+                />
+              ) : post.platform === 'instagram' ? (
+                <InstagramShareButton
+                  postContent={post.content}
+                  size="sm"
+                  text=""
+                  title="Auf Instagram teilen"
+                />
+              ) : (
+                <LinkedInShareButton
+                  postContent={post.content}
+                  size="sm"
+                  text=""
+                  title="Auf LinkedIn teilen"
+                />
+              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <div>
+                    <DeleteButton
+                      size="sm"
+                      text=""
+                      title="Beitrag löschen"
+                    />
+                  </div>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Möchtest du diesen Beitrag wirklich löschen?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Diese Aktion kann nicht rückgängig gemacht werden.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Nein</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => onDelete(post.id)}
+                    >
+                      Ja
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+})
+
 const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginClick, initialExpanded }: SavedPostsProps) {
   const [savedPosts, setSavedPosts] = useState<SavedPost[]>([])
   const [isCollapsed, setIsCollapsed] = useState(!initialExpanded)
@@ -123,98 +236,16 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
               <p className="text-gray-700 text-sm">Noch keine gespeicherten Beiträge.</p>
             </div>
           ) : savedPosts.map((post) => (
-            <div key={post.id} className="p-3 rounded-lg border border-gray-200 bg-white">
-              {editingPost?.id === post.id ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={editingPost.content}
-                    onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-lg text-sm resize-y"
-                    rows={Math.max(8, editingPost.content.split('\n').length + 2)}
-                    style={{ minHeight: '150px' }}
-                  />
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      onClick={() => setEditingPost(null)}
-                      variant="ghost"
-                      size="sm"
-                    >
-                      Abbrechen
-                    </Button>
-                    <SaveButton
-                      onClick={() => handleEdit(post.id, editingPost.content)}
-                      size="sm"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <p className="text-gray-800 whitespace-pre-wrap text-sm">{post.content}</p>
-                  <div className="mt-3 flex justify-end">
-                    <div className="flex gap-1">
-                      <EditButton
-                        onClick={() => setEditingPost({ id: post.id, content: post.content })}
-                        size="sm"
-                        text=""
-                        title="Beitrag bearbeiten"
-                      />
-                      {post.platform === 'x' ? (
-                        <XShareButton
-                          tweetContent={post.content}
-                          size="sm"
-                          text=""
-                          title="Auf X teilen"
-                        />
-                      ) : post.platform === 'instagram' ? (
-                        <InstagramShareButton
-                          postContent={post.content}
-                          size="sm"
-                          text=""
-                          title="Auf Instagram teilen"
-                        />
-                      ) : (
-                        <LinkedInShareButton
-                          postContent={post.content}
-                          size="sm"
-                          text=""
-                          title="Auf LinkedIn teilen"
-                        />
-                      )}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <div>
-                            <DeleteButton
-                              size="sm"
-                              text=""
-                              title="Beitrag löschen"
-                            />
-                          </div>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Möchtest du diesen Beitrag wirklich löschen?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Diese Aktion kann nicht rückgängig gemacht werden.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Nein</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              onClick={() => handleDelete(post.id)}
-                            >
-                              Ja
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+            <PostCard
+              key={post.id}
+              post={post}
+              editingPost={editingPost}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onStartEdit={(id, content) => setEditingPost({ id, content })}
+              onCancelEdit={() => setEditingPost(null)}
+              onEditContentChange={(content) => setEditingPost(prev => prev ? { ...prev, content } : null)}
+            />
           ))}
         </div>
       </div>
@@ -267,98 +298,16 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
               <p className="text-gray-700">Noch keine gespeicherten Beiträge.</p>
             </div>
           ) : savedPosts.map((post) => (
-            <div key={post.id} className="p-4 rounded-lg border border-gray-200 bg-white">
-              {editingPost?.id === post.id ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={editingPost.content}
-                    onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-lg resize-y"
-                    rows={Math.max(10, editingPost.content.split('\n').length + 2)}
-                    style={{ minHeight: '200px' }}
-                  />
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      onClick={() => setEditingPost(null)}
-                      variant="ghost"
-                      size="sm"
-                    >
-                      Abbrechen
-                    </Button>
-                    <SaveButton
-                      onClick={() => handleEdit(post.id, editingPost.content)}
-                      size="sm"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
-                  <div className="mt-4 flex justify-end">
-                    <div className="flex gap-2">
-                      <EditButton
-                        onClick={() => setEditingPost({ id: post.id, content: post.content })}
-                        size="sm"
-                        text=""
-                        title="Beitrag bearbeiten"
-                      />
-                      {post.platform === 'x' ? (
-                        <XShareButton
-                          tweetContent={post.content}
-                          size="sm"
-                          text=""
-                          title="Auf X teilen"
-                        />
-                      ) : post.platform === 'instagram' ? (
-                        <InstagramShareButton
-                          postContent={post.content}
-                          size="sm"
-                          text=""
-                          title="Auf Instagram teilen"
-                        />
-                      ) : (
-                        <LinkedInShareButton
-                          postContent={post.content}
-                          size="sm"
-                          text=""
-                          title="Auf LinkedIn teilen"
-                        />
-                      )}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <div>
-                            <DeleteButton
-                              size="sm"
-                              text=""
-                              title="Beitrag löschen"
-                            />
-                          </div>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Möchtest du diesen Beitrag wirklich löschen?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Diese Aktion kann nicht rückgängig gemacht werden.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Nein</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              onClick={() => handleDelete(post.id)}
-                            >
-                              Ja
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+            <PostCard
+              key={post.id}
+              post={post}
+              editingPost={editingPost}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onStartEdit={(id, content) => setEditingPost({ id, content })}
+              onCancelEdit={() => setEditingPost(null)}
+              onEditContentChange={(content) => setEditingPost(prev => prev ? { ...prev, content } : null)}
+            />
           ))}
             </div>
           </div>

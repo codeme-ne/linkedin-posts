@@ -13,7 +13,7 @@ const ALLOWED_ORIGINS_PROD = process.env.ALLOWED_ORIGINS_PROD
   ? process.env.ALLOWED_ORIGINS_PROD.split(',').filter(Boolean)
   : PRODUCTION_FALLBACK_ORIGINS;
 
-const ALLOWED_ORIGINS_DEV = (process.env.ALLOWED_ORIGINS_DEV || 'http://localhost:5173,http://localhost:5174,http://localhost:3000').split(',').filter(Boolean);
+const ALLOWED_ORIGINS_DEV = (process.env.ALLOWED_ORIGINS_DEV || 'http://localhost:5173,http://localhost:5174,http://localhost:3000,http://localhost:3001,http://127.0.0.1:5173,http://127.0.0.1:3000').split(',').filter(Boolean);
 
 const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
 const allowedOrigins = isDevelopment ? ALLOWED_ORIGINS_DEV : ALLOWED_ORIGINS_PROD;
@@ -31,15 +31,16 @@ export function getCorsHeaders(origin: string | null): Record<string, string> {
     'Vary': 'Origin', // Important for caching
   };
 
-  // Development mode: validate origin is localhost before allowing credentials
+  // Development mode: only allow explicit localhost origins
   if (isDevelopment) {
-    // Validate origin is localhost before allowing credentials
-    if (origin && /^http:\/\/localhost:\d+$/.test(origin)) {
+    if (origin && ALLOWED_ORIGINS_DEV.includes(origin)) {
       headers['Access-Control-Allow-Origin'] = origin;
       headers['Access-Control-Allow-Credentials'] = 'true';
     } else if (origin) {
-      // Non-localhost origin in dev - allow without credentials
-      headers['Access-Control-Allow-Origin'] = origin;
+      // Log unauthorized origin attempts even in development
+      console.warn(`CORS Dev: Unauthorized origin blocked: ${origin}`);
+      console.warn(`Allowed dev origins: ${ALLOWED_ORIGINS_DEV.join(', ')}`);
+      // No CORS headers for disallowed origins (browser will block)
     } else {
       // No origin - default to localhost:5173
       headers['Access-Control-Allow-Origin'] = 'http://localhost:5173';
@@ -70,14 +71,12 @@ export function getCorsHeaders(origin: string | null): Record<string, string> {
  */
 export function isOriginAllowed(origin: string | null): boolean {
   if (!origin) return false;
-  
+
   if (isDevelopment) {
-    // In development, allow localhost origins with any port
-    return ALLOWED_ORIGINS_DEV.some(allowed => 
-      origin.startsWith(allowed) || origin.startsWith('http://localhost:')
-    );
+    // In development, only allow explicit dev origins
+    return ALLOWED_ORIGINS_DEV.includes(origin);
   }
-  
+
   return ALLOWED_ORIGINS_PROD.includes(origin);
 }
 

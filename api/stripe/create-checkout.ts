@@ -136,13 +136,14 @@ export default async function handler(req: Request) {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     })
-  } catch (error: any) {
-    console.error('Stripe checkout creation error:', error)
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    console.error('Stripe checkout creation error:', err)
     return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
-      { 
+      JSON.stringify({ error: err.message }),
+      {
         status: 500,
-        headers: { 'Content-Type': 'application/json' } 
+        headers: { 'Content-Type': 'application/json' }
       }
     )
   }

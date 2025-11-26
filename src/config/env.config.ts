@@ -29,6 +29,7 @@ export interface EnvironmentVariables {
   // App configuration
   VITE_DOMAIN_NAME?: string;
   VITE_BASE_URL?: string;
+  VITE_SITE_URL?: string;
   VITE_SUPPORT_EMAIL?: string;
   VITE_APP_VERSION?: string;
   

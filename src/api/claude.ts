@@ -1,29 +1,18 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { buildSinglePostPrompt } from '@/libs/promptBuilder';
-
-// API Key wird jetzt serverseitig in der Edge Function verwendet
-const CLAUDE_API_KEY = 'not-needed' // Dummy-Wert, wird von Edge Function überschrieben
-
-const anthropic = new Anthropic({
-  apiKey: CLAUDE_API_KEY,
-  dangerouslyAllowBrowser: true,
-  baseURL: `${window.location.origin}/api/claude` // Absolute URL - nutzt die aktuelle Domain
-});
+import { buildSinglePostPrompt, buildBatchedPostPrompt, parseBatchedResponse } from '@/libs/promptBuilder';
+import { generateClaudeMessage } from '@/libs/api-client';
+import type { Platform } from '@/config/platforms';
 
 export async function linkedInPostsFromNewsletter(content: string) {
   try {
    const prompt = buildSinglePostPrompt(content, 'linkedin');
-   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
-    max_tokens: 4096,
-    temperature: 0.85,
-    messages: [{
-      role: 'user',
-      content: prompt
-    }]
+   const response = await generateClaudeMessage({
+     model: 'claude-3-5-sonnet-20241022',
+     max_tokens: 4096,
+     temperature: 0.85,
+     messages: [{ role: 'user', content: prompt }],
    });
-   
-   const text = (response.content[0] as { text: string }).text;
+
+   const text = response.content[0].text;
    // Parse single LinkedIn post
    const regex = /LINKEDIN:\s*([\s\S]*?)$/;
    const match = text.match(regex);
@@ -38,7 +27,7 @@ export async function linkedInPostsFromNewsletter(content: string) {
    // Fallback: if no LINKEDIN: prefix found, take the whole text
    const cleanText = text.replace(/^\s*LINKEDIN:\s*/, '').trim();
    return cleanText ? [cleanText] : [];
-  } catch (error) {
+  } catch {
     throw new Error('Failed to remix content');
   }
 } 
@@ -93,24 +82,21 @@ export async function xTweetsFromBlog(content: string) {
   try {
     const prompt = buildSinglePostPrompt(content, 'x');
 
-    const response = await anthropic.messages.create({
+    const response = await generateClaudeMessage({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 280,
       temperature: 0.65,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }]
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    const text = (response.content[0] as { text: string }).text.trim();
+    const text = response.content[0].text.trim();
 
     // Parse single tweet - take the first non-empty line
     const cleanedTweet = sanitizeTweet(text);
 
     // Return array with single tweet
     return cleanedTweet ? [cleanedTweet] : [];
-  } catch (error) {
+  } catch {
     throw new Error('Failed to generate X tweets');
   }
 }
@@ -119,18 +105,15 @@ export async function instagramPostsFromBlog(content: string) {
   try {
     const prompt = buildSinglePostPrompt(content, 'instagram');
 
-    const response = await anthropic.messages.create({
+    const response = await generateClaudeMessage({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 4096,
       temperature: 0.85,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }]
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    const text = (response.content[0] as { text: string }).text;
-    
+    const text = response.content[0].text;
+
     // Parse single Instagram post from XML tags
     const descriptionsMatch = text.match(/<instagram_descriptions>([\s\S]*?)<\/instagram_descriptions>/i);
 
@@ -158,7 +141,41 @@ export async function instagramPostsFromBlog(content: string) {
     // Last fallback: if no INSTAGRAM: prefix found, take the whole text
     const cleanText = text.replace(/^\s*INSTAGRAM:\s*/, '').trim();
     return cleanText ? [cleanText] : [];
-  } catch (error) {
+  } catch {
     throw new Error('Failed to generate Instagram posts');
+  }
+}
+
+/**
+ * Generate posts for multiple platforms in a single API call.
+ * Reduces API costs by ~3x compared to separate calls per platform.
+ *
+ * @param content - Source content to generate posts from
+ * @param platforms - Array of platforms to generate for
+ * @returns Record with posts for each platform, or null if batching fails
+ */
+export async function batchedPostsFromContent(
+  content: string,
+  platforms: Platform[]
+): Promise<Record<Platform, string[]> | null> {
+  try {
+    const prompt = buildBatchedPostPrompt(content, platforms);
+
+    const response = await generateClaudeMessage({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 4096,
+      temperature: 0.85,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const text = response.content[0].text;
+
+    // Parse batched response
+    const parsed = parseBatchedResponse(text, platforms);
+
+    return parsed; // Returns null if parsing failed, triggering fallback
+  } catch (error) {
+    console.error('Batched generation failed:', error);
+    return null; // Signal fallback to parallel calls
   }
 }

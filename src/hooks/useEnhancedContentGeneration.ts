@@ -103,20 +103,21 @@ export const useEnhancedContentGeneration = () => {
 
       return response;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error))
       let errorMessage = 'Enhanced Generierung fehlgeschlagen. Bitte erneut versuchen.';
-      const msg = error?.message || '';
+      const msg = err.message
 
       if (msg.includes('Usage limit') || msg.includes('limit')) {
         errorMessage = 'Tageslimit erreicht. Upgrade für unbegrenzte Posts.';
       } else if (msg.includes('429') || msg.toLowerCase().includes('rate')) {
         errorMessage = 'Zu viele Anfragen. Bitte 30 Sekunden warten.';
-      } else if (error?.name === 'AbortError') {
+      } else if (err.name === 'AbortError') {
         errorMessage = 'Anfrage-Timeout. Bitte versuche es erneut.';
       }
 
       toast.error(errorMessage);
-      throw error;
+      throw err;
 
     } finally {
       setActiveGenerations((prev) => {
@@ -197,9 +198,10 @@ export const useEnhancedContentGeneration = () => {
 
       return comparison;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error))
       toast.error('Vergleichsgenerierung fehlgeschlagen');
-      throw error;
+      throw err;
 
     } finally {
       setActiveGenerations((prev) => {

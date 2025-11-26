@@ -17,7 +17,13 @@ export const useAuth = () => {
       if (session) setLoginOpen(false)
     })
     return () => {
-      sub?.subscription?.unsubscribe?.()
+      try {
+        if (sub?.subscription) {
+          sub.subscription.unsubscribe()
+        }
+      } catch (error) {
+        console.error('Failed to cleanup auth subscription:', error)
+      }
     }
   }, [])
 

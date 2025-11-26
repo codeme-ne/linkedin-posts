@@ -54,12 +54,13 @@ export default async function handler(req: Request) {
     // Verify webhook signature with 5-minute timestamp tolerance (300 seconds)
     // This prevents replay attacks by rejecting events older than 5 minutes
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret, 300)
-  } catch (err: any) {
-    console.error(`Webhook signature verification failed: ${err.message}`)
-    return new Response(`Webhook signature verification failed: ${err.message}`, { status: 400 })
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err : new Error(String(err))
+    console.error(`Webhook signature verification failed: ${error.message}`)
+    return new Response(`Webhook signature verification failed: ${error.message}`, { status: 400 })
   }
 
-  // Check for duplicate webhook (idempotency protection)
+  // Idempotency protection - insert FIRST to prevent race conditions
   // Prevents processing the same event multiple times if Stripe retries
   // NOTE: Requires Supabase migration:
   // CREATE TABLE processed_webhooks (
@@ -69,19 +70,29 @@ export default async function handler(req: Request) {
   //   processed_at TIMESTAMPTZ DEFAULT NOW()
   // );
   // CREATE INDEX idx_processed_webhooks_event_id ON processed_webhooks(event_id);
-  const eventId = event.id
-  const { data: existingEvent } = await supabase
-    .from('processed_webhooks')
-    .select('id')
-    .eq('event_id', eventId)
-    .single()
+  try {
+    const { error: insertError } = await supabase
+      .from('processed_webhooks')
+      .insert({
+        event_id: event.id,
+        event_type: event.type,
+        processed_at: new Date().toISOString()
+      })
 
-  if (existingEvent) {
-    console.log(`Duplicate webhook event ${eventId}, skipping`)
-    return new Response(JSON.stringify({ received: true, duplicate: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    })
+    if (insertError) {
+      // Check if it's a duplicate key error (Postgres 23505)
+      if (insertError.code === '23505') {
+        console.log(`Duplicate webhook event ${event.id}, skipping`)
+        return new Response(JSON.stringify({ received: true, duplicate: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
+      }
+      // Other insert errors - log but continue (best effort)
+      console.error('Failed to record webhook:', insertError)
+    }
+  } catch (e) {
+    console.error('Webhook recording error:', e)
   }
 
   console.log(`Processing Stripe event: ${event.type}`)
@@ -157,20 +168,81 @@ export default async function handler(req: Request) {
           case yearlyPriceId:
             interval = 'yearly';
             break;
-          default:
-            console.warn(`Unknown price ID: ${priceId}, using session mode as fallback`);
+          default: {
+            // SECURITY: Unknown price ID - should never happen in production
+            console.error('🚨 SECURITY ALERT: Unknown price ID received!');
+            console.error(`   Event ID: ${event.id}`);
+            console.error(`   Session ID: ${session.id}`);
+            console.error(`   Unknown Price ID: ${priceId}`);
+            console.error(`   Expected: ${monthlyPriceId} (monthly) or ${yearlyPriceId} (yearly)`);
+            console.error(`   Fallback: Using session mode as interval`);
+
+            // Log anomaly for review
+            const { error: unknownPriceError } = await supabase
+              .from('webhook_anomalies')
+              .insert({
+                event_id: event.id,
+                anomaly_type: 'unknown_price_id',
+                expected_value: null,
+                received_value: null,
+                details: {
+                  received_price_id: priceId,
+                  expected_monthly: monthlyPriceId,
+                  expected_yearly: yearlyPriceId,
+                  session_id: session.id,
+                  session_mode: session.mode,
+                  amount: amount,
+                  timestamp: new Date().toISOString(),
+                },
+              });
+
+            if (unknownPriceError) {
+              console.error('Failed to log unknown price ID anomaly:', unknownPriceError);
+            }
+
             // Fallback for safety, but should not be hit with correct config
             interval = session.mode === 'subscription' ? 'monthly' : 'yearly';
             break;
+          }
         }
 
         // Validate and use config price for data integrity
         const expectedAmount = CORRECT_PRICES[interval as keyof typeof CORRECT_PRICES];
         if (amount !== expectedAmount) {
-          console.warn(`⚠️ Price mismatch detected!`);
-          console.warn(`   Received: ${amount} (${amount / 100} EUR)`);
-          console.warn(`   Expected: ${expectedAmount} (${expectedAmount / 100} EUR)`);
-          console.warn(`   Using config price for database storage`);
+          // SECURITY: Price mismatch detected - log prominently
+          console.error('🚨 SECURITY ALERT: Price mismatch detected in Stripe checkout!');
+          console.error(`   Event ID: ${event.id}`);
+          console.error(`   Session ID: ${session.id}`);
+          console.error(`   Price ID: ${priceId}`);
+          console.error(`   Interval: ${interval}`);
+          console.error(`   Received: ${amount} cents (${amount / 100} EUR)`);
+          console.error(`   Expected: ${expectedAmount} cents (${expectedAmount / 100} EUR)`);
+          console.error(`   Difference: ${amount - expectedAmount} cents`);
+          console.error(`   Action: Using validated config price (${expectedAmount}) for database`);
+
+          // Record anomaly for monitoring and review
+          // NOTE: Requires migration 20251126_create_webhook_anomalies.sql
+          const { error: priceMismatchError } = await supabase
+            .from('webhook_anomalies')
+            .insert({
+              event_id: event.id,
+              anomaly_type: 'price_mismatch',
+              expected_value: expectedAmount,
+              received_value: amount,
+              details: {
+                interval,
+                session_id: session.id,
+                price_id: priceId,
+                customer_id: customerId,
+                difference_cents: amount - expectedAmount,
+                timestamp: new Date().toISOString(),
+              },
+            });
+
+          if (priceMismatchError) {
+            // Log insertion failure but don't break webhook processing
+            console.error('Failed to log price mismatch anomaly:', priceMismatchError);
+          }
         }
         const validatedAmount = expectedAmount; // Always use config price
         
@@ -312,19 +384,10 @@ export default async function handler(req: Request) {
       default:
         console.log(`Unhandled event type: ${event.type}`)
     }
-  } catch (error: any) {
-    console.error(`Webhook processing error for ${event.type}:`, error)
-    return new Response(`Webhook error: ${error.message}`, { status: 500 })
-  }
-
-  // Mark webhook as processed to prevent duplicate handling
-  const { error: recordError } = await supabase.from('processed_webhooks').insert({
-    event_id: event.id,
-    event_type: event.type,
-    processed_at: new Date().toISOString()
-  })
-  if (recordError) {
-    console.error('Failed to record webhook:', recordError)
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    console.error(`Webhook processing error for ${event.type}:`, err)
+    return new Response(`Webhook error: ${err.message}`, { status: 500 })
   }
 
   return new Response(JSON.stringify({ received: true }), {

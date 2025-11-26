@@ -2,6 +2,174 @@ import type { Platform } from "@/config/platforms";
 import type { VoiceTone } from "@/config/voice-tones";
 import { DEFAULT_VOICE_TONE } from "@/config/voice-tones";
 
+/**
+ * Build batched prompt for multiple platforms in single API call.
+ * Reduces API costs by ~3x compared to N separate calls.
+ */
+export function buildBatchedPostPrompt(
+  content: string,
+  platforms: Platform[],
+  voiceTone?: VoiceTone
+): string {
+  const selectedTone = voiceTone || DEFAULT_VOICE_TONE;
+
+  const platformRequirements = platforms.map(platform => {
+    switch (platform) {
+      case 'linkedin':
+        return `
+---LINKEDIN---
+Create EXACTLY ONE high-quality LinkedIn post.
+
+STRUCTURE & STYLE:
+- Opening hook (first 1-2 sentences capture 80% of the value)
+- Short sentences with line breaks for readability
+- Clear hierarchy: Hook → Core insights → Key takeaway → Engagement question
+- Use bullets (↳) or arrows for lists when appropriate
+- No hashtags, minimal emojis
+- Professional but conversational tone
+- Stay well under LinkedIn's limit - be concise and impactful
+
+CONTENT REQUIREMENTS:
+- Include specific examples, company names, or case studies when relevant
+- Add concrete, actionable insights readers can immediately use
+- Use data points or statistics if available in source content
+- Create genuine business value, not just motivational content
+
+OUTPUT: Start with "LINKEDIN:" prefix, then the post content.`;
+
+      case 'x':
+        return `
+---X---
+Create EXACTLY ONE authentic, engaging tweet.
+
+STRUCTURE & STYLE:
+- Punchy, attention-grabbing opening
+- Authentic human voice (not corporate speak)
+- Clear value: insight, tip, or thought-provoking statement
+- Include call-to-action when natural
+- NO hashtags, NO emojis
+- Conversational and personal feel
+- Maximum 280 characters
+
+CONTENT APPROACH:
+- Focus on one key insight from the source material
+- Make it relatable to entrepreneurs and business builders
+- Use conversational language that feels genuine
+- Avoid marketing-speak or generic business jargon
+
+OUTPUT: Start with "X:" prefix, then the tweet text.`;
+
+      case 'instagram':
+        return `
+---INSTAGRAM---
+Create EXACTLY ONE engaging Instagram caption.
+
+STRUCTURE & STYLE:
+- Compelling hook in first 125 characters (preview text)
+- 3-6 concise, engaging sentences
+- Use line breaks for readability
+- 3-5 relevant hashtags at the end
+- Clear call-to-action or question to drive engagement
+- Maximum 2,200 characters but stay focused and concise
+
+CONTENT APPROACH:
+- Visual storytelling that connects emotionally
+- Behind-the-scenes insights or personal perspective
+- Actionable advice that followers can implement
+- Authentic voice that builds community
+- Strategic use of emojis for visual appeal (not excessive)
+
+OUTPUT: Start with "INSTAGRAM:" prefix, then the caption.`;
+
+      default:
+        return '';
+    }
+  }).join('\n');
+
+  return `You are an expert social media ghostwriter specialized in creating premium, engaging content for European solopreneurs and small companies.
+
+VOICE & PERSONALITY:
+${selectedTone.promptModifier}
+
+QUALITY STANDARDS:
+- Professional, research-backed content like industry leaders
+- Specific examples, company names, and real insights when relevant
+- Engaging hooks that immediately capture attention
+- Clear value proposition and actionable takeaways
+- Authentic voice that builds trust and authority
+
+TASK: Generate social media posts for the following platforms based on this content.
+
+${platformRequirements}
+
+CRITICAL:
+- Generate content for ALL requested platforms listed above
+- Each platform must start with its prefix (LINKEDIN:, X:, INSTAGRAM:)
+- Return ONLY the post content, no meta-commentary
+- Each platform gets exactly ONE post
+
+Source Content: ${content}`;
+}
+
+/**
+ * Parse batched multi-platform response into platform-specific posts.
+ * Returns Record with posts for each platform, or null if parsing fails.
+ */
+export function parseBatchedResponse(
+  text: string,
+  platforms: Platform[]
+): Record<Platform, string[]> | null {
+  const result: Record<Platform, string[]> = { linkedin: [], x: [], instagram: [] };
+
+  try {
+    // LinkedIn parsing
+    if (platforms.includes('linkedin')) {
+      const linkedinMatch = text.match(/LINKEDIN:\s*([\s\S]*?)(?=(?:X:|INSTAGRAM:|$))/i);
+      if (linkedinMatch && linkedinMatch[1]) {
+        const postContent = linkedinMatch[1].trim();
+        if (postContent) {
+          result.linkedin = [postContent];
+        }
+      }
+    }
+
+    // X/Twitter parsing
+    if (platforms.includes('x')) {
+      const xMatch = text.match(/X:\s*([\s\S]*?)(?=(?:LINKEDIN:|INSTAGRAM:|$))/i);
+      if (xMatch && xMatch[1]) {
+        const tweetContent = xMatch[1].trim().slice(0, 280); // Respect character limit
+        if (tweetContent) {
+          result.x = [tweetContent];
+        }
+      }
+    }
+
+    // Instagram parsing
+    if (platforms.includes('instagram')) {
+      const instagramMatch = text.match(/INSTAGRAM:\s*([\s\S]*?)(?=(?:LINKEDIN:|X:|$))/i);
+      if (instagramMatch && instagramMatch[1]) {
+        const postContent = instagramMatch[1].trim();
+        if (postContent) {
+          result.instagram = [postContent];
+        }
+      }
+    }
+
+    // Verify all requested platforms have content
+    for (const platform of platforms) {
+      if (!result[platform] || result[platform].length === 0) {
+        console.warn(`Batched parsing failed: missing content for ${platform}`);
+        return null; // Signal fallback to parallel calls
+      }
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Batched parsing error:', error);
+    return null; // Signal fallback to parallel calls
+  }
+}
+
 export function buildSinglePostPrompt(
   content: string,
   platform: Platform,

@@ -67,10 +67,11 @@ export function ButtonCheckout({
 
       // Redirect to Stripe checkout
       window.location.href = data.url
-    } catch (error: any) {
-      console.error('Checkout error:', error)
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error))
+      console.error('Checkout error:', err)
       toast.error(
-        error.message === 'Checkout creation failed'
+        err.message === 'Checkout creation failed'
           ? 'Fehler beim Erstellen der Bezahlung. Bitte versuchen Sie es erneut.'
           : 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.'
       )

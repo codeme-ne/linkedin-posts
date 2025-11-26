@@ -1,5 +1,6 @@
 // Edge Function: Premium Content-Extraktion mit Firecrawl
-// Unbegrenzter Zugang für Premium-Nutzer (ShipFast-Pattern)
+// Rate-limited access für Premium-Nutzer (100 extractions/month)
+// Prevents cost-based DoS durch monatliche Limits pro User
 
 import { createClient } from '@supabase/supabase-js';
 import { isUrlSafe } from './utils/urlValidation';
@@ -127,29 +128,39 @@ export default async function handler(req: Request) {
       );
     }
 
-    // 2. Subscription prüfen (single query for both status and access)
-    const { data: subscription, error: subError } = await supabase
-      .from('subscriptions')
-      .select('status, is_active')
-      .eq('user_id', user.id)
-      .single();
+    // 2. Check rate limit and increment usage atomically
+    // This prevents cost-based DoS by enforcing monthly extraction limits
+    const { data: rateLimitResult, error: rateLimitError } = await supabase
+      .rpc('check_and_increment_premium_extraction');
 
-    // Check subscription exists and is active
-    if (subError || !subscription) {
+    if (rateLimitError) {
+      console.error('Rate limit check error:', rateLimitError);
       return new Response(
         JSON.stringify({
-          error: 'Premium-Abo erforderlich',
-          details: 'Diese Funktion ist nur für Nutzer mit aktivem Premium-Abo verfügbar.'
+          error: 'Fehler bei Prüfung der Nutzungslimits',
+          details: 'Bitte versuchen Sie es später erneut.'
         }),
-        { status: 403, headers: { ...cors, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
       );
     }
 
-    // ShipFast pattern: is_active is the Single Source of Truth
-    if (!subscription.is_active) {
+    // Check if extraction is allowed
+    if (!rateLimitResult?.success || !rateLimitResult?.can_extract) {
+      const errorMessage = rateLimitResult?.error || 'Monatliches Extraktionslimit erreicht';
+      const resetAt = rateLimitResult?.reset_at
+        ? new Date(rateLimitResult.reset_at).toLocaleDateString('de-DE')
+        : 'nächsten Monat';
+
       return new Response(
         JSON.stringify({
-          error: 'Premium-Zugang erforderlich. Upgrade zu Premium für unbegrenzte Extraktionen.',
+          error: errorMessage,
+          details: `Sie haben Ihr monatliches Limit von ${rateLimitResult?.limit || 100} Extraktionen erreicht. Zurücksetzung am ${resetAt}.`,
+          usage: {
+            used: rateLimitResult?.used || 0,
+            limit: rateLimitResult?.limit || 100,
+            remaining: 0,
+            resetAt: rateLimitResult?.reset_at
+          }
         }),
         { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } }
       );
@@ -278,11 +289,12 @@ export default async function handler(req: Request) {
       headers: { ...cors, 'Content-Type': 'application/json' },
     });
 
-  } catch (error) {
-    console.error('Premium-Extraction-Fehler:', error);
-    
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    console.error('Premium-Extraction-Fehler:', err);
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: 'Interner Server-Fehler',
         details: 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.'
       }),

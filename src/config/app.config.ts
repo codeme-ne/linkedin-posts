@@ -239,7 +239,7 @@ const config: AppConfig = {
   
   limits: {
     freeExtractions: 3,
-    premiumExtractions: 20,
+    premiumExtractions: 100, // Monthly limit per premium user (enforced server-side)
     maxPostLength: {
       linkedin: 3000,
       x: 280,

@@ -68,14 +68,17 @@ export const updateSavedPost = async (id: number, content: string) => {
 // Auth helpers
 const getRedirectUrl = () => {
   // Prefer explicit site URL from env for reliable email redirects
-  const envSiteUrl = (import.meta.env.VITE_SITE_URL || import.meta.env.VITE_APP_URL) as string | undefined
+  const envSiteUrl = (import.meta.env.VITE_SITE_URL || import.meta.env.VITE_BASE_URL) as string | undefined
   if (envSiteUrl && envSiteUrl.length > 0) return envSiteUrl.replace(/\/$/, '')
 
   // Fallback to current origin (useful in local dev)
   if (typeof window !== 'undefined' && window.location?.origin) {
     return window.location.origin
   }
+
   // Last resort: production URL (ensure this matches Supabase Allowed Redirect URLs)
+  // If you see this warning, set VITE_SITE_URL or VITE_BASE_URL in your environment
+  console.warn('[Auth] Using hardcoded production URL fallback. Set VITE_SITE_URL to avoid this.')
   return 'https://linkedin-posts-one.vercel.app'
 }
 

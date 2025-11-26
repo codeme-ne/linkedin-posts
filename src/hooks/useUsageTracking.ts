@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/api/supabase';
 import { useAuth } from './useAuth';
+import { useSubscription } from './useSubscription';
 import { toast } from 'sonner';
+import config from '@/config/app.config';
 
 interface UsageStatus {
   canGenerate: boolean;
@@ -12,35 +14,48 @@ interface UsageStatus {
   isLoading: boolean;
 }
 
+/**
+ * Unified usage tracking hook that delegates to useSubscription
+ * for localStorage tracking (usage_DATE pattern).
+ * Provides backward-compatible interface for components using this hook.
+ */
 export function useUsageTracking() {
   const { userEmail } = useAuth();
+  const { hasAccess, dailyUsage, hasUsageRemaining, decrementUsage, loading: subscriptionLoading } = useSubscription();
+
   const [usageStatus, setUsageStatus] = useState<UsageStatus>({
     canGenerate: true,
     isPremium: false,
     used: 0,
-    limit: 3,
-    remaining: 3,
+    limit: config.limits.freeExtractions,
+    remaining: config.limits.freeExtractions,
     isLoading: true,
   });
 
-  // Load usage status on mount and when user changes
+  // One-time migration: clean up legacy freeGenerationsCount key
   useEffect(() => {
-    if (userEmail) {
-      loadUsageStatus();
-    } else {
-      // For non-authenticated users, use localStorage as fallback
-      // This is less secure but allows demo usage
-      const localUsage = parseInt(localStorage.getItem('freeGenerationsCount') || '0', 10);
-      setUsageStatus({
-        canGenerate: localUsage < 3,
-        isPremium: false,
-        used: localUsage,
-        limit: 3,
-        remaining: Math.max(0, 3 - localUsage),
-        isLoading: false,
-      });
+    const legacyKey = 'freeGenerationsCount';
+    if (localStorage.getItem(legacyKey) !== null) {
+      console.log('[useUsageTracking] Migrating from legacy freeGenerationsCount to usage_DATE pattern');
+      localStorage.removeItem(legacyKey);
     }
-  }, [userEmail]);
+  }, []); // Run once on mount
+
+  // Sync state with useSubscription's daily usage tracking
+  useEffect(() => {
+    const limit = config.limits.freeExtractions;
+    const used = dailyUsage;
+    const remaining = Math.max(0, limit - used);
+
+    setUsageStatus({
+      canGenerate: hasAccess || hasUsageRemaining(),
+      isPremium: hasAccess,
+      used,
+      limit,
+      remaining,
+      isLoading: subscriptionLoading,
+    });
+  }, [hasAccess, dailyUsage, hasUsageRemaining, subscriptionLoading]);
 
   const loadUsageStatus = async () => {
     try {
@@ -70,83 +85,66 @@ export function useUsageTracking() {
   };
 
   const checkAndIncrementUsage = async (): Promise<boolean> => {
-    // If user is authenticated, use secure backend tracking
+    // Delegate to useSubscription for usage tracking (daily reset pattern)
+    if (hasAccess) {
+      // Premium users have unlimited access
+      return true;
+    }
+
+    // Check if free tier has remaining usage
+    if (!hasUsageRemaining()) {
+      toast.error(
+        'Dein kostenloses Limit ist erreicht. Upgrade zu Premium für unlimitierte Generierungen.'
+      );
+      return false;
+    }
+
+    // If user is authenticated, also check backend usage tracking
     if (userEmail) {
       try {
         const { data, error } = await supabase.rpc('check_and_increment_usage');
 
         if (error) {
-          console.error('Error checking usage:', error);
-          toast.error('Fehler beim Überprüfen des Limits');
-          return false;
-        }
-
-        if (!data?.can_generate) {
+          console.error('Error checking backend usage:', error);
+          // Don't block on backend error, continue with local tracking
+        } else if (!data?.can_generate) {
           toast.error(
             'Dein kostenloses Limit ist erreicht. Upgrade zu Premium für unlimitierte Generierungen.'
           );
           return false;
         }
-
-        // Update local state using functional update
-        setUsageStatus(prev => ({
-          ...prev,
-          canGenerate: data.can_generate,
-          isPremium: data.is_premium || false,
-          used: data.used || 0,
-          limit: data.limit || 3,
-          remaining: data.remaining ?? 0,
-          isLoading: false,
-        }));
-
-        return true;
       } catch (err) {
-        console.error('Failed to check usage:', err);
-        toast.error('Fehler beim Überprüfen des Limits');
-        return false;
+        console.error('Failed to check backend usage:', err);
+        // Continue with local tracking on error
       }
-    } else {
-      // Fallback to localStorage for non-authenticated users
-      const localUsage = parseInt(localStorage.getItem('freeGenerationsCount') || '0', 10);
-
-      if (localUsage >= 3) {
-        toast.error(
-          'Dein kostenloses Limit ist erreicht. Bitte logge dich ein für weitere Generierungen.'
-        );
-        return false;
-      }
-
-      // Increment local counter
-      const newCount = localUsage + 1;
-      localStorage.setItem('freeGenerationsCount', newCount.toString());
-
-      setUsageStatus(prev => ({
-        ...prev,
-        canGenerate: newCount < 3,
-        isPremium: false,
-        used: newCount,
-        limit: 3,
-        remaining: Math.max(0, 3 - newCount),
-        isLoading: false,
-      }));
-
-      return true;
     }
+
+    // Increment usage counter (using useSubscription's decrementUsage)
+    // Note: "decrement" is a naming artifact - it actually increments usage
+    decrementUsage();
+
+    return true;
   };
 
   const resetLocalUsage = () => {
-    // Admin function to reset local storage (for testing)
+    // Clean up legacy localStorage key
     localStorage.removeItem('freeGenerationsCount');
-    if (!userEmail) {
-      setUsageStatus({
-        canGenerate: true,
-        isPremium: false,
-        used: 0,
-        limit: 3,
-        remaining: 3,
-        isLoading: false,
-      });
-    }
+
+    // Reset current day's usage (usage_DATE pattern from useSubscription)
+    const today = new Date().toDateString();
+    const todayKey = `usage_${today}`;
+    localStorage.removeItem(todayKey);
+
+    // Trigger state update
+    const limit = config.limits.freeExtractions;
+    setUsageStatus({
+      canGenerate: true,
+      isPremium: hasAccess,
+      used: 0,
+      limit,
+      remaining: limit,
+      isLoading: false,
+    });
   };
 
   return {

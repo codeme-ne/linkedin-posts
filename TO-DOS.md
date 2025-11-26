@@ -58,3 +58,27 @@ All critical and medium priority items from code review have been resolved.
 - **Restrict dev CORS to explicit origins** - Dev mode allows any origin if present. **Problem:** Line 42 in cors.ts allows any origin in dev if origin header present, could leak credentials. **Files:** `api/utils/cors.ts:42`. **Solution:** Check against explicit `ALLOWED_ORIGINS_DEV` list only.
 
 - **Add monitoring for Stripe price mismatches** - Mismatch only logs to console. **Problem:** Price validation warns but processes anyway, no alerting. **Files:** `api/stripe-webhook-simplified.ts:140-175`. **Solution:** Send to monitoring system (Sentry/DataDog), consider pausing subscription activation.
+
+## Code Review Round 3 - 2025-11-26 06:37
+
+### Critical (New Findings)
+
+- **Fix webhook idempotency race condition** - Check happens BEFORE insert allowing duplicates. **Problem:** Two simultaneous webhooks can both pass the `existingEvent` check before either inserts, causing duplicate subscription activations. **Files:** `api/stripe-webhook-simplified.ts:72-85,321`. **Solution:** Insert into `processed_webhooks` FIRST with unique constraint, then process; catch constraint violation to handle duplicates atomically.
+
+### High Priority (New Findings)
+
+- **Add LRU cache for generated posts state** - Unbounded state growth. **Problem:** `generatedPosts` and `activeGenerations` grow indefinitely with no max size; generation IDs never removed on error paths. **Files:** `src/hooks/useContentGeneration.ts:26-27`. **Solution:** Implement LRU cache with max 50 posts, add circuit breaker for failed generations.
+
+- **Batch Claude API calls per request** - N+1 pattern costs 3x more. **Problem:** Each platform makes separate Claude API call (3 calls for 3 platforms) when single batched prompt would work. **Files:** `src/hooks/useContentGeneration.ts:73-92`. **Solution:** Create `buildMultiPlatformPrompt()` to generate all platforms in one API call, parse response sections.
+
+### Medium Priority (New Findings)
+
+- **Add React Query/SWR for subscription caching** - No query deduplication. **Problem:** `useSubscription` fetches subscription on every mount (5 components = 5 queries per page load). **Files:** `src/hooks/useSubscription.ts:48-63`. **Solution:** Add SWR with `dedupingInterval: 60000` to cache subscription state.
+
+- **Delete deprecated promptBuilder.ts** - Duplicate prompt systems. **Problem:** `promptBuilder.ts` (178 lines) and `promptBuilder.v2.ts` (313 lines) have 60% overlap, causing maintenance confusion. **Files:** `src/libs/promptBuilder.ts`, `src/libs/promptBuilder.v2.ts`. **Solution:** Confirm v2 is production, delete v1, update imports.
+
+- **Standardize on api-client.ts for Claude calls** - Mixed API patterns. **Problem:** `src/api/claude.ts` uses Anthropic SDK while `src/libs/api-client.ts` uses fetch - two ways to do same thing. **Files:** `src/api/claude.ts`, `src/libs/api-client.ts:284-331`. **Solution:** Migrate all claude.ts functions to use `generateClaudeMessage()`, then deprecate claude.ts.
+
+- **Split usePostGeneratorState reducer** - 375-line function. **Problem:** Single reducer handles 15+ action types (cyclomatic complexity ~15), hard to test and maintain. **Files:** `src/hooks/usePostGeneratorState.ts:115-375`. **Solution:** Split into `workflowReducer`, `contentReducer`, `editingReducer` and compose them.
+
+- **Add request deduplication for URL extraction** - No caching of identical requests. **Problem:** Users can spam extract button causing multiple identical API calls to Jina/Firecrawl. **Files:** `src/hooks/useUrlExtraction.ts:26-75`, `api/extract.ts:158-167`. **Solution:** Add Map cache with 5-min TTL keyed by URL+premium flag.

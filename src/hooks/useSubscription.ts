@@ -7,6 +7,15 @@ import config from '@/config/app.config';
 
 const supabase = getSupabaseClient();
 
+// Simple in-memory cache to prevent redundant queries (5 components = 1 query)
+const subscriptionCache: {
+  data: Subscription | null;
+  timestamp: number;
+  userId: string | null;
+} = { data: null, timestamp: 0, userId: null };
+
+const CACHE_TTL = 60000; // 60 seconds
+
 export interface Subscription {
   id: string;
   user_id: string;
@@ -44,7 +53,20 @@ export function useSubscription() {
       setLoading(true);
       setError(null);
 
-      // ShipFast pattern: Simple query focusing on active status
+      const now = Date.now();
+
+      // Return cached data if valid for this user
+      if (
+        subscriptionCache.data !== undefined && // Cache has been populated
+        subscriptionCache.userId === user.id &&
+        now - subscriptionCache.timestamp < CACHE_TTL
+      ) {
+        setSubscription(subscriptionCache.data);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch fresh data from Supabase
       const { data, error: fetchError } = await supabase
         .from('subscriptions')
         .select('id, user_id, stripe_customer_id, stripe_subscription_id, status, is_active, interval, amount, currency, current_period_end')
@@ -54,11 +76,18 @@ export function useSubscription() {
       if (fetchError) {
         if (fetchError.code === 'PGRST116') {
           // No subscription found - user is not premium
+          subscriptionCache.data = null;
+          subscriptionCache.timestamp = now;
+          subscriptionCache.userId = user.id;
           setSubscription(null);
         } else {
           throw fetchError;
         }
       } else {
+        // Update cache with fresh data
+        subscriptionCache.data = data;
+        subscriptionCache.timestamp = now;
+        subscriptionCache.userId = user.id;
         setSubscription(data);
       }
     } catch (err) {
@@ -71,6 +100,8 @@ export function useSubscription() {
   }, [user, authLoading]);
 
   const refreshSubscription = () => {
+    // Invalidate cache to force fresh fetch
+    subscriptionCache.timestamp = 0;
     fetchSubscription();
   };
 
@@ -118,24 +149,39 @@ export function useSubscription() {
   const [usageCount, setUsageCount] = useState<number>(() => {
     const today = new Date().toDateString()
     const todayKey = `usage_${today}`
-
-    // Cleanup old usage entries (keep only today's)
     try {
-      const keysToRemove: string[] = []
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i)
-        if (key && key.startsWith('usage_') && key !== todayKey) {
-          keysToRemove.push(key)
+      return parseInt(localStorage.getItem(todayKey) || '0', 10)
+    } catch {
+      return 0
+    }
+  })
+
+  // Cleanup old usage entries in background (non-blocking)
+  useEffect(() => {
+    const cleanup = () => {
+      const today = new Date().toDateString()
+      const todayKey = `usage_${today}`
+      try {
+        const keysToRemove: string[] = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key && key.startsWith('usage_') && key !== todayKey) {
+            keysToRemove.push(key)
+          }
         }
+        keysToRemove.forEach(key => localStorage.removeItem(key))
+      } catch (e) {
+        console.warn('Failed to cleanup localStorage:', e)
       }
-      keysToRemove.forEach(key => localStorage.removeItem(key))
-    } catch (e) {
-      // localStorage might be unavailable in some contexts
-      console.warn('Failed to cleanup localStorage:', e)
     }
 
-    return parseInt(localStorage.getItem(todayKey) || '0', 10)
-  })
+    // Run cleanup in idle time to avoid blocking UI
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(cleanup)
+    } else {
+      setTimeout(cleanup, 1000)
+    }
+  }, [])
 
   const decrementUsage = useCallback(() => {
     if (hasAccess) return; // Pro users unlimited

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import { linkedInPostsFromNewsletter, xTweetsFromBlog, instagramPostsFromBlog } from '@/api/claude'
+import { linkedInPostsFromNewsletter, xTweetsFromBlog, instagramPostsFromBlog, batchedPostsFromContent } from '@/api/claude'
 import type { Platform } from '@/config/platforms'
 import { PLATFORM_LABEL } from '@/config/platforms'
 import { buildSinglePostPrompt, validatePost, normalizeSinglePostResponse } from '@/libs/promptBuilder'
@@ -15,6 +15,9 @@ interface GenerationProgress {
   totalPlatforms: number
   completedPlatforms: number
 }
+
+// Maximum number of posts to keep in memory (LRU-like cache)
+const MAX_POSTS = 50
 
 export const useContentGeneration = () => {
   const [postsByPlatform, setPostsByPlatform] = useState<Record<Platform, string[]>>({
@@ -60,69 +63,46 @@ export const useContentGeneration = () => {
     })
 
     try {
-      const newPosts: Record<Platform, string[]> = { linkedin: [], x: [], instagram: [] }
+      let newPosts: Record<Platform, string[]> = { linkedin: [], x: [], instagram: [] }
 
-      // Show progress for parallel generation
+      // Show progress
       setGenerationProgress(prev => ({
         ...prev,
         currentPlatform: "Alle Plattformen",
         progress: 10,
       }))
 
-      // Create parallel promise array for all platforms
-      const platformPromises = selectedPlatforms.map(async (platform) => {
-        const platformName = PLATFORM_LABEL[platform]
-        try {
-          let posts: string[] = []
-          switch (platform) {
-            case 'linkedin':
-              posts = await linkedInPostsFromNewsletter(inputText)
-              break
-            case 'x':
-              posts = await xTweetsFromBlog(inputText)
-              break
-            case 'instagram':
-              posts = await instagramPostsFromBlog(inputText)
-              break
-          }
-          return { platform, posts, success: true, platformName }
-        } catch (error) {
-          return { platform, posts: [] as string[], success: false, error, platformName }
-        }
-      })
+      /**
+       * OPTIMIZATION: Try batched API call first (1 call for all platforms)
+       * Reduces costs by ~3x compared to N separate calls
+       * Falls back to parallel calls if batching fails
+       */
+      if (selectedPlatforms.length > 1) {
+        const batchedResult = await batchedPostsFromContent(inputText, selectedPlatforms)
 
-      // Execute all in parallel
-      const results = await Promise.allSettled(platformPromises)
-
-      // Process results and handle errors gracefully
-      let completed = 0
-      for (const result of results) {
-        if (result.status === 'fulfilled') {
-          const { platform, posts, success, platformName, error } = result.value
-          if (success) {
-            newPosts[platform] = posts
-            completed++
-          } else {
-            toast.error(`Fehler bei ${platformName}: ${error instanceof Error ? error.message : String(error)}`)
-          }
+        if (batchedResult) {
+          // Batching succeeded - use those results
+          newPosts = batchedResult
+          setGenerationProgress(prev => ({
+            ...prev,
+            completedPlatforms: selectedPlatforms.length,
+            progress: 100,
+          }))
         } else {
-          // Handle rejected promise (shouldn't happen with our try-catch, but be safe)
-          toast.error(`Unerwarteter Fehler bei der Generierung`)
+          // Batching failed - fall back to parallel calls
+          console.warn('Batched generation failed, falling back to parallel calls')
+          newPosts = await executeParallelGeneration(inputText, selectedPlatforms)
         }
+      } else {
+        // Single platform - use direct call (no need for batching)
+        newPosts = await executeParallelGeneration(inputText, selectedPlatforms)
       }
 
-      // Update progress after all complete
-      setGenerationProgress(prev => ({
-        ...prev,
-        completedPlatforms: completed,
-        progress: 100,
-      }))
-
       setPostsByPlatform(prev => ({ ...prev, ...newPosts }))
-      
+
       const names = selectedPlatforms.map(p => PLATFORM_LABEL[p]).join(', ')
       toast.success(`Beiträge erstellt! Generiert für: ${names}`)
-      
+
       return true
     } catch (error) {
       toast.error("Fehler beim Erstellen - LinkedIn-Beiträge konnten nicht erstellt werden.")
@@ -139,9 +119,71 @@ export const useContentGeneration = () => {
     }
   }
 
+  /**
+   * Fallback: Execute parallel generation for all platforms
+   * Used when batching fails or for single platform requests
+   */
+  const executeParallelGeneration = async (
+    inputText: string,
+    selectedPlatforms: Platform[]
+  ): Promise<Record<Platform, string[]>> => {
+    const newPosts: Record<Platform, string[]> = { linkedin: [], x: [], instagram: [] }
+
+    // Create parallel promise array for all platforms
+    const platformPromises = selectedPlatforms.map(async (platform) => {
+      const platformName = PLATFORM_LABEL[platform]
+      try {
+        let posts: string[] = []
+        switch (platform) {
+          case 'linkedin':
+            posts = await linkedInPostsFromNewsletter(inputText)
+            break
+          case 'x':
+            posts = await xTweetsFromBlog(inputText)
+            break
+          case 'instagram':
+            posts = await instagramPostsFromBlog(inputText)
+            break
+        }
+        return { platform, posts, success: true, platformName }
+      } catch (error) {
+        return { platform, posts: [] as string[], success: false, error, platformName }
+      }
+    })
+
+    // Execute all in parallel
+    const results = await Promise.allSettled(platformPromises)
+
+    // Process results and handle errors gracefully
+    let completed = 0
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        const { platform, posts, success, platformName, error } = result.value
+        if (success) {
+          newPosts[platform] = posts
+          completed++
+        } else {
+          toast.error(`Fehler bei ${platformName}: ${error instanceof Error ? error.message : String(error)}`)
+        }
+      } else {
+        // Handle rejected promise (shouldn't happen with our try-catch, but be safe)
+        toast.error(`Unerwarteter Fehler bei der Generierung`)
+      }
+    }
+
+    // Update progress after all complete
+    setGenerationProgress(prev => ({
+      ...prev,
+      completedPlatforms: completed,
+      progress: 100,
+    }))
+
+    return newPosts
+  }
+
   // === New: Single post generation per platform (via Edge Function helper) ===
 
-  const generateSinglePost = async (
+  const generateSinglePost = useCallback(async (
     content: string,
     platform: Platform,
     isRegeneration = false,
@@ -182,20 +224,33 @@ export const useContentGeneration = () => {
         ],
       }, { timeout: 25000 })
 
-  const raw = (response.content[0] as { text: string }).text
-  const generatedPost = normalizeSinglePostResponse(raw, platform)
+      // Type guard: validate response structure before accessing text
+      const firstBlock = response.content?.[0]
+      if (!firstBlock || typeof firstBlock !== 'object' || !('text' in firstBlock) || typeof firstBlock.text !== 'string') {
+        throw new Error('Invalid Claude API response: expected text block')
+      }
+      const raw = firstBlock.text
+      const generatedPost = normalizeSinglePostResponse(raw, platform)
 
       // Validate and store
       validatePost(generatedPost, platform)
 
-      setGeneratedPosts((prev) => ({
-        ...prev,
-        [platform]: {
+      setGeneratedPosts((prev) => {
+        const newEntry = {
           post: generatedPost,
           regenerationCount: isRegeneration ? regenerationCount + 1 : 0,
           isEdited: false,
-        },
-      }))
+        }
+        const updated = { ...prev, [platform]: newEntry }
+        const entries = Object.entries(updated)
+
+        // Apply LRU: keep only the last MAX_POSTS entries
+        if (entries.length > MAX_POSTS) {
+          const trimmed = entries.slice(-MAX_POSTS)
+          return Object.fromEntries(trimmed) as typeof prev
+        }
+        return updated
+      })
 
       if (!isRegeneration) {
         decrementUsage()
@@ -204,18 +259,19 @@ export const useContentGeneration = () => {
       toast.success(`${platform.toUpperCase()} Post generiert!`)
 
       return generatedPost
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error))
       let errorMessage = 'Generierung fehlgeschlagen. Bitte erneut versuchen.'
-      const msg = error?.message || ''
+      const msg = err.message
       if (msg.includes('Usage limit') || msg.includes('limit')) {
         errorMessage = 'Tageslimit erreicht. Upgrade für unbegrenzte Posts.'
       } else if (msg.includes('429') || msg.toLowerCase().includes('rate')) {
         errorMessage = 'Zu viele Anfragen. Bitte 30 Sekunden warten.'
-      } else if (error?.name === 'AbortError') {
+      } else if (err.name === 'AbortError') {
         errorMessage = 'Anfrage-Timeout. Bitte versuche es erneut.'
       }
       toast.error(errorMessage)
-      throw error
+      throw err
     } finally {
       setActiveGenerations((prev) => {
         const next = new Set(prev)
@@ -223,7 +279,7 @@ export const useContentGeneration = () => {
         return next
       })
     }
-  }
+  }, [hasUsageRemaining, decrementUsage, generatedPosts, setShowUpgradeModal, setActiveGenerations, setGeneratedPosts])
 
   const regeneratePost = async (content: string, platform: Platform, voiceTone?: VoiceTone) => {
     const current = generatedPosts[platform]

@@ -111,11 +111,16 @@ const initialState: PostGeneratorState = {
   isDirty: false,
 };
 
-// Reducer
-function postGeneratorReducer(
+// Domain-specific reducer handlers
+
+/**
+ * Handles workflow navigation and step management actions.
+ * Manages: SET_STEP, COMPLETE_STEP, RESET_WORKFLOW
+ */
+function handleWorkflowActions(
   state: PostGeneratorState,
   action: PostGeneratorAction
-): PostGeneratorState {
+): PostGeneratorState | null {
   switch (action.type) {
     case 'SET_STEP':
       return {
@@ -129,6 +134,23 @@ function postGeneratorReducer(
         completedSteps: [...new Set([...state.completedSteps, action.step])] as WorkflowStep[],
       };
 
+    case 'RESET_WORKFLOW':
+      return initialState;
+
+    default:
+      return null;
+  }
+}
+
+/**
+ * Handles input configuration and platform selection actions.
+ * Manages: SET_SOURCE_URL, SET_INPUT_TEXT, SET_PREMIUM_EXTRACTION, TOGGLE_PLATFORM, SET_PLATFORMS
+ */
+function handleInputActions(
+  state: PostGeneratorState,
+  action: PostGeneratorAction
+): PostGeneratorState | null {
+  switch (action.type) {
     case 'SET_SOURCE_URL':
       return {
         ...state,
@@ -149,7 +171,7 @@ function postGeneratorReducer(
         usePremiumExtraction: action.enabled,
       };
 
-    case 'TOGGLE_PLATFORM':
+    case 'TOGGLE_PLATFORM': {
       const platforms = state.selectedPlatforms.includes(action.platform)
         ? state.selectedPlatforms.filter(p => p !== action.platform)
         : [...state.selectedPlatforms, action.platform];
@@ -158,6 +180,7 @@ function postGeneratorReducer(
         selectedPlatforms: platforms,
         isDirty: true,
       };
+    }
 
     case 'SET_PLATFORMS':
       return {
@@ -166,6 +189,20 @@ function postGeneratorReducer(
         isDirty: true,
       };
 
+    default:
+      return null;
+  }
+}
+
+/**
+ * Handles URL extraction lifecycle actions.
+ * Manages: START_EXTRACTION, COMPLETE_EXTRACTION, FAIL_EXTRACTION, SET_EXTRACTION_PROGRESS
+ */
+function handleExtractionActions(
+  state: PostGeneratorState,
+  action: PostGeneratorAction
+): PostGeneratorState | null {
+  switch (action.type) {
     case 'START_EXTRACTION':
       return {
         ...state,
@@ -193,7 +230,27 @@ function postGeneratorReducer(
         errors: { ...state.errors, extraction: action.error },
       };
 
-    case 'START_GENERATION':
+    case 'SET_EXTRACTION_PROGRESS':
+      return {
+        ...state,
+        extractionProgress: action.progress,
+      };
+
+    default:
+      return null;
+  }
+}
+
+/**
+ * Handles AI content generation lifecycle actions.
+ * Manages: START_GENERATION, COMPLETE_GENERATION, FAIL_GENERATION, SET_GENERATION_PROGRESS
+ */
+function handleGenerationActions(
+  state: PostGeneratorState,
+  action: PostGeneratorAction
+): PostGeneratorState | null {
+  switch (action.type) {
+    case 'START_GENERATION': {
       const newGenerating = new Set(state.isGenerating);
       newGenerating.add(action.platform);
       return {
@@ -207,8 +264,9 @@ function postGeneratorReducer(
           },
         },
       };
+    }
 
-    case 'COMPLETE_GENERATION':
+    case 'COMPLETE_GENERATION': {
       const updatedGenerating = new Set(state.isGenerating);
       updatedGenerating.delete(action.platform);
 
@@ -240,8 +298,9 @@ function postGeneratorReducer(
           },
         },
       };
+    }
 
-    case 'FAIL_GENERATION':
+    case 'FAIL_GENERATION': {
       const failGenerating = new Set(state.isGenerating);
       failGenerating.delete(action.platform);
       return {
@@ -255,6 +314,7 @@ function postGeneratorReducer(
           },
         },
       };
+    }
 
     case 'SET_GENERATION_PROGRESS':
       return {
@@ -266,28 +326,20 @@ function postGeneratorReducer(
         },
       };
 
-    case 'SET_EXTRACTION_PROGRESS':
-      return {
-        ...state,
-        extractionProgress: action.progress,
-      };
+    default:
+      return null;
+  }
+}
 
-    case 'MARK_SAVED':
-      return {
-        ...state,
-        lastSavedAt: new Date(),
-        isDirty: false,
-      };
-
-    case 'RESET_WORKFLOW':
-      return initialState;
-
-    case 'CLEAR_ERRORS':
-      return {
-        ...state,
-        errors: {},
-      };
-
+/**
+ * Handles post editing and manipulation actions.
+ * Manages: START_EDIT, UPDATE_EDITING_CONTENT, SAVE_EDIT, CANCEL_EDIT, DELETE_POST, REGENERATE_POST
+ */
+function handlePostEditingActions(
+  state: PostGeneratorState,
+  action: PostGeneratorAction
+): PostGeneratorState | null {
+  switch (action.type) {
     case 'START_EDIT':
       return {
         ...state,
@@ -309,7 +361,7 @@ function postGeneratorReducer(
         },
       };
 
-    case 'SAVE_EDIT':
+    case 'SAVE_EDIT': {
       if (!state.editingPost) return state;
       const { platform, index, content } = state.editingPost;
       const updatedPosts = [...(state.postsByPlatform[platform] || [])];
@@ -332,6 +384,7 @@ function postGeneratorReducer(
         editingPost: null,
         isDirty: true,
       };
+    }
 
     case 'CANCEL_EDIT':
       return {
@@ -339,7 +392,7 @@ function postGeneratorReducer(
         editingPost: null,
       };
 
-    case 'DELETE_POST':
+    case 'DELETE_POST': {
       const postsAfterDelete = [...(state.postsByPlatform[action.platform] || [])];
       postsAfterDelete.splice(action.index, 1);
 
@@ -351,8 +404,9 @@ function postGeneratorReducer(
         },
         isDirty: true,
       };
+    }
 
-    case 'REGENERATE_POST':
+    case 'REGENERATE_POST': {
       const postsToRegenerate = [...(state.postsByPlatform[action.platform] || [])];
       if (postsToRegenerate[action.index]) {
         postsToRegenerate[action.index] = {
@@ -368,10 +422,58 @@ function postGeneratorReducer(
           [action.platform]: postsToRegenerate,
         },
       };
+    }
 
     default:
-      return state;
+      return null;
   }
+}
+
+/**
+ * Handles meta actions like saving and error management.
+ * Manages: MARK_SAVED, CLEAR_ERRORS
+ */
+function handleMetaActions(
+  state: PostGeneratorState,
+  action: PostGeneratorAction
+): PostGeneratorState | null {
+  switch (action.type) {
+    case 'MARK_SAVED':
+      return {
+        ...state,
+        lastSavedAt: new Date(),
+        isDirty: false,
+      };
+
+    case 'CLEAR_ERRORS':
+      return {
+        ...state,
+        errors: {},
+      };
+
+    default:
+      return null;
+  }
+}
+
+/**
+ * Main reducer that composes domain-specific handlers.
+ * Each handler processes its own domain; if it returns null, the action is passed to the next handler.
+ * This pattern reduces cyclomatic complexity and makes the reducer easier to test and maintain.
+ */
+function postGeneratorReducer(
+  state: PostGeneratorState,
+  action: PostGeneratorAction
+): PostGeneratorState {
+  return (
+    handleWorkflowActions(state, action) ??
+    handleInputActions(state, action) ??
+    handleExtractionActions(state, action) ??
+    handleGenerationActions(state, action) ??
+    handlePostEditingActions(state, action) ??
+    handleMetaActions(state, action) ??
+    state
+  );
 }
 
 // Hook
