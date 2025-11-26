@@ -29,11 +29,18 @@ interface ComparisonResult {
   };
 }
 
+interface PendingRegeneration {
+  content: string;
+  platform: Platform;
+  postGoal: PostGoal;
+}
+
 export const useEnhancedContentGeneration = () => {
   const [enhancedPosts, setEnhancedPosts] = useState<Partial<Record<Platform, EnhancedGenerationState>>>({});
   const [activeGenerations, setActiveGenerations] = useState<Set<string>>(new Set());
   const [comparisonResults, setComparisonResults] = useState<Partial<Record<Platform, ComparisonResult>>>({});
   const [isComparisonMode, setIsComparisonMode] = useState(false);
+  const [pendingRegeneration, setPendingRegeneration] = useState<PendingRegeneration | null>(null);
 
   const { decrementUsage, hasUsageRemaining } = useSubscription();
 
@@ -122,6 +129,7 @@ export const useEnhancedContentGeneration = () => {
 
   /**
    * Regenerate enhanced post with different formulas
+   * If post is edited, sets pending state for component to confirm
    */
   const regenerateEnhancedPost = async (
     content: string,
@@ -130,11 +138,29 @@ export const useEnhancedContentGeneration = () => {
   ) => {
     const current = enhancedPosts[platform];
     if (current?.isEdited) {
-      // TODO: Replace with non-blocking UI modal for better UX
-      const proceed = window.confirm('Das Regenerieren überschreibt Ihre Änderungen. Fortfahren?');
-      if (!proceed) return null;
+      setPendingRegeneration({ content, platform, postGoal });
+      return null;
     }
     return generateEnhancedSinglePost(content, platform, postGoal, true);
+  };
+
+  /**
+   * Confirm pending regeneration (call after user confirms via AlertDialog)
+   */
+  const confirmRegeneration = async () => {
+    if (!pendingRegeneration) return null;
+
+    const { content, platform, postGoal } = pendingRegeneration;
+    setPendingRegeneration(null);
+
+    return generateEnhancedSinglePost(content, platform, postGoal, true);
+  };
+
+  /**
+   * Cancel pending regeneration (call when user cancels AlertDialog)
+   */
+  const cancelRegeneration = () => {
+    setPendingRegeneration(null);
   };
 
   /**
@@ -272,12 +298,15 @@ export const useEnhancedContentGeneration = () => {
     comparisonResults,
     isComparisonMode,
     setIsComparisonMode,
+    pendingRegeneration,
 
     // Enhanced generation methods
     generateEnhancedSinglePost,
     regenerateEnhancedPost,
     generatePostComparison,
     changePostGoal,
+    confirmRegeneration,
+    cancelRegeneration,
 
     // Utilities
     getGenerationMetadata,
