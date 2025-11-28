@@ -106,8 +106,8 @@ function truncateContent(content: string): string {
   return content;
 }
 
-import { getCorsHeaders } from './utils/cors';
-import { isUrlSafe } from './utils/urlValidation';
+import { getCorsHeaders } from './utils/cors.js';
+import { isUrlSafe } from './utils/urlValidation.js';
 
 export default async function handler(req: Request) {
   // Get CORS headers

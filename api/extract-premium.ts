@@ -3,8 +3,8 @@
 // Prevents cost-based DoS durch monatliche Limits pro User
 
 import { createClient } from '@supabase/supabase-js';
-import { isUrlSafe } from './utils/urlValidation';
-import { parseJsonSafely } from './utils/safeJson';
+import { isUrlSafe } from './utils/urlValidation.js';
+import { parseJsonSafely } from './utils/safeJson.js';
 
 export const config = {
   runtime: 'edge',
