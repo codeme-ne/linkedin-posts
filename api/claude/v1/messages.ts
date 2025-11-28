@@ -1,5 +1,5 @@
-import { getCorsHeaders, createCorsResponse, handlePreflight } from '../../utils/cors';
-import { parseJsonSafely } from '../../utils/safeJson';
+import { getCorsHeaders, createCorsResponse, handlePreflight } from '../../utils/cors.js';
+import { parseJsonSafely } from '../../utils/safeJson.js';
 
 export const config = {
   runtime: 'edge',
