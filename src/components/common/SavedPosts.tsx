@@ -22,6 +22,8 @@ interface SavedPostsProps {
   isAuthenticated?: boolean;
   onLoginClick?: () => void;
   initialExpanded?: boolean;
+  /** Render as inline content (for 50/50 layout) instead of fixed sidebar */
+  inline?: boolean;
 }
 
 interface PostCardProps {
@@ -137,7 +139,7 @@ const PostCard = memo(({ post, editingPost, onEdit, onDelete, onStartEdit, onCan
   )
 })
 
-const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginClick, initialExpanded }: SavedPostsProps) {
+const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuthenticated, onLoginClick, initialExpanded, inline }: SavedPostsProps) {
   const [savedPosts, setSavedPosts] = useState<SavedPost[]>([])
   const [isCollapsed, setIsCollapsed] = useState(!initialExpanded)
   const [editingPost, setEditingPost] = useState<{ id: number, content: string } | null>(null)
@@ -186,13 +188,60 @@ const SavedPostsComponent = function SavedPosts({ onCollapse, refreshKey, isAuth
   const handleEdit = async (id: number, newContent: string) => {
     try {
       await updateSavedPost(id, newContent)
-      setSavedPosts(posts => posts.map(p => 
+      setSavedPosts(posts => posts.map(p =>
         p.id === id ? { ...p, content: newContent } : p
       ))
       setEditingPost(null)
     } catch (error) {
       // Error handling - editing state remains active
     }
+  }
+
+  // Inline rendering mode for 50/50 layout (desktop/tablet)
+  if (inline) {
+    return (
+      <div className="h-full flex flex-col">
+        {/* Header */}
+        <div className="flex items-center h-14 px-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Gespeicherte Beiträge
+          </h2>
+        </div>
+
+        {/* Content area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {!isAuthenticated ? (
+            <div className="p-4 rounded-lg border border-gray-200 bg-white text-center space-y-2">
+              <p className="text-gray-700">Bitte logge dich ein, um gespeicherte Beiträge zu sehen.</p>
+              {onLoginClick && (
+                <Button onClick={onLoginClick} variant="default" size="sm">Login</Button>
+              )}
+            </div>
+          ) : isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          ) : savedPosts.length === 0 ? (
+            <div className="p-4 rounded-lg border border-gray-200 bg-white text-center">
+              <p className="text-gray-700">Noch keine gespeicherten Beiträge.</p>
+            </div>
+          ) : savedPosts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              editingPost={editingPost}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onStartEdit={(id, content) => setEditingPost({ id, content })}
+              onCancelEdit={() => setEditingPost(null)}
+              onEditContentChange={(content) => setEditingPost(prev => prev ? { ...prev, content } : null)}
+            />
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (

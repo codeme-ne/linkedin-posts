@@ -63,7 +63,7 @@ export default function GeneratorV2() {
   const bottomSheet = useMobileBottomSheet();
 
   // Custom hooks
-  const { userEmail, loginOpen, setLoginOpen, searchParams } = useAuth();
+  const { userEmail, loginOpen, setLoginOpen } = useAuth();
   const { hasAccess } = useSubscription();
   const {
     // canGenerate, // Reserved for future use - usage tracking available if needed
@@ -444,18 +444,17 @@ export default function GeneratorV2() {
       }
       inputArea={InputArea}
       outputArea={OutputArea}
+      sidebar={
+        <SavedPosts
+          onCollapse={setIsSidebarCollapsed}
+          refreshKey={refreshKey}
+          isAuthenticated={!!userEmail}
+          onLoginClick={() => setLoginOpen(true)}
+          initialExpanded={true}
+          inline
+        />
+      }
     />
-
-    {/* Desktop SavedPosts sidebar - rendered outside UnifiedLayout to avoid duplicate fixed containers */}
-    <div className="hidden lg:block">
-      <SavedPosts
-        onCollapse={setIsSidebarCollapsed}
-        refreshKey={refreshKey}
-        isAuthenticated={!!userEmail}
-        onLoginClick={() => setLoginOpen(true)}
-        initialExpanded={searchParams.get('expand') === 'saved'}
-      />
-    </div>
 
     {/* Mobile FAB for saved posts */}
     <button

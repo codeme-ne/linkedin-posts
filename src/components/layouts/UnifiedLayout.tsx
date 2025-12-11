@@ -5,6 +5,7 @@ interface UnifiedLayoutProps {
   header?: ReactNode;
   inputArea: ReactNode;
   outputArea: ReactNode;
+  sidebar?: ReactNode;
   className?: string;
   children?: ReactNode;
 }
@@ -15,6 +16,7 @@ export function UnifiedLayout({
   header,
   inputArea,
   outputArea,
+  sidebar,
   className,
   children,
 }: UnifiedLayoutProps) {
@@ -41,35 +43,32 @@ export function UnifiedLayout({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Desktop Two-Column Layout
+  // Desktop Two-Column Layout (50/50 split with sidebar)
   if (layoutMode === 'two-column') {
     return (
       <div className={cn('min-h-screen bg-background', className)}>
         {/* Header */}
         {header && (
           <div className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur-sm">
-            <div className="container mx-auto px-4 py-3">
+            <div className="px-4 py-3">
               {header}
             </div>
           </div>
         )}
 
-        {/* Main Content Area - with right padding for sidebar */}
-        <div className="container mx-auto px-4 py-4 lg:pr-[24rem]">
-          <div className="grid grid-cols-12 gap-6">
-            {/* Input Column (55%) */}
-            <div className="col-span-6">
-              <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
-                {inputArea}
-              </div>
+        {/* Main Content Area - 50/50 split */}
+        <div className="flex h-[calc(100vh-4rem)]">
+          {/* Left Column - Input & Output (50%) */}
+          <div className="w-1/2 overflow-y-auto border-r">
+            <div className="p-4 space-y-6">
+              {inputArea}
+              {outputArea}
             </div>
+          </div>
 
-            {/* Output Column (45%) */}
-            <div className="col-span-6">
-              <div className="space-y-4">
-                {outputArea}
-              </div>
-            </div>
+          {/* Right Column - Sidebar (50%) */}
+          <div className="w-1/2 overflow-y-auto bg-gray-50/50">
+            {sidebar}
           </div>
         </div>
 
@@ -78,37 +77,34 @@ export function UnifiedLayout({
     );
   }
 
-  // Tablet Single-Column Layout
+  // Tablet Two-Column Layout (50/50 split with sidebar)
   if (layoutMode === 'single-column') {
     return (
       <div className={cn('min-h-screen bg-background', className)}>
         {/* Header */}
         {header && (
           <div className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur-sm">
-            <div className="container mx-auto px-4 py-4">
+            <div className="px-4 py-3">
               {header}
             </div>
           </div>
         )}
 
-        {/* Main Content - Single Column */}
-        <div className="container mx-auto px-4 py-6 max-w-4xl">
-          <div className="space-y-8">
-            {/* Input Section */}
-            <section className="space-y-4">
-              <h2 className="text-lg font-semibold">Input</h2>
+        {/* Main Content Area - 50/50 split for tablet */}
+        <div className="flex h-[calc(100vh-4rem)]">
+          {/* Left Column - Input & Output (50%) */}
+          <div className="w-1/2 overflow-y-auto border-r">
+            <div className="p-4 space-y-6">
               {inputArea}
-            </section>
-
-            {/* Output Section */}
-            <section className="space-y-4">
-              <h2 className="text-lg font-semibold">Generated Content</h2>
               {outputArea}
-            </section>
+            </div>
+          </div>
+
+          {/* Right Column - Sidebar (50%) */}
+          <div className="w-1/2 overflow-y-auto bg-gray-50/50">
+            {sidebar}
           </div>
         </div>
-
-        {/* Sidebar as overlay on tablet */}
 
         {children}
       </div>
