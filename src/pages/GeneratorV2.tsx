@@ -444,15 +444,17 @@ export default function GeneratorV2() {
       }
       inputArea={InputArea}
       outputArea={OutputArea}
-      sidebar={
-        <SavedPosts
-          onCollapse={setIsSidebarCollapsed}
-          refreshKey={refreshKey}
-          isAuthenticated={!!userEmail}
-          onLoginClick={() => setLoginOpen(true)}
-        />
-      }
     />
+
+    {/* Desktop SavedPosts sidebar - fixed overlay that can toggle */}
+    <div className="hidden md:block">
+      <SavedPosts
+        onCollapse={setIsSidebarCollapsed}
+        refreshKey={refreshKey}
+        isAuthenticated={!!userEmail}
+        onLoginClick={() => setLoginOpen(true)}
+      />
+    </div>
 
     {/* Mobile FAB for saved posts */}
     <button
