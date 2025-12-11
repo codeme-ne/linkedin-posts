@@ -42,7 +42,7 @@ import { perfMonitor, PERF_MARKS, PERF_MEASURES } from "@/utils/performance";
 // Types
 import type { Platform } from "@/config/platforms";
 import { PLATFORM_LABEL } from "@/config/platforms";
-import { savePost } from "@/api/supabase";
+import { savePost, getSession } from "@/api/supabase";
 import { createLinkedInShareUrl } from "@/api/linkedin";
 
 import { MobileBottomSheet, useMobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
@@ -59,7 +59,6 @@ export default function GeneratorV2() {
 
   // Local UI state only
   const [refreshKey, setRefreshKey] = useState(0);
-  const [, setIsSidebarCollapsed] = useState(false);
   const bottomSheet = useMobileBottomSheet();
 
   // Custom hooks
@@ -328,14 +327,17 @@ export default function GeneratorV2() {
                                       text=""
                                       onClick={async () => {
                                         try {
+                                          // Get auth token from Supabase session (not localStorage)
+                                          const { data: { session } } = await getSession();
+
                                           // Call our secure backend endpoint instead of exposing credentials
                                           const response = await fetch('/api/share/linkedin', {
                                             method: 'POST',
                                             headers: {
                                               'Content-Type': 'application/json',
                                               // Optional: Add auth token if user is logged in
-                                              ...(userEmail ? {
-                                                'Authorization': `Bearer ${localStorage.getItem('sb-access-token') || ''}`
+                                              ...(session?.access_token ? {
+                                                'Authorization': `Bearer ${session.access_token}`
                                               } : {})
                                             },
                                             body: JSON.stringify({ content: postContent })
@@ -449,7 +451,7 @@ export default function GeneratorV2() {
     {/* Desktop SavedPosts sidebar - fixed overlay that can toggle */}
     <div className="hidden md:block">
       <SavedPosts
-        onCollapse={setIsSidebarCollapsed}
+        onCollapse={() => {}} // Collapse state managed internally by SavedPosts
         refreshKey={refreshKey}
         isAuthenticated={!!userEmail}
         onLoginClick={() => setLoginOpen(true)}

@@ -213,7 +213,10 @@ export const useContentGeneration = () => {
       )
 
       const maxTokens = platform === 'x' ? 1024 : 2048
-      const temperature = isRegeneration ? 0.8 + regenerationCount * 0.05 : 0.7
+      // Cap temperature at 0.95 to prevent API errors after 4+ regenerations
+      const temperature = isRegeneration
+        ? Math.min(0.95, 0.8 + regenerationCount * 0.05)
+        : 0.7
 
       const response = await generateClaudeMessage({
         model: 'claude-3-5-sonnet-20241022',

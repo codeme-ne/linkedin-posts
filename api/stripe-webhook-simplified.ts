@@ -1,13 +1,19 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-// Fix TypeScript definition issue - invoice.subscription exists in API but not in types
+// Fix TypeScript definition issues - some fields exist in API but not in types
 declare module 'stripe' {
   namespace Stripe {
     interface Invoice {
       subscription?: string | Stripe.Subscription | null;
     }
   }
+}
+
+// Type for subscription item with period fields (API version 2025-08-27.basil)
+interface SubscriptionItemWithPeriod extends Stripe.SubscriptionItem {
+  current_period_start?: number;
+  current_period_end?: number;
 }
 
 export const config = {
@@ -294,9 +300,9 @@ export default async function handler(req: Request) {
       case 'customer.subscription.updated': {
         // Subscription updated - handle plan changes
         const subscription = event.data.object as Stripe.Subscription
-        
+
         // In API version 2025-08-27.basil, current_period_start/end moved to subscription items
-        const firstItem = subscription.items?.data?.[0] as any
+        const firstItem = subscription.items?.data?.[0] as SubscriptionItemWithPeriod | undefined
         const periodStart = firstItem?.current_period_start || Math.floor(Date.now() / 1000)
         const periodEnd = firstItem?.current_period_end || Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000)
         

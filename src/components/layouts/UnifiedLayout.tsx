@@ -23,28 +23,46 @@ export function UnifiedLayout({
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('two-column');
   const [mobileTab, setMobileTab] = useState<'input' | 'output'>('input');
 
-  // Determine layout mode based on viewport
+  // Determine layout mode based on viewport (debounced for performance)
   useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-      if (width < 768) {
-        setLayoutMode('mobile-tabs');
-      } else if (width < 1024) {
-        setLayoutMode('single-column');
-      } else {
-        setLayoutMode('two-column');
-      }
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        const width = window.innerWidth;
+
+        if (width < 768) {
+          setLayoutMode('mobile-tabs');
+        } else if (width < 1024) {
+          setLayoutMode('single-column');
+        } else {
+          setLayoutMode('two-column');
+        }
+      }, 100); // 100ms debounce
     };
 
-    handleResize();
+    // Initial call without debounce
+    const width = window.innerWidth;
+    if (width < 768) {
+      setLayoutMode('mobile-tabs');
+    } else if (width < 1024) {
+      setLayoutMode('single-column');
+    } else {
+      setLayoutMode('two-column');
+    }
+
     window.addEventListener('resize', handleResize);
 
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
-  // Desktop Two-Column Layout (50/50 split: input | output)
-  if (layoutMode === 'two-column') {
+  // Desktop & Tablet Layout (50/50 split: input | output)
+  // Both two-column and single-column use identical 50/50 split
+  if (layoutMode === 'two-column' || layoutMode === 'single-column') {
     return (
       <div className={cn('min-h-screen bg-background', className)}>
         {/* Header */}
@@ -57,44 +75,6 @@ export function UnifiedLayout({
         )}
 
         {/* Main Content Area - 50/50 split */}
-        <div className="flex h-[calc(100vh-4rem)]">
-          {/* Left Column - Input (50%) */}
-          <div className="w-1/2 overflow-y-auto border-r">
-            <div className="p-4">
-              {inputArea}
-            </div>
-          </div>
-
-          {/* Right Column - Output / Generated Posts (50%) */}
-          <div className="w-1/2 overflow-y-auto bg-gray-50/30">
-            <div className="p-4">
-              {outputArea}
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar (toggleable overlay) */}
-        {sidebar}
-
-        {children}
-      </div>
-    );
-  }
-
-  // Tablet Two-Column Layout (50/50 split: input | output)
-  if (layoutMode === 'single-column') {
-    return (
-      <div className={cn('min-h-screen bg-background', className)}>
-        {/* Header */}
-        {header && (
-          <div className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur-sm">
-            <div className="px-4 py-3">
-              {header}
-            </div>
-          </div>
-        )}
-
-        {/* Main Content Area - 50/50 split for tablet */}
         <div className="flex h-[calc(100vh-4rem)]">
           {/* Left Column - Input (50%) */}
           <div className="w-1/2 overflow-y-auto border-r">
