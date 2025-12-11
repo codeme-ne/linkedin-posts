@@ -1,363 +1,312 @@
-# 🚀 Social Transformer
+# Social Transformer
 
 <div align="center">
 
-**Transform newsletters and blog posts into platform-optimized social media content using AI**
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-06B6D4?logo=tailwindcss&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-Edge-000000?logo=vercel&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-29%20passing-green?logo=vitest&logoColor=white)
+![CI](https://github.com/codeme-ne/linkedin-posts/actions/workflows/ci.yml/badge.svg)
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-linkedin--posts--one.vercel.app-blue?style=for-the-badge)](https://linkedin-posts-one.vercel.app/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+**AI-powered content transformation platform that converts newsletters and articles into platform-optimized social media posts.**
+
+[Live Demo](https://linkedin-posts-one.vercel.app/) · [Report Bug](https://github.com/codeme-ne/linkedin-posts/issues) · [Request Feature](https://github.com/codeme-ne/linkedin-posts/issues)
 
 </div>
 
-## 🎯 What is Social Transformer?
+---
 
-Social Transformer is an AI-powered SaaS platform that converts long-form content (newsletters, blog posts, articles) into engaging, platform-optimized social media posts for LinkedIn, X (Twitter), and Instagram.
-
-### ✨ Key Features
-
-- **🤖 AI-Powered Transformation**: Uses Claude API to intelligently adapt content tone and style
-- **🎯 Platform Optimization**: Creates tailored posts for LinkedIn, X, and Instagram
-- **⚡ Single & Batch Generation**: Generate one post at a time or multiple posts simultaneously
-- **💾 Save & Organize**: Store and manage your transformed posts
-- **📱 Mobile-First Design**: Fully responsive interface with PWA capabilities
-- **💳 Flexible Pricing**: Free tier + Pro subscriptions (monthly/yearly)
-- **🔒 Privacy-First**: Secure authentication with Supabase
-
-### 🎬 Demo Video
+## Demo
 
 https://github.com/user-attachments/assets/demo-video.mp4
 
-> 📺 **[Watch the full demo on our live site](https://linkedin-posts-one.vercel.app/)**
-
-### 🎬 How it Works
-
-1. **Paste Content**: Add your newsletter or blog post content
-2. **Select Platforms**: Choose LinkedIn, X, Instagram, or all three
-3. **AI Magic**: Claude transforms your content with platform-specific optimization
-4. **Edit & Polish**: Fine-tune the generated posts with built-in editor
-5. **Save & Share**: Store posts for later or share directly
+> **[Try it live →](https://linkedin-posts-one.vercel.app/)**
 
 ---
 
-## 🛠️ Tech Stack
+## Features
 
-| Category | Technology | Purpose |
-|----------|------------|----------|
-| **Frontend** | React 18 + TypeScript + Vite | Modern, fast development experience |
-| **Styling** | TailwindCSS + shadcn/ui | Beautiful, accessible components |
-| **Backend** | Vercel Edge Functions | Serverless API routes |
-| **Database** | Supabase (PostgreSQL) | User management & data storage |
-| **AI** | Anthropic Claude API | Content transformation |
+| Feature | Description |
+|---------|-------------|
+| **Multi-Platform Generation** | Create optimized posts for LinkedIn, X (Twitter), and Instagram from a single input |
+| **Smart URL Extraction** | Extract content from any URL using Jina Reader with automatic cleaning |
+| **Batched AI Processing** | Cost-optimized API calls - generates for all platforms in a single request |
+| **Voice & Tone Control** | Customize output style with configurable tone presets |
+| **Post Management** | Save, edit, and organize generated content with Supabase backend |
+| **One-Click Sharing** | Share directly to social platforms or copy to clipboard |
+| **Freemium Model** | Free tier (3/day) with Pro subscriptions via Stripe |
+| **Mobile-First Design** | Responsive UI with bottom sheet navigation on mobile/tablet |
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              CLIENT (React 19 + Vite 7)                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │   Pages/     │  │  Components/ │  │   Hooks/     │  │   Config/    │    │
+│  │  GeneratorV2 │  │  shadcn/ui   │  │  useContent  │  │  app.config  │    │
+│  │  Settings    │  │  Radix UI    │  │  Generation  │  │  env.config  │    │
+│  │  Landing     │  │  Mobile UI   │  │  useAuth     │  │  platforms   │    │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘    │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         EDGE FUNCTIONS (Vercel)                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │ /api/claude  │  │ /api/extract │  │ /api/stripe  │  │ /api/share   │    │
+│  │   Proxy to   │  │ Jina Reader  │  │  Checkout    │  │  LinkedIn    │    │
+│  │  Claude AI   │  │  Extraction  │  │   Portal     │  │   Share      │    │
+│  └──────────────┘  └──────────────┘  │   Webhook    │  └──────────────┘    │
+│                                      └──────────────┘                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                    ┌─────────────────┼─────────────────┐
+                    ▼                 ▼                 ▼
+          ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+          │   Claude AI  │  │   Supabase   │  │    Stripe    │
+          │  (Anthropic) │  │  PostgreSQL  │  │   Payments   │
+          │              │  │     Auth     │  │              │
+          └──────────────┘  └──────────────┘  └──────────────┘
+```
+
+### Data Flow
+
+```
+User Input → URL Extraction (optional) → AI Generation → Display → Save/Share
+     │              │                          │            │          │
+     └──────────────┴──────────────────────────┴────────────┴──────────┘
+                            All operations use React hooks
+                            with optimistic UI updates
+```
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **Frontend** | React 19, TypeScript 5.9, Vite 7 | Modern SPA with strict type safety |
+| **Styling** | TailwindCSS 3.4, shadcn/ui, Radix | Accessible, composable components |
+| **State** | Custom hooks, React Context | Encapsulated business logic |
+| **Backend** | Vercel Edge Functions | Serverless API with low latency |
+| **Database** | Supabase (PostgreSQL) | RLS-enabled data storage |
+| **Auth** | Supabase Auth | Magic link authentication |
+| **AI** | Claude 3.5 Sonnet | Content transformation |
 | **Payments** | Stripe | Subscription management |
-| **Auth** | Supabase Auth | Secure user authentication |
-| **Deployment** | Vercel | Edge-optimized hosting |
+| **Testing** | Vitest, Testing Library | Unit tests with 29 test cases |
+| **CI/CD** | GitHub Actions | Automated lint, type-check, test, deploy |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- **Node.js** 18+ ([Download](https://nodejs.org/))
-- **npm** or **yarn** package manager
-- **Git** for version control
+- Node.js 20+
+- npm or yarn
+- Supabase account
+- Anthropic API key
 
-### 1. Clone & Install
+### Installation
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/codeme-ne/linkedin-posts.git
 cd linkedin-posts
 
 # Install dependencies
 npm install
-```
 
-### 2. Environment Setup
-
-```bash
-# Copy environment template
+# Configure environment
 cp .env.example .env
+# Edit .env with your API keys
+
+# Start development server
+npm run dev:full
 ```
 
-**Fill in your `.env` file** with the required API keys:
+### Environment Variables
 
 ```env
-# Required: Supabase (Database & Auth)
-VITE_SUPABASE_URL="https://your-project.supabase.co"
-VITE_SUPABASE_ANON_KEY="your-anon-key"
-SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+# Required - Supabase
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Required: Claude AI
-CLAUDE_API_KEY="sk-ant-api03-your-key"
+# Required - AI
+CLAUDE_API_KEY=sk-ant-api03-...
 
-# Required: Stripe (Payments)
-VITE_STRIPE_PAYMENT_LINK_MONTHLY="https://buy.stripe.com/monthly"
-VITE_STRIPE_PAYMENT_LINK_YEARLY="https://buy.stripe.com/yearly"
-STRIPE_WEBHOOK_SECRET="whsec_your-webhook-secret"
-
-# Optional: LinkedIn API
-LINKEDIN_ACCESS_TOKEN="your-linkedin-token"
-LINKEDIN_AUTHOR_URN="urn:li:person:your-id"
+# Required - Payments
+STRIPE_SECRET_KEY=sk_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+VITE_STRIPE_MONTHLY_PRICE_ID=price_...
+VITE_STRIPE_YEARLY_PRICE_ID=price_...
 ```
 
-### 3. Database Setup
+---
 
-1. Create a [Supabase](https://supabase.com/) project
-2. Run the SQL migrations in `/supabase/migrations/`
-3. Configure authentication providers if needed
+## Development
 
-### 4. Payment Setup (Optional)
+### Scripts
 
-1. Create [Stripe](https://stripe.com/) account
-2. Set up products and payment links
-3. Configure webhook endpoint: `your-domain/api/stripe-webhook`
-4. Add webhook events: `payment_intent.succeeded`, `checkout.session.completed`
+| Command | Description |
+|---------|-------------|
+| `npm run dev:full` | Start frontend (5173) + API (3001) |
+| `npm run build` | TypeScript + Vite production build |
+| `npm run test` | Run Vitest in watch mode |
+| `npm run test:coverage` | Generate coverage report |
+| `npm run lint` | ESLint check |
+| `npm run type-check` | TypeScript strict check |
 
-### 5. Start Development
+### Project Structure
+
+```
+src/
+├── api/           # API client wrappers (claude, extract, supabase)
+├── components/    # UI components (shadcn/ui based)
+│   ├── ui/        # Base components (Button, Card, Dialog...)
+│   ├── common/    # Shared components (UrlExtractor, PlatformSelector)
+│   ├── mobile/    # Mobile-specific (BottomSheet)
+│   └── modals/    # Modal dialogs (Upgrade, Login)
+├── config/        # Centralized configuration
+├── hooks/         # Business logic hooks
+│   ├── useContentGeneration.ts  # AI generation orchestration
+│   ├── useUrlExtraction.ts      # Content extraction
+│   ├── useSubscription.ts       # Access control
+│   └── useAuth.ts               # Authentication
+├── pages/         # Route components
+├── libs/          # Utilities (promptBuilder, api-client)
+└── test/          # Test files
+
+api/               # Vercel Edge Functions
+├── claude/        # Claude AI proxy
+├── stripe/        # Payment endpoints
+└── extract.ts     # URL extraction
+```
+
+---
+
+## Key Implementation Details
+
+### Batched Generation (Cost Optimization)
+
+Multi-platform requests use a single API call, reducing costs by ~67%:
+
+```typescript
+// src/hooks/useContentGeneration.ts
+if (selectedPlatforms.length > 1) {
+  const batchedResult = await batchedPostsFromContent(inputText, selectedPlatforms)
+  if (batchedResult) {
+    newPosts = batchedResult // Single API call for all platforms
+  } else {
+    newPosts = await executeParallelGeneration(inputText, selectedPlatforms) // Fallback
+  }
+}
+```
+
+### Subscription Access Control
+
+Single source of truth pattern via `is_active` boolean:
+
+```typescript
+// src/hooks/useSubscription.ts
+const hasAccess = subscription?.is_active === true
+const hasUsageRemaining = () => {
+  if (hasAccess) return true
+  return localStorage usage < config.limits.freeGenerationsPerDay
+}
+```
+
+### Edge Function Security
+
+Claude API key never exposed to client - all requests proxied through edge:
+
+```typescript
+// api/claude/v1/messages.ts
+export const config = { runtime: 'edge' }
+// Uses CLAUDE_API_KEY from server environment
+```
+
+---
+
+## Testing
+
+29 test cases covering core functionality:
 
 ```bash
-# Start the development server
-npm run dev
+npm run test:run
 
-# Visit your app
-open http://localhost:5173
+# Output:
+✓ src/test/utils/validation.test.ts (8 tests)
+✓ src/test/api/claude.test.ts (10 tests)
+✓ src/test/hooks/useContentGeneration.test.ts (11 tests)
+
+Test Files  3 passed (3)
+     Tests  29 passed (29)
 ```
+
+Test categories:
+- **Hooks**: Generation lifecycle, error handling, state management
+- **API**: Response parsing, error recovery, validation
+- **Utils**: Input validation, content normalization
 
 ---
 
-## 📁 Project Structure
-
-```
-linkedin-posts/
-├── src/
-│   ├── components/          # Reusable UI components
-│   │   ├── ui/             # shadcn/ui components
-│   │   └── forms/          # Form components
-│   ├── pages/              # Route components
-│   ├── hooks/              # Custom React hooks
-│   ├── libs/               # Utility libraries
-│   ├── types/              # TypeScript definitions
-│   └── styles/             # Global styles
-├── api/                    # Vercel serverless functions
-│   ├── claude/            # Claude AI proxy
-│   └── stripe-webhook/    # Payment webhooks
-├── supabase/
-│   └── migrations/        # Database schema
-├── public/                # Static assets
-└── docs/                  # Documentation
-```
-
----
-
-## 🎨 Key Features Deep Dive
-
-### Single-Post Generation
-
-New feature allowing platform-specific post generation:
-
-- **Hook**: `useContentGeneration` with `generateSinglePost`, `regeneratePost`
-- **UI**: `PlatformGenerators` renders individual platform cards
-- **Prompting**: `src/libs/promptBuilder.ts` handles platform-specific prompts
-- **Location**: Integrated in `src/pages/GeneratorV2.tsx`
-
-### AI Content Transformation
-
-- **Smart Context**: Analyzes content type and audience
-- **Platform Adaptation**: Adjusts tone, length, and hashtags per platform
-- **Quality Validation**: Built-in content validation with `validatePost`
-- **Regeneration**: Easy one-click regeneration with different variations
-
-### User Management
-
-- **Free Tier**: 2 transformations per day
-- **Pro Monthly**: €29/month - unlimited transformations
-- **Pro Yearly**: €299/year - unlimited transformations + savings
-- **Automatic Billing**: Stripe handles all payment processing
-
----
-
-## 🚀 Deployment
+## Deployment
 
 ### Vercel (Recommended)
 
-1. **Connect Repository**
-   - Import project to [Vercel](https://vercel.com/)
-   - Connect your GitHub repository
+1. Connect repository to Vercel
+2. Configure environment variables in dashboard
+3. Deploy triggers automatically on push to `main`
 
-2. **Environment Variables**
-   - Add all variables from `.env.example`
-   - Use Vercel dashboard: Settings → Environment Variables
-
-3. **Domain Setup**
-   - Configure custom domain
-   - Update CORS origins in environment
-
-### Manual Deployment
-
-```bash
-# Build for production
-npm run build
-
-# Preview build locally
-npm run preview
-
-# Deploy to your preferred hosting
-# (Netlify, Railway, DigitalOcean, etc.)
-```
+CI/CD pipeline includes:
+- ESLint validation
+- TypeScript type checking
+- Test suite (29 tests)
+- Coverage reporting
+- Production build verification
 
 ---
 
-## 🧪 Development
+## API Reference
 
-### Available Scripts
-
-```bash
-# Development
-npm run dev                 # Start dev server (port 5173)
-npm run dev:frontend        # Frontend only
-npm run dev:api            # API only (port 3001)
-npm run dev:full           # Both frontend + API
-
-# Production
-npm run build              # Build for production
-npm run preview            # Preview production build
-
-# Code Quality
-npm run lint               # Run ESLint
-npm run type-check         # TypeScript checking
-npm run test               # Run tests (when implemented)
-```
-
-### Code Style
-
-- **TypeScript**: Strict mode enabled
-- **ESLint**: Extended React/TypeScript rules
-- **Prettier**: Code formatting (configure in your editor)
-- **Conventions**: Functional components, custom hooks, clean architecture
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/claude/v1/messages` | POST | Bearer | Claude AI proxy |
+| `/api/extract` | POST | - | URL content extraction |
+| `/api/stripe/create-checkout` | POST | Bearer | Stripe checkout session |
+| `/api/stripe/create-portal` | POST | Bearer | Customer portal link |
+| `/api/stripe-webhook-simplified` | POST | Signature | Webhook handler |
 
 ---
 
-## 📊 API Endpoints
+## License
 
-| Endpoint | Method | Purpose | Auth Required |
-|----------|--------|---------|---------------|
-| `/api/claude/v1/messages` | POST | Claude AI proxy | ✅ |
-| `/api/stripe-webhook` | POST | Payment webhooks | ❌ |
-| `/api/linkedin/post` | POST | LinkedIn posting | ✅ |
-
-### Example API Usage
-
-```typescript
-// Transform content with Claude
-const response = await fetch('/api/claude/v1/messages', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${userToken}`
-  },
-  body: JSON.stringify({
-    content: 'Your newsletter content...',
-    platform: 'linkedin',
-    tone: 'professional'
-  })
-});
-```
+Private repository - All rights reserved.
 
 ---
 
-## 🤝 Contributing
+## Author
 
-We welcome contributions! Here's how to get started:
+**Lukas Zangerl**
 
-### Setup Development Environment
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Follow the setup instructions above
-4. Make your changes
-5. Add tests if applicable
-6. Commit with clear messages: `git commit -m "Add amazing feature"`
-7. Push and create a Pull Request
-
-### Contribution Guidelines
-
-- **Code Quality**: Follow existing patterns and ESLint rules
-- **Testing**: Add tests for new features
-- **Documentation**: Update README and add inline comments
-- **Performance**: Consider impact on bundle size and runtime
-- **Accessibility**: Ensure components are accessible
-
----
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Environment Variables Not Loading**
-```bash
-# Check file name and location
-ls -la .env
-# Restart dev server after changes
-npm run dev
-```
-
-**Supabase Connection Issues**
-```bash
-# Verify URLs and keys in Supabase dashboard
-# Check network connectivity
-# Ensure anon key has correct permissions
-```
-
-**Claude API Errors**
-```bash
-# Verify API key format: sk-ant-api03-...
-# Check API quota and billing
-# Ensure CORS is configured properly
-```
-
-**Build Failures**
-```bash
-# Clear cache and reinstall
-rm -rf node_modules package-lock.json
-npm install
-
-# Check TypeScript errors
-npm run type-check
-```
-
-### Getting Help
-
-- 📧 **Email**: [Your contact email]
-- 🐛 **Issues**: [GitHub Issues](https://github.com/codeme-ne/linkedin-posts/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/codeme-ne/linkedin-posts/discussions)
-
----
-
-## 📄 License
-
-**Private Repository** - All rights reserved.
-
-This is proprietary software. See license terms for usage rights.
-
----
-
-## 🙏 Acknowledgments
-
-- **[Anthropic](https://anthropic.com/)** - Claude AI API
-- **[Supabase](https://supabase.com/)** - Backend infrastructure
-- **[Vercel](https://vercel.com/)** - Deployment platform
-- **[shadcn/ui](https://ui.shadcn.com/)** - Beautiful UI components
-- **[Stripe](https://stripe.com/)** - Payment processing
+- GitHub: [@codeme-ne](https://github.com/codeme-ne)
+- LinkedIn: [Connect](https://linkedin.com/in/lukaszangerl)
 
 ---
 
 <div align="center">
 
-**Made with ❤️ by [Lukas Zangerl](https://github.com/codeme-ne)**
+Built with React 19 · TypeScript · Vercel Edge · Claude AI
 
-[Live Demo](https://linkedin-posts-one.vercel.app/) • [Issues](https://github.com/codeme-ne/linkedin-posts/issues) • [Discussions](https://github.com/codeme-ne/linkedin-posts/discussions)
+**[View Live Demo →](https://linkedin-posts-one.vercel.app/)**
 
 </div>

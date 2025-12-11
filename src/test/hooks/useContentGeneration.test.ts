@@ -7,6 +7,7 @@ vi.mock('@/api/claude', () => ({
   linkedInPostsFromNewsletter: vi.fn(),
   xTweetsFromBlog: vi.fn(),
   instagramPostsFromBlog: vi.fn(),
+  batchedPostsFromContent: vi.fn(),
 }));
 
 // Mock the subscription hook
@@ -84,12 +85,16 @@ describe('useContentGeneration', () => {
   });
 
   test('should generate content for multiple platforms', async () => {
-    const { linkedInPostsFromNewsletter, xTweetsFromBlog } = await import('@/api/claude');
-    (linkedInPostsFromNewsletter as any).mockResolvedValue(['LinkedIn post']);
-    (xTweetsFromBlog as any).mockResolvedValue(['X tweet']);
-    
+    const { batchedPostsFromContent } = await import('@/api/claude');
+    // Mock batched generation (used for multi-platform)
+    (batchedPostsFromContent as any).mockResolvedValue({
+      linkedin: ['LinkedIn post'],
+      x: ['X tweet'],
+      instagram: [],
+    });
+
     const { result } = renderHook(() => useContentGeneration());
-    
+
     await act(async () => {
       const success = await result.current.generateContent(
         'Test content',
@@ -97,7 +102,7 @@ describe('useContentGeneration', () => {
       );
       expect(success).toBe(true);
     });
-    
+
     expect(result.current.postsByPlatform.linkedin).toEqual(['LinkedIn post']);
     expect(result.current.postsByPlatform.x).toEqual(['X tweet']);
   });
