@@ -1,13 +1,10 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface UnifiedLayoutProps {
   header?: ReactNode;
   inputArea: ReactNode;
   outputArea: ReactNode;
-  sidebarArea?: ReactNode;
   className?: string;
   children?: ReactNode;
 }
@@ -18,12 +15,10 @@ export function UnifiedLayout({
   header,
   inputArea,
   outputArea,
-  sidebarArea,
   className,
   children,
 }: UnifiedLayoutProps) {
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('two-column');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileTab, setMobileTab] = useState<'input' | 'output'>('input');
 
   // Determine layout mode based on viewport
@@ -53,55 +48,30 @@ export function UnifiedLayout({
         {/* Header */}
         {header && (
           <div className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur-sm">
-            <div className="container mx-auto px-4 py-4">
+            <div className="container mx-auto px-4 py-3">
               {header}
             </div>
           </div>
         )}
 
-        {/* Main Content Area */}
-        <div className="container mx-auto px-4 py-6">
+        {/* Main Content Area - with right padding for sidebar */}
+        <div className="container mx-auto px-4 py-4 lg:pr-[24rem]">
           <div className="grid grid-cols-12 gap-6">
-            {/* Input Column (60%) */}
-            <div className="col-span-7">
-              <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
+            {/* Input Column (55%) */}
+            <div className="col-span-6">
+              <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
                 {inputArea}
               </div>
             </div>
 
-            {/* Output Column (40%) */}
-            <div className="col-span-5">
+            {/* Output Column (45%) */}
+            <div className="col-span-6">
               <div className="space-y-4">
                 {outputArea}
               </div>
             </div>
           </div>
         </div>
-
-        {/* Sidebar (if provided) */}
-        {sidebarArea && (
-          <div
-            className={cn(
-              "fixed right-0 top-0 h-full z-30 transition-all duration-300 bg-background border-l",
-              sidebarCollapsed ? "w-12" : "w-80"
-            )}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="absolute left-2 top-4"
-            >
-              {sidebarCollapsed ? <ChevronLeft /> : <ChevronRight />}
-            </Button>
-            <div className={cn(
-              "pt-16 h-full overflow-y-auto",
-              sidebarCollapsed && "hidden"
-            )}>
-              {sidebarArea}
-            </div>
-          </div>
-        )}
 
         {children}
       </div>

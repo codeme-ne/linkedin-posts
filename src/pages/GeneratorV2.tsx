@@ -4,7 +4,6 @@ import { toast } from "sonner";
 // Feature flag and layout components
 import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 import { UnifiedLayout } from "@/components/layouts/UnifiedLayout";
-import { WorkflowStepper, type WorkflowStep } from "@/components/common/WorkflowStepper";
 import { EnhancedUrlExtractor } from "@/components/common/EnhancedUrlExtractor";
 import { CharacterCounterTextarea } from "@/components/common/CharacterCounter";
 import {
@@ -197,13 +196,6 @@ export default function GeneratorV2() {
 
   const handleSaveEdit = () => {
     actions.saveEdit();
-  };
-
-  // Handle step navigation
-  const handleStepClick = (step: WorkflowStep) => {
-    if (state.completedSteps.includes(step) || state.currentStep === step) {
-      actions.setStep(step);
-    }
   };
 
   // Memoized Input Area component
@@ -427,51 +419,43 @@ export default function GeneratorV2() {
     <>
     <UnifiedLayout
       header={
-        <div className="space-y-4">
-          {/* Top bar with account */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Social Transformer
-            </h1>
-            <div className="flex items-center gap-4">
-              {userEmail ? (
-                <AccountButton />
-              ) : (
-                <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="default" size="sm">Login</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Einloggen</DialogTitle>
-                    </DialogHeader>
-                    <Auth />
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            Social Transformer
+          </h1>
+          <div className="flex items-center gap-4">
+            {userEmail ? (
+              <AccountButton />
+            ) : (
+              <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="default" size="sm">Login</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Einloggen</DialogTitle>
+                  </DialogHeader>
+                  <Auth />
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
-
-          {/* Workflow Stepper */}
-          <WorkflowStepper
-            currentStep={state.currentStep}
-            completedSteps={state.completedSteps}
-            onStepClick={handleStepClick}
-          />
         </div>
       }
       inputArea={InputArea}
       outputArea={OutputArea}
-      sidebarArea={
-        <SavedPosts
-          onCollapse={setIsSidebarCollapsed}
-          refreshKey={refreshKey}
-          isAuthenticated={!!userEmail}
-          onLoginClick={() => setLoginOpen(true)}
-          initialExpanded={searchParams.get('expand') === 'saved'}
-        />
-      }
     />
+
+    {/* Desktop SavedPosts sidebar - rendered outside UnifiedLayout to avoid duplicate fixed containers */}
+    <div className="hidden lg:block">
+      <SavedPosts
+        onCollapse={setIsSidebarCollapsed}
+        refreshKey={refreshKey}
+        isAuthenticated={!!userEmail}
+        onLoginClick={() => setLoginOpen(true)}
+        initialExpanded={searchParams.get('expand') === 'saved'}
+      />
+    </div>
 
     {/* Mobile FAB for saved posts */}
     <button
