@@ -3,7 +3,7 @@
 -- Date: 2025-11-26
 
 -- Create table to track webhook anomalies
-CREATE TABLE webhook_anomalies (
+CREATE TABLE IF NOT EXISTS webhook_anomalies (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   event_id TEXT NOT NULL,
   anomaly_type TEXT NOT NULL,
@@ -14,13 +14,13 @@ CREATE TABLE webhook_anomalies (
 );
 
 -- Create index for anomaly type queries (for dashboard/reporting)
-CREATE INDEX idx_webhook_anomalies_type ON webhook_anomalies(anomaly_type);
+CREATE INDEX IF NOT EXISTS idx_webhook_anomalies_type ON webhook_anomalies(anomaly_type);
 
 -- Create index for event_id lookups
-CREATE INDEX idx_webhook_anomalies_event_id ON webhook_anomalies(event_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_anomalies_event_id ON webhook_anomalies(event_id);
 
 -- Create index on created_at for time-based queries
-CREATE INDEX idx_webhook_anomalies_created_at ON webhook_anomalies(created_at);
+CREATE INDEX IF NOT EXISTS idx_webhook_anomalies_created_at ON webhook_anomalies(created_at);
 
 -- Add comments for documentation
 COMMENT ON TABLE webhook_anomalies IS 'Tracks anomalies detected in Stripe webhook processing for security monitoring';
@@ -35,6 +35,7 @@ COMMENT ON COLUMN webhook_anomalies.created_at IS 'Timestamp when anomaly was de
 ALTER TABLE webhook_anomalies ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Only service role can insert/read
+DROP POLICY IF EXISTS "Service role full access" ON webhook_anomalies;
 CREATE POLICY "Service role full access"
   ON webhook_anomalies
   FOR ALL
