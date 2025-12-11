@@ -22,10 +22,7 @@ export interface EnvironmentVariables {
   // LinkedIn (server-side only for security, no VITE_ prefix)
   LINKEDIN_ACCESS_TOKEN?: string;
   LINKEDIN_AUTHOR_URN?: string;
-  
-  // Firecrawl (optional)
-  FIRECRAWL_API_KEY?: string;
-  
+
   // App configuration
   VITE_DOMAIN_NAME?: string;
   VITE_BASE_URL?: string;
@@ -65,8 +62,7 @@ const REQUIRED_SERVER_VARS: (keyof EnvironmentVariables)[] = [
  */
 const RECOMMENDED_VARS: (keyof EnvironmentVariables)[] = [
   'VITE_STRIPE_PAYMENT_LINK_YEARLY',
-  'VITE_STRIPE_PAYMENT_LINK_MONTHLY',
-  'FIRECRAWL_API_KEY'
+  'VITE_STRIPE_PAYMENT_LINK_MONTHLY'
 ];
 
 /**

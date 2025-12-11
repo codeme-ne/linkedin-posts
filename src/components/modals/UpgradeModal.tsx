@@ -11,7 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { CheckCircle2, XCircle, Sparkles, Zap, Shield, Clock } from 'lucide-react';
 import config, { formatPrice } from '@/config/app.config';
-import { useSubscription } from '@/hooks/useSubscription';
 import { createCheckoutSession } from '@/libs/api-client';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -24,7 +23,6 @@ interface UpgradeModalProps {
 }
 
 export function UpgradeModal({ isOpen, onClose, trigger = 'usage_limit' }: UpgradeModalProps) {
-  const { dailyUsage } = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const yearlyPlan = config.stripe.plans.find(p => p.interval === 'yearly');
@@ -57,8 +55,8 @@ export function UpgradeModal({ isOpen, onClose, trigger = 'usage_limit' }: Upgra
     switch (trigger) {
       case 'usage_limit':
         return {
-          title: 'Tageslimit erreicht!',
-          description: `Du hast deine ${config.limits.freeExtractions} kostenlosen Generierungen für heute aufgebraucht. Upgrade auf Pro für unbegrenzte Nutzung!`,
+          title: 'Bereit für mehr?',
+          description: 'Upgrade auf Pro für unbegrenzte Premium-Features!',
           icon: <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
         };
       case 'feature_locked':
@@ -91,25 +89,6 @@ export function UpgradeModal({ isOpen, onClose, trigger = 'usage_limit' }: Upgra
           </div>
         </DialogHeader>
 
-        {/* Usage Status */}
-        {trigger === 'usage_limit' && (
-          <div className="bg-muted/50 rounded-lg p-4 text-center">
-            <div className="text-sm text-muted-foreground mb-1">Heutige Nutzung</div>
-            <div className="flex items-center justify-center gap-1">
-              {[...Array(config.limits.freeExtractions)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-3 h-3 rounded-full ${
-                    i < dailyUsage ? 'bg-red-500' : 'bg-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {dailyUsage} von {config.limits.freeExtractions} verwendet
-            </div>
-          </div>
-        )}
 
         {/* Premium Features */}
         <div className="space-y-3 my-6">

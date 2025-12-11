@@ -55,7 +55,6 @@ export interface AppConfig {
   // Feature flags
   features: {
     linkedinPosting: AppFeature;
-    premiumExtraction: AppFeature;
     postSaving: AppFeature;
     multiPlatform: AppFeature;
     directPosting: AppFeature;
@@ -86,13 +85,12 @@ export interface AppConfig {
   
   // Limits and quotas
   limits: {
-    freeExtractions: number;
-    premiumExtractions: number;
     maxPostLength: {
       linkedin: number;
       x: number;
       instagram: number;
     };
+    freeGenerationsPerDay: number;
   };
   
   // Environment-specific settings
@@ -189,13 +187,6 @@ const config: AppConfig = {
       requiresAuth: true,
       requiresSubscription: true
     },
-    premiumExtraction: {
-      name: "Premium Content-Extraktion",
-      description: "JavaScript-Rendering und PDF-Support",
-      enabled: true,
-      requiresAuth: true,
-      requiresSubscription: true
-    },
     postSaving: {
       name: "Posts speichern",
       description: "Generierte Posts speichern und verwalten",
@@ -238,13 +229,12 @@ const config: AppConfig = {
   },
   
   limits: {
-    freeExtractions: Infinity, // Unlimited free generations - premium offers features, not limits
-    premiumExtractions: 100, // Monthly limit per premium user (enforced server-side)
     maxPostLength: {
       linkedin: 3000,
       x: 280,
       instagram: 2200
-    }
+    },
+    freeGenerationsPerDay: 3
   },
   
   env: {

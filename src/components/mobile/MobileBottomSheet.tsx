@@ -37,17 +37,38 @@ export function MobileBottomSheet({
   const controls = useAnimation();
   const sheetRef = useRef<HTMLDivElement>(null);
 
-  // Check if device is mobile
-  const [isMobile, setIsMobile] = useState(false);
+  // Check if device is mobile or tablet (< 1024px)
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const checkDevice = () => {
+      setIsMobileOrTablet(window.innerWidth < 1024);
     };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
   }, []);
+
+  // Lock body scroll when sheet is open
+  useEffect(() => {
+    if (isOpen && isMobileOrTablet) {
+      // Save current scroll position and lock body
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+
+      return () => {
+        // Restore scroll position when closing
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [isOpen, isMobileOrTablet]);
 
   // Get the height for current snap point
   const getSnapHeight = (snapPoint: number) => {
@@ -56,7 +77,7 @@ export function MobileBottomSheet({
 
   // Animate sheet when opening/closing
   useEffect(() => {
-    if (isOpen && isMobile) {
+    if (isOpen && isMobileOrTablet) {
       controls.start({
         y: 0,
         transition: { type: 'spring', damping: 30, stiffness: 400 },
@@ -67,7 +88,7 @@ export function MobileBottomSheet({
         transition: { type: 'spring', damping: 30, stiffness: 400 },
       });
     }
-  }, [isOpen, isMobile, controls]);
+  }, [isOpen, isMobileOrTablet, controls]);
 
   // Handle drag end to snap to points
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -102,8 +123,8 @@ export function MobileBottomSheet({
     }
   };
 
-  // Don't render on desktop
-  if (!isMobile) {
+  // Don't render on desktop (only show on mobile and tablet)
+  if (!isMobileOrTablet) {
     return null;
   }
 

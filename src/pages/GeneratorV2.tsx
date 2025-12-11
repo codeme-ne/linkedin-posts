@@ -63,16 +63,16 @@ export default function GeneratorV2() {
 
   // Custom hooks
   const { userEmail, loginOpen, setLoginOpen } = useAuth();
-  const { hasAccess } = useSubscription();
+  const { hasAccess: _hasAccess } = useSubscription();
   const {
     // canGenerate, // Reserved for future use - usage tracking available if needed
-    isPremium,
+    isPremium: _isPremium,
     // checkAndIncrementUsage - removed: URL extraction is now always free (Jina Reader)
   } = useUsageTracking();
 
   // const canExtract = () => isPremium || canGenerate; // Reserved for future use
-  const isPro = hasAccess || isPremium;
-  const { extractionUsage, extractContent } = useUrlExtraction();
+  // const isPro = hasAccess || isPremium; // Reserved for future premium features
+  const { extractContent } = useUrlExtraction();
 
   // Feature flag check
   const newUxEnabled = useFeatureFlag('NEW_UX', {
@@ -143,25 +143,15 @@ export default function GeneratorV2() {
     }
   }, [state.errors]);
 
-  // Enhanced extraction handler
-  // URL extraction is always free (Jina Reader has no limits)
-  // Usage limits only apply to AI generation
-  const handleExtract = useCallback(async (url: string, usePremium: boolean = false) => {
+  // URL extraction handler (uses Jina Reader - always free)
+  const handleExtract = useCallback(async (url: string) => {
     if (!url) return;
 
     perfMonitor.mark(PERF_MARKS.EXTRACTION_START);
     actions.startExtraction();
-    actions.setPremiumExtraction(usePremium);
-
-    // Premium extraction still requires Pro subscription (Firecrawl has costs)
-    if (usePremium && !isPro) {
-      actions.failExtraction('Premium extraction requires Pro subscription');
-      toast.error('Premium-Extraktion erfordert ein Pro-Abo');
-      return;
-    }
 
     try {
-      const result = await extractContent(url, usePremium, isPro);
+      const result = await extractContent(url);
       if (result) {
         const prefill = [result.title, result.content]
           .filter(Boolean)
@@ -175,7 +165,7 @@ export default function GeneratorV2() {
     } catch (error) {
       actions.failExtraction(error instanceof Error ? error.message : 'Extraction failed');
     }
-  }, [extractContent, isPro, actions]);
+  }, [extractContent, actions]);
 
   // Save post handler
   const handleSavePost = async (content: string, platform: 'linkedin' | 'x' | 'instagram' = 'linkedin') => {
@@ -205,19 +195,11 @@ export default function GeneratorV2() {
         onContentExtracted={handleExtract}
         onTextInput={actions.setInputText}
         isExtracting={state.isExtracting}
-        isPro={isPro}
-        usageRemaining={extractionUsage?.remaining}
-        usePremiumExtraction={state.usePremiumExtraction}
-        onPremiumToggle={actions.setPremiumExtraction}
       />
 
       {state.inputText.trim() && (
         <Card>
-          <CardHeader>
-            <CardTitle>Plattform-spezifische Generierung</CardTitle>
-            <CardDescription>Erzeuge und regeneriere Beiträge pro Plattform</CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <PlatformGenerators
               content={state.inputText}
               onPostGenerated={(platform, post) => {
@@ -238,7 +220,7 @@ export default function GeneratorV2() {
         </Card>
       )}
     </div>
-  ), [state.inputText, state.isExtracting, state.usePremiumExtraction, handleExtract, actions, isPro, extractionUsage?.remaining]);
+  ), [state.inputText, state.isExtracting, handleExtract, actions]);
 
   // Stable Output Area - prevents layout jumping by maintaining consistent container
   const OutputArea = useMemo(() => {
@@ -448,8 +430,8 @@ export default function GeneratorV2() {
       outputArea={OutputArea}
     />
 
-    {/* Desktop SavedPosts sidebar - fixed overlay that can toggle */}
-    <div className="hidden md:block">
+    {/* Desktop SavedPosts sidebar - fixed overlay that can toggle (only on desktop >= 1024px) */}
+    <div className="hidden lg:block">
       <SavedPosts
         onCollapse={() => {}} // Collapse state managed internally by SavedPosts
         refreshKey={refreshKey}
@@ -458,10 +440,10 @@ export default function GeneratorV2() {
       />
     </div>
 
-    {/* Mobile FAB for saved posts */}
+    {/* Mobile/Tablet FAB for saved posts (hidden on desktop >= 1024px) */}
     <button
       onClick={bottomSheet.open}
-      className="fixed bottom-6 right-6 md:hidden z-50 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:shadow-xl transition-all"
+      className="fixed bottom-6 right-6 lg:hidden z-50 bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:shadow-xl transition-all"
       aria-label="Gespeicherte Beiträge öffnen"
     >
       <Bookmark className="h-6 w-6" />

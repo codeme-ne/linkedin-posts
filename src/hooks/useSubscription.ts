@@ -196,7 +196,7 @@ export function useSubscription() {
     if (hasAccess) return true;
     const today = new Date().toDateString();
     const currentUsage = parseInt(localStorage.getItem(`usage_${today}`) || '0', 10);
-    return currentUsage < config.limits.freeExtractions; // use config value instead of hardcoded
+    return currentUsage < config.limits.freeGenerationsPerDay;
   }, [hasAccess])
 
   // Combine loading states for better UX

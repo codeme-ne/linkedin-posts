@@ -27,8 +27,8 @@ export function useUsageTracking() {
     canGenerate: true,
     isPremium: false,
     used: 0,
-    limit: config.limits.freeExtractions,
-    remaining: config.limits.freeExtractions,
+    limit: config.limits.freeGenerationsPerDay,
+    remaining: config.limits.freeGenerationsPerDay,
     isLoading: true,
   });
 
@@ -43,7 +43,7 @@ export function useUsageTracking() {
 
   // Sync state with useSubscription's daily usage tracking
   useEffect(() => {
-    const limit = config.limits.freeExtractions;
+    const limit = config.limits.freeGenerationsPerDay;
     const used = dailyUsage;
     const remaining = Math.max(0, limit - used);
 
@@ -136,7 +136,7 @@ export function useUsageTracking() {
     localStorage.removeItem(todayKey);
 
     // Trigger state update
-    const limit = config.limits.freeExtractions;
+    const limit = config.limits.freeGenerationsPerDay;
     setUsageStatus({
       canGenerate: true,
       isPremium: hasAccess,

@@ -20,7 +20,6 @@ export interface PostGeneratorState {
   // Input
   sourceUrl: string;
   inputText: string;
-  usePremiumExtraction: boolean;
 
   // Platform Selection
   selectedPlatforms: Platform[];
@@ -63,7 +62,6 @@ type PostGeneratorAction =
   | { type: 'COMPLETE_STEP'; step: WorkflowStep }
   | { type: 'SET_SOURCE_URL'; url: string }
   | { type: 'SET_INPUT_TEXT'; text: string }
-  | { type: 'SET_PREMIUM_EXTRACTION'; enabled: boolean }
   | { type: 'TOGGLE_PLATFORM'; platform: Platform }
   | { type: 'SET_PLATFORMS'; platforms: Platform[] }
   | { type: 'START_EXTRACTION' }
@@ -91,7 +89,6 @@ const initialState: PostGeneratorState = {
   completedSteps: [],
   sourceUrl: '',
   inputText: '',
-  usePremiumExtraction: false,
   selectedPlatforms: ['linkedin'],
   postsByPlatform: {
     linkedin: [],
@@ -144,7 +141,7 @@ function handleWorkflowActions(
 
 /**
  * Handles input configuration and platform selection actions.
- * Manages: SET_SOURCE_URL, SET_INPUT_TEXT, SET_PREMIUM_EXTRACTION, TOGGLE_PLATFORM, SET_PLATFORMS
+ * Manages: SET_SOURCE_URL, SET_INPUT_TEXT, TOGGLE_PLATFORM, SET_PLATFORMS
  */
 function handleInputActions(
   state: PostGeneratorState,
@@ -163,12 +160,6 @@ function handleInputActions(
         ...state,
         inputText: action.text,
         isDirty: true,
-      };
-
-    case 'SET_PREMIUM_EXTRACTION':
-      return {
-        ...state,
-        usePremiumExtraction: action.enabled,
       };
 
     case 'TOGGLE_PLATFORM': {
@@ -529,10 +520,6 @@ export function usePostGeneratorState() {
 
     setInputText: useCallback((text: string) => {
       dispatch({ type: 'SET_INPUT_TEXT', text });
-    }, []),
-
-    setPremiumExtraction: useCallback((enabled: boolean) => {
-      dispatch({ type: 'SET_PREMIUM_EXTRACTION', enabled });
     }, []),
 
     togglePlatform: useCallback((platform: Platform) => {

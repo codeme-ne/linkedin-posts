@@ -7,17 +7,11 @@ interface ExtractionResult {
   content: string
 }
 
-interface ExtractionUsage {
-  used: number
-  limit: number
-  remaining: number
-}
-
 /**
  * Request deduplication cache with TTL.
  *
- * Prevents duplicate API calls to Jina/Firecrawl when users spam the extract button.
- * Cache key format: `${url}:${isPremium}`
+ * Prevents duplicate API calls to Jina when users spam the extract button.
+ * Cache key format: URL
  * TTL: 5 minutes
  * Max entries: 100 (with automatic cleanup of expired entries)
  */
@@ -30,14 +24,12 @@ const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 export const useUrlExtraction = () => {
   const [isExtracting, setIsExtracting] = useState(false)
-  const [extractionUsage, setExtractionUsage] = useState<ExtractionUsage | null>(null)
 
-  const extractContent = async (sourceUrl: string, usePremiumExtraction: boolean, isPro: boolean = false): Promise<ExtractionResult | null> => {
+  const extractContent = async (sourceUrl: string): Promise<ExtractionResult | null> => {
     if (!sourceUrl.trim()) return null
 
     // Check cache first
-    const cacheKey = `${sourceUrl}:${usePremiumExtraction && isPro}`
-    const cached = extractionCache.get(cacheKey)
+    const cached = extractionCache.get(sourceUrl)
 
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       toast.info('Cached result returned')
@@ -47,51 +39,16 @@ export const useUrlExtraction = () => {
     setIsExtracting(true)
 
     try {
-      let result: ExtractionResult
-
-      if (usePremiumExtraction && isPro) {
-        // Premium extraction with Firecrawl
-        const response = await fetch('/api/extract-premium', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url: sourceUrl }),
-        })
-
-        const data = await response.json()
-
-        if (!response.ok) {
-          if (data.usage) {
-            setExtractionUsage(data.usage)
-          }
-          throw new Error(data.error || "Premium-Extraktion fehlgeschlagen")
-        }
-
-        result = {
-          title: data.title,
-          content: data.markdown || data.content || "",
-        }
-
-        // Update usage information
-        if (data.usage) {
-          setExtractionUsage(data.usage)
-          toast.success(`Premium-Import erfolgreich ✨ - ${data.usage.remaining} von ${data.usage.limit} Premium-Extraktionen übrig diesen Monat`)
-        } else {
-          toast.success(`Premium-Import erfolgreich ✨ - ${data.title || "Inhalt wurde mit verbesserter Qualität importiert"}`)
-        }
-      } else {
-        // Standard extraction with Jina
-        const extractResult = await extractFromUrl(sourceUrl)
-        result = {
-          title: extractResult.title || "",  // Don't default to "Ohne Titel"
-          content: extractResult.content || ""
-        }
-        toast.success(`Inhalt importiert - ${extractResult.title || sourceUrl}`)
+      // Standard extraction with Jina Reader
+      const extractResult = await extractFromUrl(sourceUrl)
+      const result: ExtractionResult = {
+        title: extractResult.title || "",
+        content: extractResult.content || ""
       }
+      toast.success(`Inhalt importiert - ${extractResult.title || sourceUrl}`)
 
       // Cache the successful result
-      extractionCache.set(cacheKey, {
+      extractionCache.set(sourceUrl, {
         result,
         timestamp: Date.now()
       })
@@ -117,8 +74,6 @@ export const useUrlExtraction = () => {
 
   return {
     isExtracting,
-    extractionUsage,
     extractContent,
-    setExtractionUsage
   }
 }

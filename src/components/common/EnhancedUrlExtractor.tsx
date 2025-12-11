@@ -12,7 +12,6 @@ import {
   Sparkles,
   Loader2,
   Globe,
-  Zap,
   ArrowRight,
   CheckCircle2,
   AlertCircle,
@@ -21,13 +20,9 @@ import {
 
 interface EnhancedUrlExtractorProps {
   value: string;
-  onContentExtracted: (url: string, usePremium: boolean) => void;
+  onContentExtracted: (url: string) => void;
   onTextInput: (text: string) => void;
   isExtracting?: boolean;
-  isPro?: boolean;
-  usageRemaining?: number;
-  usePremiumExtraction?: boolean;
-  onPremiumToggle?: (enabled: boolean) => void;
   className?: string;
 }
 
@@ -36,20 +31,10 @@ const EnhancedUrlExtractorComponent = ({
   onContentExtracted,
   onTextInput,
   isExtracting = false,
-  isPro = false,
-  usageRemaining,
-  usePremiumExtraction = false,
-  onPremiumToggle,
   className,
 }: EnhancedUrlExtractorProps) => {
   const [url, setUrl] = useState('');
   const [activeTab, setActiveTab] = useState<'url' | 'text'>('url');
-
-  // Use controlled premium state if provided, otherwise local state
-  const usePremium = usePremiumExtraction;
-  const setUsePremium = (enabled: boolean) => {
-    onPremiumToggle?.(enabled);
-  };
 
   const handleExtract = () => {
     if (!url.trim()) {
@@ -65,8 +50,8 @@ const EnhancedUrlExtractorComponent = ({
       return;
     }
 
-    // Trigger extraction with premium flag
-    onContentExtracted(url, usePremium);
+    // Trigger extraction
+    onContentExtracted(url);
   };
 
   return (
@@ -125,34 +110,6 @@ const EnhancedUrlExtractorComponent = ({
                   className="pl-10 pr-4 h-12 text-base"
                   disabled={isExtracting}
                 />
-              </div>
-
-              {/* Premium Toggle */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <label className="flex items-center gap-3 cursor-pointer flex-1">
-                  <input
-                    type="checkbox"
-                    checked={usePremium}
-                    onChange={(e) => setUsePremium(e.target.checked)}
-                    className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
-                    disabled={!isPro}
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-yellow-500" />
-                      <span className="font-medium">Premium-Extraktion</span>
-                      {!isPro && <Badge variant="secondary">Pro</Badge>}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Bessere Qualität • JavaScript-Support • Screenshots
-                    </p>
-                  </div>
-                </label>
-                {isPro && usageRemaining !== undefined && (
-                  <Badge variant="outline" className="ml-2">
-                    {usageRemaining}/20
-                  </Badge>
-                )}
               </div>
 
               {/* Main CTA Button */}
