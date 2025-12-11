@@ -69,13 +69,6 @@ const EnhancedUrlExtractorComponent = ({
     onContentExtracted(url, usePremium);
   };
 
-  const popularSources = [
-    { name: 'Medium', icon: '📝', example: 'medium.com/@user/article' },
-    { name: 'Substack', icon: '📬', example: 'newsletter.substack.com' },
-    { name: 'LinkedIn', icon: '💼', example: 'linkedin.com/pulse/' },
-    { name: 'Blog', icon: '🌐', example: 'yourblog.com/post' },
-  ];
-
   return (
     <Card className={cn("border-2 border-primary/20 shadow-lg", className)}>
       <div className="p-6 space-y-6">
@@ -181,23 +174,6 @@ const EnhancedUrlExtractorComponent = ({
                   </>
                 )}
               </Button>
-            </div>
-
-            {/* Popular Sources */}
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Beliebte Quellen:</p>
-              <div className="grid grid-cols-2 gap-2">
-                {popularSources.map((source) => (
-                  <button
-                    key={source.name}
-                    onClick={() => setUrl(`https://${source.example}`)}
-                    className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-muted/50 transition-colors text-sm"
-                  >
-                    <span>{source.icon}</span>
-                    <span>{source.name}</span>
-                  </button>
-                ))}
-              </div>
             </div>
           </TabsContent>
 

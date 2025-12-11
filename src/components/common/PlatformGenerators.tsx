@@ -1,6 +1,5 @@
 import { useMemo, memo } from 'react'
 import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
 import { useContentGeneration } from '@/hooks/useContentGeneration'
 import type { Platform } from '@/config/platforms'
 
@@ -15,7 +14,6 @@ export function PlatformGenerators({ content, onPostGenerated }: PlatformGenerat
     generateSinglePost,
     regeneratePost,
     isGenerating,
-    setGeneratedPosts,
   } = useContentGeneration()
 
   const platforms = useMemo(() => (
@@ -43,17 +41,6 @@ export function PlatformGenerators({ content, onPostGenerated }: PlatformGenerat
     } catch (error) {
       console.error(`Regeneration failed for ${platform}:`, error)
     }
-  }
-
-  const handlePostEdit = (platform: Platform, newPost: string) => {
-    setGeneratedPosts((prev) => ({
-      ...prev,
-      [platform]: {
-        ...(prev[platform] || { post: '', regenerationCount: 0, isEdited: false }),
-        post: newPost,
-        isEdited: true,
-      },
-    }))
   }
 
   if (!content.trim()) {
@@ -97,38 +84,6 @@ export function PlatformGenerators({ content, onPostGenerated }: PlatformGenerat
               >
                 {hasPost ? '🔄 Regenerieren' : '✨ Generieren'}
               </Button>
-
-              {hasPost && (
-                <div className="space-y-2">
-                  <textarea
-                    value={currentPost!.post}
-                    onChange={(e) => handlePostEdit(k, e.target.value)}
-                    className="w-full p-3 border rounded-md text-sm resize-none bg-background"
-                    rows={6}
-                    placeholder={`${name} Post...`}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{currentPost!.isEdited && '✏️ Bearbeitet'}</span>
-                    <span>
-                      {currentPost!.post.length}
-                      {k === 'x' && '/280'}
-                      {k === 'instagram' && '/2200'}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        await navigator.clipboard.writeText(currentPost!.post)
-                        toast.success('Post in Zwischenablage kopiert.')
-                      }}
-                    >
-                      📋 Kopieren
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           )
         })}
