@@ -51,69 +51,103 @@ export function buildBatchedPostPrompt(
       case 'linkedin':
         return `
 ---LINKEDIN---
-Create EXACTLY ONE high-quality LinkedIn post.
 
-STRUCTURE & STYLE:
-- Opening hook (first 1-2 sentences capture 80% of the value)
-- Short sentences with line breaks for readability
-- Clear hierarchy: Hook → Core insights → Key takeaway → Engagement question
-- Use bullets (↳) or arrows for lists when appropriate
-- No hashtags, minimal emojis
-- Professional but conversational tone
-- STRICT: Stay between 500-1000 characters - be concise and impactful
-- CRITICAL: MUST end with a complete sentence - NEVER cut off mid-sentence!
+⚠️ HARD CONSTRAINTS (VIOLATION = FAILURE):
+1. EXACTLY 500-900 characters (optimal engagement length)
+2. MUST end with complete sentence (. ! or ?)
+3. NO hashtags (LinkedIn algorithm penalizes them)
+4. Maximum 1-2 emojis total, only if adding value
 
-CONTENT REQUIREMENTS:
-- Include specific examples, company names, or case studies when relevant
-- Add concrete, actionable insights readers can immediately use
-- Use data points or statistics if available in source content
-- Create genuine business value, not just motivational content
+❌ ANTI-PATTERNS (NEVER DO):
+- Incomplete sentences or cut-off thoughts
+- "Agree?" or "Thoughts?" without context
+- Motivational fluff without substance ("Chase your dreams!")
+- Wall of text without line breaks
+- Starting with "I" (narcissistic opener)
 
-OUTPUT: Start with "LINKEDIN:" prefix, then the post content.`;
+✅ PROVEN LINKEDIN STRUCTURE:
+Line 1: Hook (surprising fact, contrarian view, or bold claim)
+Line 2-3: Context/Story (the "why this matters")
+Line 4-6: Key insight with specific example
+Line 7: Actionable takeaway
+Line 8: Engagement question (optional)
+
+EXAMPLE STRUCTURE:
+"Nobody talks about the real reason startups fail.
+
+It's not funding. It's not the product.
+
+It's founders who can't admit when they're wrong.
+
+I watched 3 companies die this year because the CEO ignored customer feedback for 6 months.
+
+The fix? Weekly "What are we wrong about?" meetings.
+
+What blind spots have you discovered too late?"
+
+OUTPUT: Start with "LINKEDIN:" prefix, then the post.`;
 
       case 'x':
         return `
----X---
-Create EXACTLY ONE authentic, engaging tweet.
+---X (TWITTER)---
 
-STRUCTURE & STYLE:
-- Punchy, attention-grabbing opening
-- Authentic human voice (not corporate speak)
-- Clear value: insight, tip, or thought-provoking statement
-- Include call-to-action when natural
-- NO hashtags, NO emojis
-- Conversational and personal feel
-- STRICT: Maximum 280 characters
-- CRITICAL: MUST end with a complete sentence - NEVER cut off mid-sentence or mid-word!
+⚠️ HARD CONSTRAINTS (VIOLATION = FAILURE):
+1. EXACTLY 200-275 characters (leave buffer for platform)
+2. MUST end with complete sentence (. ! or ?)
+3. NO hashtags, NO emojis, NO links
+4. ONE standalone thought (not a thread teaser)
 
-CONTENT APPROACH:
-- Focus on one key insight from the source material
-- Make it relatable to entrepreneurs and business builders
-- Use conversational language that feels genuine
-- Avoid marketing-speak or generic business jargon
+❌ ANTI-PATTERNS (NEVER DO):
+- "That's" or any incomplete sentence at the end
+- Generic advice like "Work hard" or "Stay focused"
+- Corporate speak like "leverage", "synergy", "optimize"
+- Clickbait without substance
 
-OUTPUT: Start with "X:" prefix, then the tweet text.`;
+✅ GOOD TWEET STRUCTURE:
+[Surprising insight or contrarian take] + [One concrete example or specific detail] + [Thought-provoking ending]
+
+EXAMPLE OF PERFECT TWEET:
+"Most founders fail because they solve problems nobody has. The trick: find what annoys YOU daily, then discover 1000 others feel the same. Your frustration is your business plan."
+
+VOICE: Conversational, authentic, like texting a smart friend.
+
+OUTPUT: Start with "X:" prefix, then the tweet.`;
 
       case 'instagram':
         return `
 ---INSTAGRAM---
-Create EXACTLY ONE engaging Instagram caption.
 
-STRUCTURE & STYLE:
-- Compelling hook in first 125 characters (preview text)
-- 3-6 concise, engaging sentences
-- Use line breaks for readability
-- 3-5 relevant hashtags at the end
-- Clear call-to-action or question to drive engagement
-- STRICT: Maximum 2,200 characters but stay focused and concise (aim for 500-1500)
-- CRITICAL: MUST end with a complete sentence - NEVER cut off mid-sentence!
+⚠️ HARD CONSTRAINTS (VIOLATION = FAILURE):
+1. EXACTLY 400-1200 characters (sweet spot for engagement)
+2. MUST end with complete sentence before hashtags (. ! or ?)
+3. First 125 characters = preview text (must hook reader!)
+4. EXACTLY 3-5 hashtags at the very end, separated by spaces
 
-CONTENT APPROACH:
-- Visual storytelling that connects emotionally
-- Behind-the-scenes insights or personal perspective
-- Actionable advice that followers can implement
-- Authentic voice that builds community
-- Strategic use of emojis for visual appeal (not excessive)
+❌ ANTI-PATTERNS (NEVER DO):
+- Incomplete sentences or cut-off thoughts
+- More than 5 hashtags (looks spammy)
+- No line breaks (wall of text = no engagement)
+- Starting with hashtags
+- Generic CTAs like "Link in bio"
+
+✅ INSTAGRAM CAPTION STRUCTURE:
+Line 1: Strong hook (question, bold statement, or story opener)
+Line 2-4: Story/insight with emotional connection
+Line 5: Clear actionable takeaway or CTA
+Line 6: 3-5 relevant hashtags
+
+EXAMPLE CAPTION:
+"The advice that changed everything for me 👇
+
+Three years ago, someone told me: 'Stop planning. Start doing.'
+
+I had 47 business ideas in my notes app. Zero launched.
+
+That week, I picked the simplest one and shipped it in 48 hours. It flopped. But the NEXT one? That became my full-time income.
+
+Save this for when perfectionism hits. 💡
+
+#entrepreneurlife #startupjourney #businesstips"
 
 OUTPUT: Start with "INSTAGRAM:" prefix, then the caption.`;
 
@@ -237,90 +271,110 @@ QUALITY STANDARDS:
     case "linkedin":
       return `${baseSystemPrompt}
 
-LINKEDIN-SPECIFIC REQUIREMENTS:
-Create EXACTLY ONE high-quality LinkedIn post from the provided content.
+⚠️ HARD CONSTRAINTS (VIOLATION = FAILURE):
+1. EXACTLY 500-900 characters (optimal engagement length)
+2. MUST end with complete sentence (. ! or ?)
+3. NO hashtags (LinkedIn algorithm penalizes them)
+4. Maximum 1-2 emojis total, only if adding value
 
-OUTPUT FORMAT (CRITICAL):
-- Return ONLY the pure post text
-- NO labels, headings, numbering, or variants
-- NO introduction/explanation before or after
-- Start with prefix "LINKEDIN:" in the first line
+OUTPUT FORMAT:
+- Return ONLY the post text (no labels, no explanations)
+- Start with "LINKEDIN:" prefix
 
-LINKEDIN STRUCTURE & STYLE:
-- Opening hook (first 1-2 sentences capture 80% of the value)
-- Short sentences with line breaks for readability
-- Clear hierarchy: Hook → Core insights → Key takeaway → Engagement question
-- Use bullets (↳) or arrows for lists when appropriate
-- No hashtags, minimal emojis
-- Professional but conversational tone
-- STRICT: Stay between 500-1000 characters - be concise and impactful
-- CRITICAL: MUST end with a complete sentence - NEVER cut off mid-sentence!
+❌ ANTI-PATTERNS (NEVER DO):
+- Incomplete sentences or cut-off thoughts
+- "Agree?" or "Thoughts?" without context
+- Motivational fluff without substance
+- Wall of text without line breaks
+- Starting with "I"
 
-CONTENT ENHANCEMENT:
-- Include specific examples, company names, or case studies when relevant
-- Add concrete, actionable insights readers can immediately use
-- Use data points or statistics if available in source content
-- Create genuine business value, not just motivational content${regenerationPrompt}
+✅ PROVEN LINKEDIN STRUCTURE:
+Line 1: Hook (surprising fact, contrarian view, bold claim)
+Line 2-3: Context/Story
+Line 4-6: Key insight with specific example
+Line 7: Actionable takeaway
+Line 8: Engagement question (optional)
+
+EXAMPLE:
+"Nobody talks about the real reason startups fail.
+
+It's not funding. It's not the product.
+
+It's founders who can't admit when they're wrong.
+
+I watched 3 companies die this year because the CEO ignored customer feedback for 6 months.
+
+The fix? Weekly 'What are we wrong about?' meetings."${regenerationPrompt}
 
 Source Content: ${content}`;
 
     case "x":
       return `${baseSystemPrompt}
 
-X/TWITTER-SPECIFIC REQUIREMENTS:
-Create EXACTLY ONE authentic, engaging tweet from the provided content.
+⚠️ HARD CONSTRAINTS (VIOLATION = FAILURE):
+1. EXACTLY 200-275 characters (leave buffer for platform)
+2. MUST end with complete sentence (. ! or ?)
+3. NO hashtags, NO emojis, NO links
+4. ONE standalone thought (not a thread teaser)
 
-OUTPUT FORMAT (CRITICAL):
-- Return ONLY the tweet text, no extras
-- NO labels, numbering, or variants
-- Self-contained (not part of a thread)
-- Maximum 280 characters
+OUTPUT FORMAT:
+- Return ONLY the tweet text
+- Start with "X:" prefix
 
-X STRUCTURE & STYLE:
-- Punchy, attention-grabbing opening
-- Authentic human voice (not corporate speak)
-- Clear value: insight, tip, or thought-provoking statement
-- Include call-to-action when natural ("What's your take?" etc.)
-- NO hashtags, NO emojis
-- Conversational and personal feel
-- STRICT: Maximum 280 characters
-- CRITICAL: MUST end with a complete sentence - NEVER cut off mid-sentence or mid-word!
+❌ ANTI-PATTERNS (NEVER DO):
+- "That's" or any incomplete sentence at the end
+- Generic advice like "Work hard" or "Stay focused"
+- Corporate speak like "leverage", "synergy", "optimize"
+- Clickbait without substance
 
-CONTENT APPROACH:
-- Focus on one key insight from the source material
-- Make it relatable to entrepreneurs and business builders
-- Use conversational language that feels genuine
-- Avoid marketing-speak or generic business jargon${regenerationPrompt}
+✅ GOOD TWEET STRUCTURE:
+[Surprising insight or contrarian take] + [One concrete example] + [Thought-provoking ending]
+
+EXAMPLE:
+"Most founders fail because they solve problems nobody has. The trick: find what annoys YOU daily, then discover 1000 others feel the same. Your frustration is your business plan."
+
+VOICE: Conversational, authentic, like texting a smart friend.${regenerationPrompt}
 
 Source Content: ${content}`;
 
     case "instagram":
       return `${baseSystemPrompt}
 
-INSTAGRAM-SPECIFIC REQUIREMENTS:
-Create EXACTLY ONE engaging Instagram caption from the provided content.
+⚠️ HARD CONSTRAINTS (VIOLATION = FAILURE):
+1. EXACTLY 400-1200 characters (sweet spot for engagement)
+2. MUST end with complete sentence before hashtags (. ! or ?)
+3. First 125 characters = preview text (must hook reader!)
+4. EXACTLY 3-5 hashtags at the very end, separated by spaces
 
-OUTPUT FORMAT (CRITICAL):
-- Return ONLY the pure caption text
-- NO labels, numbering, or variants
-- NO introduction/explanation
-- Start with prefix "INSTAGRAM:" in the first line
+OUTPUT FORMAT:
+- Return ONLY the caption text
+- Start with "INSTAGRAM:" prefix
 
-INSTAGRAM STRUCTURE & STYLE:
-- Compelling hook in first 125 characters (preview text)
-- 3-6 concise, engaging sentences
-- Use line breaks for readability
-- 3-5 relevant hashtags at the end
-- Clear call-to-action or question to drive engagement
-- STRICT: Maximum 2,200 characters but stay focused and concise (aim for 500-1500)
-- CRITICAL: MUST end with a complete sentence - NEVER cut off mid-sentence!
+❌ ANTI-PATTERNS (NEVER DO):
+- Incomplete sentences or cut-off thoughts
+- More than 5 hashtags (looks spammy)
+- No line breaks (wall of text = no engagement)
+- Starting with hashtags
+- Generic CTAs like "Link in bio"
 
-CONTENT APPROACH:
-- Visual storytelling that connects emotionally
-- Behind-the-scenes insights or personal perspective
-- Actionable advice that followers can implement
-- Authentic voice that builds community
-- Strategic use of emojis for visual appeal (not excessive)${regenerationPrompt}
+✅ INSTAGRAM CAPTION STRUCTURE:
+Line 1: Strong hook (question, bold statement, story opener)
+Line 2-4: Story/insight with emotional connection
+Line 5: Clear actionable takeaway or CTA
+Line 6: 3-5 relevant hashtags
+
+EXAMPLE:
+"The advice that changed everything for me 👇
+
+Three years ago, someone told me: 'Stop planning. Start doing.'
+
+I had 47 business ideas in my notes app. Zero launched.
+
+That week, I picked the simplest one and shipped it in 48 hours. It flopped. But the NEXT one? That became my full-time income.
+
+Save this for when perfectionism hits. 💡
+
+#entrepreneurlife #startupjourney #businesstips"${regenerationPrompt}
 
 Source Content: ${content}`;
 
@@ -333,10 +387,11 @@ Source Content: ${content}`;
 }
 
 export function validatePost(post: string, platform: Platform): void {
+  // Validation limits aligned with prompt constraints
   const limits: Record<Platform, { min: number; max: number }> = {
-    linkedin: { min: 50, max: 1000 },
-    x: { min: 20, max: 280 },
-    instagram: { min: 50, max: 2200 },
+    linkedin: { min: 400, max: 950 },  // Target: 500-900, with buffer
+    x: { min: 100, max: 280 },          // Target: 200-275, with buffer
+    instagram: { min: 300, max: 1500 }, // Target: 400-1200, with buffer for hashtags
   };
 
   const limit = limits[platform];
