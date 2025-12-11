@@ -5,6 +5,21 @@
 - **Main Domain**: https://linkedin-posts-one.vercel.app
 - **Related Domains**: (deprecated: transformer.social, tranformer.social)
 
+### ⚠️ IMPORTANT: Testing After Deployments
+**ALWAYS wait for Vercel deployment to complete before testing production!**
+- After `git push`, wait ~45-60 seconds for Vercel to build and deploy
+- NEVER test the old deployment - this leads to confusion and wasted effort
+- Use `sleep 50` or similar to ensure deployment is complete before navigating to production URL
+- Verify changes are live before proceeding with testing
+
+### ⚠️ IMPORTANT: Planning Before Implementation
+**ALWAYS plan and clarify before making changes!**
+- If unsure about requirements, ASK the user first before implementing
+- Understand the complete picture before starting (e.g., "left column = input, right column = output, sidebar = saved posts")
+- Don't make assumptions - confirm understanding with the user
+- Use EnterPlanMode for non-trivial tasks
+- Making changes without understanding leads to wasted effort and multiple fix attempts
+
 - Lies zu Beginn jeder neuen Aufgabe die Dateien:
 	- `README.md` (Zweck, Setup, Befehle)
 	- `src/config/app.config.ts` und `src/config/env.config.ts` (Feature Flags, Pläne, Umgebungsvariablen)
