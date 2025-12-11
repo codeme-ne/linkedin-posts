@@ -4,7 +4,7 @@
 
 **Transform newsletters and blog posts into platform-optimized social media content using AI**
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-tranformer.social-blue?style=for-the-badge)](https://www.tranformer.social/)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-tranformer.social-blue?style=for-the-badge)](https://www.tranformer.social/](https://linkedin-posts-one.vercel.app/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
