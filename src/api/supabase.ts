@@ -69,7 +69,7 @@ export const updateSavedPost = async (id: number, content: string) => {
 const getRedirectUrl = () => {
   // Prefer explicit site URL from env for reliable email redirects
   const envSiteUrl = (import.meta.env.VITE_SITE_URL || import.meta.env.VITE_BASE_URL) as string | undefined
-  if (envSiteUrl && envSiteUrl.length > 0) return envSiteUrl.replace(/\/$/, '')
+  if (envSiteUrl && envSiteUrl.trim().length > 0) return envSiteUrl.trim().replace(/\/$/, '')
 
   // Fallback to current origin (useful in local dev)
   if (typeof window !== 'undefined' && window.location?.origin) {
