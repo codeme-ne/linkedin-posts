@@ -3,6 +3,39 @@ import type { VoiceTone } from "@/config/voice-tones";
 import { DEFAULT_VOICE_TONE } from "@/config/voice-tones";
 
 /**
+ * Truncate text to max length, ensuring it ends with a complete sentence.
+ * Never cuts off mid-sentence or mid-word.
+ */
+export function truncateToCompleteSentence(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+
+  // Find the portion within the limit
+  const truncated = text.slice(0, maxLength);
+
+  // Find the last sentence-ending punctuation (. ! ?)
+  const lastPeriod = truncated.lastIndexOf('.');
+  const lastQuestion = truncated.lastIndexOf('?');
+  const lastExclamation = truncated.lastIndexOf('!');
+
+  // Get the position of the last sentence ending
+  const lastSentenceEnd = Math.max(lastPeriod, lastQuestion, lastExclamation);
+
+  // If we found a sentence ending, use it
+  if (lastSentenceEnd > maxLength * 0.3) { // At least 30% of content preserved
+    return text.slice(0, lastSentenceEnd + 1).trim();
+  }
+
+  // Fallback: find the last space to avoid cutting mid-word
+  const lastSpace = truncated.lastIndexOf(' ');
+  if (lastSpace > maxLength * 0.5) {
+    return text.slice(0, lastSpace).trim() + '...';
+  }
+
+  // Last resort: just cut at limit (shouldn't happen with good AI output)
+  return truncated.trim();
+}
+
+/**
  * Build batched prompt for multiple platforms in single API call.
  * Reduces API costs by ~3x compared to N separate calls.
  */
@@ -27,7 +60,8 @@ STRUCTURE & STYLE:
 - Use bullets (↳) or arrows for lists when appropriate
 - No hashtags, minimal emojis
 - Professional but conversational tone
-- Stay well under LinkedIn's limit - be concise and impactful
+- STRICT: Stay between 500-1000 characters - be concise and impactful
+- CRITICAL: MUST end with a complete sentence - NEVER cut off mid-sentence!
 
 CONTENT REQUIREMENTS:
 - Include specific examples, company names, or case studies when relevant
@@ -49,7 +83,8 @@ STRUCTURE & STYLE:
 - Include call-to-action when natural
 - NO hashtags, NO emojis
 - Conversational and personal feel
-- Maximum 280 characters
+- STRICT: Maximum 280 characters
+- CRITICAL: MUST end with a complete sentence - NEVER cut off mid-sentence or mid-word!
 
 CONTENT APPROACH:
 - Focus on one key insight from the source material
@@ -70,7 +105,8 @@ STRUCTURE & STYLE:
 - Use line breaks for readability
 - 3-5 relevant hashtags at the end
 - Clear call-to-action or question to drive engagement
-- Maximum 2,200 characters but stay focused and concise
+- STRICT: Maximum 2,200 characters but stay focused and concise (aim for 500-1500)
+- CRITICAL: MUST end with a complete sentence - NEVER cut off mid-sentence!
 
 CONTENT APPROACH:
 - Visual storytelling that connects emotionally
@@ -137,7 +173,8 @@ export function parseBatchedResponse(
     if (platforms.includes('x')) {
       const xMatch = text.match(/X:\s*([\s\S]*?)(?=(?:LINKEDIN:|INSTAGRAM:|$))/i);
       if (xMatch && xMatch[1]) {
-        const tweetContent = xMatch[1].trim().slice(0, 280); // Respect character limit
+        // Use smart truncation to ensure complete sentences within 280 chars
+        const tweetContent = truncateToCompleteSentence(xMatch[1].trim(), 280);
         if (tweetContent) {
           result.x = [tweetContent];
         }
@@ -216,7 +253,8 @@ LINKEDIN STRUCTURE & STYLE:
 - Use bullets (↳) or arrows for lists when appropriate
 - No hashtags, minimal emojis
 - Professional but conversational tone
-- Stay well under LinkedIn's limit - be concise and impactful
+- STRICT: Stay between 500-1000 characters - be concise and impactful
+- CRITICAL: MUST end with a complete sentence - NEVER cut off mid-sentence!
 
 CONTENT ENHANCEMENT:
 - Include specific examples, company names, or case studies when relevant
@@ -245,6 +283,8 @@ X STRUCTURE & STYLE:
 - Include call-to-action when natural ("What's your take?" etc.)
 - NO hashtags, NO emojis
 - Conversational and personal feel
+- STRICT: Maximum 280 characters
+- CRITICAL: MUST end with a complete sentence - NEVER cut off mid-sentence or mid-word!
 
 CONTENT APPROACH:
 - Focus on one key insight from the source material
@@ -272,7 +312,8 @@ INSTAGRAM STRUCTURE & STYLE:
 - Use line breaks for readability
 - 3-5 relevant hashtags at the end
 - Clear call-to-action or question to drive engagement
-- Maximum 2,200 characters but stay focused and concise
+- STRICT: Maximum 2,200 characters but stay focused and concise (aim for 500-1500)
+- CRITICAL: MUST end with a complete sentence - NEVER cut off mid-sentence!
 
 CONTENT APPROACH:
 - Visual storytelling that connects emotionally
@@ -324,9 +365,9 @@ export function normalizeSinglePostResponse(text: string, platform: Platform): s
     .trim();
 
   if (platform === 'x') {
-    // For X/Twitter, respect the 280 character limit but preserve the full text
-    // Don't truncate to just the first line - that destroys the content!
-    return t.slice(0, 280);
+    // For X/Twitter, respect the 280 character limit with smart truncation
+    // Ensures we end with a complete sentence, never cut off mid-word
+    return truncateToCompleteSentence(t, 280);
   }
 
   // For LinkedIn and Instagram, preserve the full formatted content
