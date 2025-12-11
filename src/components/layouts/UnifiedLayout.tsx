@@ -43,7 +43,7 @@ export function UnifiedLayout({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Desktop Two-Column Layout (50/50 split with sidebar)
+  // Desktop Two-Column Layout (50/50 split: input | output)
   if (layoutMode === 'two-column') {
     return (
       <div className={cn('min-h-screen bg-background', className)}>
@@ -58,26 +58,30 @@ export function UnifiedLayout({
 
         {/* Main Content Area - 50/50 split */}
         <div className="flex h-[calc(100vh-4rem)]">
-          {/* Left Column - Input & Output (50%) */}
+          {/* Left Column - Input (50%) */}
           <div className="w-1/2 overflow-y-auto border-r">
-            <div className="p-4 space-y-6">
+            <div className="p-4">
               {inputArea}
-              {outputArea}
             </div>
           </div>
 
-          {/* Right Column - Sidebar (50%) */}
-          <div className="w-1/2 overflow-y-auto bg-gray-50/50">
-            {sidebar}
+          {/* Right Column - Output / Generated Posts (50%) */}
+          <div className="w-1/2 overflow-y-auto bg-gray-50/30">
+            <div className="p-4">
+              {outputArea}
+            </div>
           </div>
         </div>
+
+        {/* Sidebar (toggleable overlay) */}
+        {sidebar}
 
         {children}
       </div>
     );
   }
 
-  // Tablet Two-Column Layout (50/50 split with sidebar)
+  // Tablet Two-Column Layout (50/50 split: input | output)
   if (layoutMode === 'single-column') {
     return (
       <div className={cn('min-h-screen bg-background', className)}>
@@ -92,19 +96,23 @@ export function UnifiedLayout({
 
         {/* Main Content Area - 50/50 split for tablet */}
         <div className="flex h-[calc(100vh-4rem)]">
-          {/* Left Column - Input & Output (50%) */}
+          {/* Left Column - Input (50%) */}
           <div className="w-1/2 overflow-y-auto border-r">
-            <div className="p-4 space-y-6">
+            <div className="p-4">
               {inputArea}
-              {outputArea}
             </div>
           </div>
 
-          {/* Right Column - Sidebar (50%) */}
-          <div className="w-1/2 overflow-y-auto bg-gray-50/50">
-            {sidebar}
+          {/* Right Column - Output / Generated Posts (50%) */}
+          <div className="w-1/2 overflow-y-auto bg-gray-50/30">
+            <div className="p-4">
+              {outputArea}
+            </div>
           </div>
         </div>
+
+        {/* Sidebar (toggleable overlay) */}
+        {sidebar}
 
         {children}
       </div>

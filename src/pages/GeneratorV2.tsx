@@ -450,8 +450,6 @@ export default function GeneratorV2() {
           refreshKey={refreshKey}
           isAuthenticated={!!userEmail}
           onLoginClick={() => setLoginOpen(true)}
-          initialExpanded={true}
-          inline
         />
       }
     />
