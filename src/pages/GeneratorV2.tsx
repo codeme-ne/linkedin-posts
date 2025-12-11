@@ -67,9 +67,9 @@ export default function GeneratorV2() {
   const { userEmail, loginOpen, setLoginOpen, searchParams } = useAuth();
   const { hasAccess } = useSubscription();
   const {
-    // canGenerate, // Reserved for future use
+    // canGenerate, // Reserved for future use - usage tracking available if needed
     isPremium,
-    checkAndIncrementUsage
+    // checkAndIncrementUsage - removed: URL extraction is now always free (Jina Reader)
   } = useUsageTracking();
 
   // const canExtract = () => isPremium || canGenerate; // Reserved for future use
@@ -146,6 +146,8 @@ export default function GeneratorV2() {
   }, [state.errors]);
 
   // Enhanced extraction handler
+  // URL extraction is always free (Jina Reader has no limits)
+  // Usage limits only apply to AI generation
   const handleExtract = useCallback(async (url: string, usePremium: boolean = false) => {
     if (!url) return;
 
@@ -153,9 +155,10 @@ export default function GeneratorV2() {
     actions.startExtraction();
     actions.setPremiumExtraction(usePremium);
 
-    const canProceed = await checkAndIncrementUsage();
-    if (!canProceed) {
-      actions.failExtraction('Usage limit reached');
+    // Premium extraction still requires Pro subscription (Firecrawl has costs)
+    if (usePremium && !isPro) {
+      actions.failExtraction('Premium extraction requires Pro subscription');
+      toast.error('Premium-Extraktion erfordert ein Pro-Abo');
       return;
     }
 
@@ -174,7 +177,7 @@ export default function GeneratorV2() {
     } catch (error) {
       actions.failExtraction(error instanceof Error ? error.message : 'Extraction failed');
     }
-  }, [checkAndIncrementUsage, extractContent, isPro, actions]);
+  }, [extractContent, isPro, actions]);
 
   // Save post handler
   const handleSavePost = async (content: string, platform: 'linkedin' | 'x' | 'instagram' = 'linkedin') => {
