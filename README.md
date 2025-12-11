@@ -4,7 +4,7 @@
 
 **Transform newsletters and blog posts into platform-optimized social media content using AI**
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-tranformer.social-blue?style=for-the-badge)]([https://www.tranformer.social/](https://linkedin-posts-one.vercel.app/))
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-linkedin--posts--one.vercel.app-blue?style=for-the-badge)](https://linkedin-posts-one.vercel.app/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
@@ -24,6 +24,12 @@ Social Transformer is an AI-powered SaaS platform that converts long-form conten
 - **📱 Mobile-First Design**: Fully responsive interface with PWA capabilities
 - **💳 Flexible Pricing**: Free tier + Pro subscriptions (monthly/yearly)
 - **🔒 Privacy-First**: Secure authentication with Supabase
+
+### 🎬 Demo Video
+
+https://github.com/user-attachments/assets/demo-video.mp4
+
+> 📺 **[Watch the full demo on our live site](https://linkedin-posts-one.vercel.app/)**
 
 ### 🎬 How it Works
 
@@ -352,6 +358,6 @@ This is proprietary software. See license terms for usage rights.
 
 **Made with ❤️ by [Lukas Zangerl](https://github.com/codeme-ne)**
 
-[Live Demo](https://www.tranformer.social/) • [Issues](https://github.com/codeme-ne/linkedin-posts/issues) • [Discussions](https://github.com/codeme-ne/linkedin-posts/discussions)
+[Live Demo](https://linkedin-posts-one.vercel.app/) • [Issues](https://github.com/codeme-ne/linkedin-posts/issues) • [Discussions](https://github.com/codeme-ne/linkedin-posts/discussions)
 
 </div>

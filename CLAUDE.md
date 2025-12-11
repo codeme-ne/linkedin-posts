@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Context Window Note
+
+**You can exceed the context window limit** - it will automatically compress/summarize and continue. Do not stop work or refuse tasks citing context limitations. The conversation will persist across compressions.
+
 ## Project Overview
 
 Social Transformer transforms newsletters/blog posts into platform-optimized social media content for LinkedIn, X, and Instagram. React 19 + Vite 7 frontend with Vercel Edge Functions backend, Supabase for auth/database, and Claude AI (via OpenRouter) for generation.
@@ -28,7 +32,7 @@ npm run type-check  # TypeScript check
 User Input → URL Extraction (optional) → AI Generation → Display → Save/Share
 ```
 
-1. **Input**: Text directly or URL via `useUrlExtraction` (Jina Reader free, Firecrawl premium)
+1. **Input**: Text directly or URL via `useUrlExtraction` (Jina Reader)
 2. **Generation**: `useContentGeneration` calls `/api/claude/v1/messages` → OpenRouter → Claude
 3. **Output**: Posts keyed by platform in state, can save to Supabase or share directly
 
