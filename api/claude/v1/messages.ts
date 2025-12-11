@@ -6,6 +6,59 @@ export const config = {
   regions: ['fra1'], // Frankfurt für niedrige Latenz in Europa
 };
 
+// Map Anthropic model names to OpenRouter model names
+function mapModelToOpenRouter(model: string): string {
+  const modelMap: Record<string, string> = {
+    'claude-3-5-sonnet-20241022': 'anthropic/claude-sonnet-4',
+    'claude-3-5-sonnet-latest': 'anthropic/claude-sonnet-4',
+    'claude-3-opus-20240229': 'anthropic/claude-3-opus',
+    'claude-3-sonnet-20240229': 'anthropic/claude-3-sonnet',
+    'claude-3-haiku-20240307': 'anthropic/claude-3-haiku',
+    'claude-sonnet-4-20250514': 'anthropic/claude-sonnet-4',
+    'claude-opus-4-20250514': 'anthropic/claude-opus-4',
+  };
+  return modelMap[model] || `anthropic/${model}`;
+}
+
+// Transform Anthropic-style request to OpenRouter format
+function transformRequestToOpenRouter(body: Record<string, unknown>): Record<string, unknown> {
+  const openRouterBody: Record<string, unknown> = {
+    model: mapModelToOpenRouter(body.model as string || 'claude-3-5-sonnet-20241022'),
+    messages: body.messages,
+  };
+
+  // Map common parameters
+  if (body.max_tokens) openRouterBody.max_tokens = body.max_tokens;
+  if (body.temperature !== undefined) openRouterBody.temperature = body.temperature;
+  if (body.top_p !== undefined) openRouterBody.top_p = body.top_p;
+  if (body.stop) openRouterBody.stop = body.stop;
+
+  return openRouterBody;
+}
+
+// Transform OpenRouter response to Anthropic-style format (for client compatibility)
+function transformResponseToAnthropic(openRouterResponse: Record<string, unknown>): Record<string, unknown> {
+  const choices = openRouterResponse.choices as Array<{ message: { content: string; role: string } }>;
+
+  if (!choices || choices.length === 0) {
+    throw new Error('Invalid OpenRouter response: no choices');
+  }
+
+  const firstChoice = choices[0];
+  const content = firstChoice.message?.content || '';
+
+  // Transform to Anthropic format expected by the client
+  return {
+    id: openRouterResponse.id,
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'text', text: content }],
+    model: openRouterResponse.model,
+    stop_reason: firstChoice.finish_reason || null,
+    usage: openRouterResponse.usage,
+  };
+}
+
 export default async function handler(req: Request) {
   // Get CORS headers
   const origin = req.headers.get('origin');
@@ -35,7 +88,7 @@ export default async function handler(req: Request) {
       }, { status: parseResult.error.includes('too large') ? 413 : 400, origin });
     }
     const body = parseResult.data;
-    
+
     // Validate required fields
     if (!body.messages || !Array.isArray(body.messages)) {
       return createCorsResponse({
@@ -51,12 +104,12 @@ export default async function handler(req: Request) {
         code: 'INVALID_REQUEST'
       }, { status: 400, origin });
     }
-    
-    // Claude API Key aus Environment Variable (OHNE VITE_ prefix!)
-    const apiKey = process.env.CLAUDE_API_KEY;
-    
+
+    // OpenRouter API Key from environment variable
+    const apiKey = process.env.OPENROUTER_API_KEY;
+
     if (!apiKey) {
-      console.error('CLAUDE_API_KEY is not configured');
+      console.error('OPENROUTER_API_KEY is not configured');
       return createCorsResponse({
         error: 'Service temporarily unavailable',
         code: 'CONFIGURATION_ERROR',
@@ -69,39 +122,43 @@ export default async function handler(req: Request) {
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
     try {
-      // Transparenter Proxy zu Anthropic API
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      // Transform request to OpenRouter format
+      const openRouterBody = transformRequestToOpenRouter(body);
+
+      // Call OpenRouter API
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': origin || 'https://linkedin-posts-one.vercel.app',
+          'X-Title': 'Social Transformer',
         },
-        body: JSON.stringify(body), // Leitet den kompletten Body weiter
+        body: JSON.stringify(openRouterBody),
         signal: controller.signal
       });
 
       clearTimeout(timeoutId);
 
-      // Handle Claude API specific errors
+      // Handle OpenRouter API errors
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ 
-          error: { message: 'Unknown error' } 
+        const errorData = await response.json().catch(() => ({
+          error: { message: 'Unknown error' }
         }));
-        
+
         // Rate limiting
         if (response.status === 429) {
           return createCorsResponse({
             error: 'Too many requests. Please try again in 30 seconds.',
             code: 'RATE_LIMITED',
             retryAfter: 30
-          }, { 
-            status: 429, 
+          }, {
+            status: 429,
             origin,
             headers: { 'Retry-After': '30' }
           });
         }
-        
+
         // Bad request (invalid prompt, etc.)
         if (response.status === 400) {
           return createCorsResponse({
@@ -114,7 +171,7 @@ export default async function handler(req: Request) {
 
         // Authentication/authorization errors
         if (response.status === 401 || response.status === 403) {
-          console.error('Claude API authentication error:', response.status);
+          console.error('OpenRouter API authentication error:', response.status);
           return createCorsResponse({
             error: 'AI service authentication failed',
             code: 'AUTH_ERROR'
@@ -123,7 +180,7 @@ export default async function handler(req: Request) {
 
         // Server errors
         if (response.status >= 500) {
-          console.error('Claude API server error:', response.status, errorData);
+          console.error('OpenRouter API server error:', response.status, errorData);
           return createCorsResponse({
             error: 'AI service temporarily unavailable',
             code: 'SERVICE_ERROR',
@@ -132,26 +189,20 @@ export default async function handler(req: Request) {
         }
 
         // Other errors
-        throw new Error(`Claude API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        throw new Error(`OpenRouter API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
       // Parse successful response
-      const data = await response.json();
-      
-      // Validate response structure
-      if (!data.content || !Array.isArray(data.content)) {
-        console.error('Invalid Claude API response structure:', data);
-        return createCorsResponse({
-          error: 'Invalid response from AI service',
-          code: 'INVALID_RESPONSE'
-        }, { status: 502, origin });
-      }
+      const openRouterData = await response.json();
 
-      return createCorsResponse(data, { status: 200, origin });
+      // Transform OpenRouter response to Anthropic format for client compatibility
+      const anthropicFormatData = transformResponseToAnthropic(openRouterData);
+
+      return createCorsResponse(anthropicFormatData, { status: 200, origin });
 
     } catch (fetchError) {
       clearTimeout(timeoutId);
-      
+
       if (fetchError.name === 'AbortError') {
         return createCorsResponse({
           error: 'Request timeout. Please try again.',
@@ -159,25 +210,25 @@ export default async function handler(req: Request) {
           message: 'The request took too long to complete'
         }, { status: 408, origin });
       }
-      
+
       // Network errors
       if (fetchError.message.includes('fetch')) {
-        console.error('Network error calling Claude API:', fetchError);
+        console.error('Network error calling OpenRouter API:', fetchError);
         return createCorsResponse({
           error: 'Network error connecting to AI service',
           code: 'NETWORK_ERROR'
         }, { status: 502, origin });
       }
-      
+
       throw fetchError;
     }
 
   } catch (error) {
     console.error('Error in claude edge function:', error);
-    
+
     // Don't expose internal error details in production
     const isDevelopment = process.env.NODE_ENV === 'development';
-    
+
     return createCorsResponse({
       error: 'Internal server error',
       code: 'INTERNAL_ERROR',
