@@ -177,6 +177,7 @@ CRITICAL:
 - Each platform must start with its prefix (LINKEDIN:, X:, INSTAGRAM:)
 - Return ONLY the post content, no meta-commentary
 - Each platform gets exactly ONE post
+- LANGUAGE MATCHING: Write in the SAME language as the source content (German→German, English→English)
 
 Source Content: ${content}`;
 }
@@ -265,7 +266,8 @@ QUALITY STANDARDS:
 - Specific examples, company names, and real insights when relevant
 - Engaging hooks that immediately capture attention
 - Clear value proposition and actionable takeaways
-- Authentic voice that builds trust and authority`;
+- Authentic voice that builds trust and authority
+- LANGUAGE: Write in the SAME language as the source content (German→German, English→English)`;
 
   switch (platform) {
     case "linkedin":
